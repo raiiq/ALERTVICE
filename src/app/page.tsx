@@ -77,7 +77,7 @@ export default function Home() {
       if (!searchQuery) {
         fetchNews(true, storedLang, false);
       }
-    }, 60000);
+    }, 5000);
 
     setMounted(true);
 

@@ -40,7 +40,7 @@ export default function ArticlePage() {
 
         const intervalId = setInterval(() => {
             fetchData(storedLang, true);
-        }, 30000);
+        }, 5000);
 
         setMounted(true);
 
