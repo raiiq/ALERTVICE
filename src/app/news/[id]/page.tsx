@@ -77,6 +77,8 @@ export default function ArticlePage() {
                 const rawPosts: NewsPost[] = feedData.posts || [];
                 const idMap = new Map();
                 const titleMap = new Map();
+                const mediaMap = new Map();
+                const dateMap = new Map();
                 const uniquePosts: NewsPost[] = [];
 
                 for (const p of rawPosts) {
@@ -88,8 +90,18 @@ export default function ArticlePage() {
                         if (titleKey.length > 5 && titleMap.has(titleKey)) continue;
                     }
 
+                    let mediaKey = "";
+                    if (p.videoUrl) mediaKey = p.videoUrl;
+                    else if (p.imageUrl) mediaKey = p.imageUrl;
+
+                    if (mediaKey && mediaMap.has(mediaKey)) continue;
+
+                    if (p.date && dateMap.has(p.date)) continue;
+
                     idMap.set(p.id, true);
                     if (titleKey.length > 5) titleMap.set(titleKey, true);
+                    if (mediaKey) mediaMap.set(mediaKey, true);
+                    if (p.date) dateMap.set(p.date, true);
                     uniquePosts.push(p);
                 }
 

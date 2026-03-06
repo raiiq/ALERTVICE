@@ -130,14 +130,40 @@ export async function GET(request: Request) {
                                 textHtml,
                                 plainText,
                                 // Store multiple as JSON if > 1, else single string
-                                imageUrl: imageUrls.length > 1 ? JSON.stringify(imageUrls) : (imageUrls[0] || null),
+                                imageUrl: imageUrls.length > 0 ? JSON.stringify(imageUrls) : null,
                                 hasVideo,
-                                videoUrl: videoUrls.length > 1 ? JSON.stringify(videoUrls) : (videoUrls[0] || null),
+                                videoUrl: videoUrls.length > 0 ? JSON.stringify(videoUrls) : null,
                                 date: dateStr || new Date().toISOString(),
                                 views: views || '0'
                             });
                         }
                     });
+
+                    // GROUPS ALBUMS INTO SINGLE POSTS
+                    const groupedPosts: any[] = [];
+                    let lastPost: any = null;
+
+                    for (const post of scrapedPosts) {
+                        if (lastPost && lastPost.date === post.date && (lastPost.plainText === post.plainText || !post.plainText || !lastPost.plainText)) {
+                            const parseList = (val: string | null) => val ? JSON.parse(val) : [];
+
+                            const combinedImages = [...parseList(lastPost.imageUrl), ...parseList(post.imageUrl)];
+                            const combinedVids = [...parseList(lastPost.videoUrl), ...parseList(post.videoUrl)];
+
+                            lastPost.imageUrl = combinedImages.length > 0 ? JSON.stringify(combinedImages) : null;
+                            lastPost.videoUrl = combinedVids.length > 0 ? JSON.stringify(combinedVids) : null;
+                            lastPost.hasVideo = lastPost.hasVideo || post.hasVideo;
+
+                            if (!lastPost.plainText && post.plainText) {
+                                lastPost.plainText = post.plainText;
+                                lastPost.textHtml = post.textHtml;
+                            }
+                        } else {
+                            groupedPosts.push(post);
+                            lastPost = post;
+                        }
+                    }
+                    scrapedPosts = groupedPosts;
 
                     // IMPORTANT: Reverse so we process NEWEST ones first
                     scrapedPosts = scrapedPosts.reverse();
