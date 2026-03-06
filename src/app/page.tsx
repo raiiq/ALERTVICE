@@ -190,7 +190,7 @@ export default function Home() {
   const sidebarPosts = posts.filter(p => p.imageUrl || p.hasVideo).slice(0, 15);
 
   return (
-    <div className="min-h-screen bg-background text-foreground tracking-wide flex flex-col" dir={isAr ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-background text-foreground tracking-wide flex flex-col font-cairo" dir={isAr ? "rtl" : "ltr"}>
       {/* Glowy Dark Header */}
       <header className="w-full bg-surface border-b border-border z-[100] shadow-[0_4px_20px_rgba(0,0,0,0.5)] shrink-0 sticky top-0 h-[64px]">
         <div className="w-full px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4 h-full">
@@ -365,10 +365,10 @@ export default function Home() {
       </header>
 
       {/* Premium Signal Bar (Ticker) */}
-      <div className="hidden lg:block w-full bg-[#050810]/80 backdrop-blur-xl border-b border-primary/20 shadow-[0_4px_30px_rgba(0,0,0,0.4),inset_0_-1px_0_rgba(var(--primary-rgb),0.1)] overflow-hidden relative shrink-0 sticky top-[64px] z-[90] h-[40px]">
+      <div className="hidden lg:block w-full bg-background/80 backdrop-blur-xl border-b border-primary/20 shadow-[0_4px_30px_rgba(0,0,0,0.4),inset_0_-1px_0_rgba(var(--primary-rgb),0.1)] overflow-hidden relative shrink-0 sticky top-[64px] z-[90] h-[40px]">
         <div className="w-full flex items-center h-full">
           {/* Status Badge */}
-          <div className="flex items-center gap-3 shrink-0 bg-[#0a1628] z-20 px-5 sm:px-6 h-full border-r border-primary/20 shadow-[10px_0_20px_rgba(0,0,0,0.6)]">
+          <div className="flex items-center gap-3 shrink-0 bg-surface z-20 px-5 sm:px-6 h-full border-r border-primary/20 shadow-[10px_0_20px_rgba(0,0,0,0.6)]">
             <div className="relative flex items-center justify-center">
               <span className="w-2 h-2 rounded-full bg-red-500 animate-ping absolute"></span>
               <span className="w-2 h-2 rounded-full bg-red-600 relative z-10"></span>
@@ -425,7 +425,7 @@ export default function Home() {
           <div className="flex flex-col lg:flex-row flex-grow">
 
             {/* LEFT SIDEBAR - Signal Monitor (Text Only) */}
-            <div className="hidden lg:flex w-[300px] shrink-0 border-r border-border flex-col bg-[#02040a] sticky top-[104px] h-[calc(100vh-104px)] overflow-y-auto custom-scrollbar">
+            <div className="hidden lg:flex w-[300px] shrink-0 border-r border-border flex-col bg-background/50 sticky top-[104px] h-[calc(100vh-104px)] overflow-y-auto custom-scrollbar">
               <div className="p-5 border-b border-border bg-surface/30 shrink-0 backdrop-blur-sm">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
@@ -601,6 +601,7 @@ export default function Home() {
                             hasVideo={post.hasVideo}
                             isAr={isAr}
                             aspect="aspect-video"
+                            singleMode={true}
                           />
                           <div className={`mt-2 ${alignClass}`}>
                             <h4 className={`text-[1.15rem] font-bold text-white group-hover:text-primary transition-colors leading-[1.4] tracking-tight`}>{post.aiTitle}</h4>
@@ -634,6 +635,7 @@ export default function Home() {
                               hasVideo={post.hasVideo}
                               isAr={isAr}
                               aspect="aspect-video"
+                              singleMode={true}
                             />
                           </div>
                           <div className="flex-1 flex flex-col gap-3">
@@ -682,7 +684,7 @@ export default function Home() {
             </div>
 
             {/* RIGHT SIDEBAR - Trending - Stack below feed on mobile */}
-            <div className="w-full lg:w-[320px] shrink-0 bg-[#02050a] border-t lg:border-t-0 lg:border-l border-border lg:sticky top-[104px] lg:h-[calc(100vh-104px)] overflow-y-auto custom-scrollbar">
+            <div className="w-full lg:w-[320px] shrink-0 bg-background/40 border-t lg:border-t-0 lg:border-l border-border lg:sticky top-[104px] lg:h-[calc(100vh-104px)] overflow-y-auto custom-scrollbar">
               <div className="p-6 flex flex-col gap-10">
                 <div className="flex flex-col gap-6">
                   <h3 className={`font-black text-white uppercase tracking-widest text-[11px] flex items-center gap-2 mb-4 border-b border-white/10 pb-2 ${isAr ? 'flex-row-reverse ml-auto' : ''}`}>
@@ -712,7 +714,7 @@ export default function Home() {
       </main>
 
       {/* Formal Footer (Full Width) */}
-      <footer className="w-full bg-[#020512] border-t border-border pt-16 pb-24 lg:pb-16 shrink-0 relative z-50">
+      <footer className="w-full bg-surface border-t border-border pt-16 pb-24 lg:pb-16 shrink-0 relative z-50">
         <div className="w-full px-6 flex flex-col lg:flex-row justify-between items-center gap-10">
           <div className="flex flex-col items-center lg:items-start gap-2">
             <div className="flex items-center gap-3">
@@ -742,9 +744,9 @@ export default function Home() {
       </footer>
 
       {/* Mobile Signal Bar (Sticky Footer) */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] h-[40px] bg-[#02050a]/90 backdrop-blur-lg border-t border-primary/30 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] flex items-center overflow-hidden">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] h-[40px] bg-background/90 backdrop-blur-lg border-t border-primary/30 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] flex items-center overflow-hidden">
         <div className="flex items-center h-full w-full">
-          <div className="bg-[#0a1628] h-full px-4 flex items-center gap-2 border-r border-primary/20 shrink-0 z-20">
+          <div className="bg-surface h-full px-4 flex items-center gap-2 border-r border-primary/20 shrink-0 z-20">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
             <span className="text-primary font-black text-[9px] tracking-widest uppercase">{isAr ? 'إشارات' : 'SIGNALS'}</span>
           </div>

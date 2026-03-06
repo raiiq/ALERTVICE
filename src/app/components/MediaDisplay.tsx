@@ -28,17 +28,28 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
         ...images.map(img => ({ type: 'image', url: img }))
     ].filter(item => item.url);
 
-    if (allMedia.length === 0 && !hasVideo) return <div className={`w-full bg-surface/10 border border-border rounded-lg ${aspect || 'aspect-video'}`} />;
+    if (allMedia.length === 0 && !hasVideo) return null;
 
     if (allMedia.length === 1 || singleMode) {
         const item = allMedia[0];
         if (!item) return null;
         return (
-            <div className={`w-full h-full relative overflow-hidden rounded-lg border border-border shadow-lg bg-black ${aspect || ''}`}>
+            <div className={`w-full h-full relative overflow-hidden rounded-lg border border-border shadow-lg bg-black ${aspect || ''} group/media`}>
                 {item.type === 'video' ? (
-                    <video src={item.url} controls className={`w-full h-full object-cover mx-auto`} />
+                    <video src={item.url} controls className={`w-full h-full object-contain mx-auto`} />
                 ) : (
-                    <img src={item.url} alt="Intel" className={`w-full h-full object-cover mx-auto`} />
+                    <div className="relative w-full h-full">
+                        <img src={item.url} alt="Intel" className={`w-full h-full object-contain mx-auto`} />
+                        {(hasVideo || item.type === 'video') && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover/media:bg-black/10 transition-colors pointer-events-none">
+                                <div className="w-12 h-12 bg-primary/90 rounded-full flex items-center justify-center shadow-[0_0_20px_var(--primary)] text-white translate-y-0 group-hover/media:-translate-y-1 transition-transform">
+                                    <svg className={`w-6 h-6 ${!isAr ? 'translate-x-[2px]' : ''}`} fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
         );

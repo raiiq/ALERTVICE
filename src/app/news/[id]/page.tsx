@@ -143,7 +143,7 @@ export default function ArticlePage() {
     const alignClass = isAr ? 'text-right' : 'text-left';
 
     return (
-        <div className="min-h-screen bg-background text-foreground tracking-wide flex flex-col" dir={isAr ? "rtl" : "ltr"}>
+        <div className="min-h-screen bg-background text-foreground tracking-wide flex flex-col font-cairo" dir={isAr ? "rtl" : "ltr"}>
 
             {/* Header */}
             <header className="w-full bg-surface border-b border-border z-50 shadow-[0_4px_20px_rgba(0,0,0,0.5)] shrink-0 sticky top-0 h-[64px]">
@@ -161,7 +161,7 @@ export default function ArticlePage() {
                             {isAr ? 'الرئيسية' : 'Home'}
                         </Link>
 
-                        <div className="flex items-center bg-[#020617] border border-white/5 p-1 rounded-full relative group/lang shadow-lg ml-auto sm:ml-0">
+                        <div className="flex items-center bg-background border border-white/5 p-1 rounded-full relative group/lang shadow-lg ml-auto sm:ml-0">
                             {/* Sliding Background */}
                             <div className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-primary rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)] ${isAr ? (lang === 'ar' ? 'translate-x-0' : 'translate-x-full') : (lang === 'ar' ? 'translate-x-full' : 'translate-x-0')}`}></div>
 
@@ -213,34 +213,44 @@ export default function ArticlePage() {
                     <div className="flex flex-col lg:flex-row lg:h-[calc(100vh-64px)] overflow-hidden">
 
                         {/* LEFT SIDEBAR - Live Now (Independent Scroll) */}
-                        <div className="hidden lg:block w-[280px] shrink-0 h-full overflow-y-auto custom-scrollbar border-r border-border p-6 bg-[#050810]">
+                        <div className="hidden lg:block w-[300px] shrink-0 h-full overflow-y-auto custom-scrollbar border-r border-border p-6 bg-background/50 backdrop-blur-sm">
                             <div className="flex items-center gap-2 mb-6 pb-2 border-b border-border">
                                 <span className="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,1)] animate-pulse"></span>
                                 <h3 className="font-bold text-white uppercase tracking-widest text-sm">{isAr ? 'مباشر الآن' : 'Live Now'}</h3>
                             </div>
                             <div className="flex flex-col gap-6">
                                 {livePosts.map(p => (
-                                    <Link href={`/news/${getPostId(p.id)}`} key={`live-${p.id}`} className="group flex flex-col gap-2 relative focus:outline-none">
+                                    <Link href={`/news/${getPostId(p.id)}`} key={`live-${p.id}`} className="group relative flex flex-col gap-3 p-3 rounded-xl bg-surface/10 border border-border/30 hover:border-primary/40 hover:bg-surface/30 transition-all duration-300">
+                                        <div className="absolute top-0 left-0 w-1 h-0 bg-primary group-hover:h-full transition-all duration-500 rounded-l-xl"></div>
+
                                         {p.imageUrl || p.hasVideo ? (
-                                            <div className="w-full aspect-[16/9] rounded overflow-hidden relative border border-border group-hover:border-primary/50 transition-colors">
+                                            <div className="w-full aspect-video rounded-lg overflow-hidden relative border border-border/50 group-hover:border-primary/30 transition-all duration-500">
                                                 {p.hasVideo && (
-                                                    <div className="absolute top-1 right-1 bg-black/60 rounded px-1.5 py-0.5 text-[9px] font-bold text-white z-10 flex items-center gap-1 backdrop-blur-sm">
-                                                        <svg className="w-2.5 h-2.5 text-primary" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-10">
+                                                        <div className="bg-primary/80 rounded-full w-6 h-6 flex items-center justify-center shadow-[0_0_8px_var(--primary)]">
+                                                            <svg className="w-3 h-3 text-white translate-x-[0.5px]" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                                                        </div>
                                                     </div>
                                                 )}
-                                                <img src={parseMedia(p.imageUrl)[0] || ''} alt="Live thumbnail" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all" />
+                                                <img src={parseMedia(p.imageUrl)[0] || ''} alt="Live" className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" />
                                             </div>
                                         ) : null}
-                                        {p.aiTag && (
-                                            <span className={`inline-block w-max bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[8px] mb-1 uppercase font-bold tracking-widest ${alignClass}`}>{p.aiTag}</span>
-                                        )}
-                                        <h4 className={`text-sm font-bold text-foreground group-hover:text-primary transition-colors leading-[1.3] line-clamp-2 ${alignClass}`}>{p.aiTitle}</h4>
-                                        <div className="flex items-center justify-between">
-                                            <time className="text-[10px] text-text-muted/60 uppercase tracking-wider">{new Date(p.date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</time>
-                                            <span className="text-[10px] text-text-muted/40 flex items-center gap-1">
-                                                <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5-2.24 5-5-2.24 5-5zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" /></svg>
-                                                {p.views}
-                                            </span>
+
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center justify-between border-b border-border/20 pb-1.5">
+                                                <span className="text-[10px] font-black text-red-500 font-mono">
+                                                    {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                                </span>
+                                                <span className="text-[7px] font-black text-primary/40 uppercase tracking-widest">SIGNAL_RCV</span>
+                                            </div>
+                                            <h4 className={`text-[12.5px] font-bold text-text-muted/80 group-hover:text-white transition-colors leading-[1.5] line-clamp-2 ${alignClass}`}>{p.aiTitle}</h4>
+                                            <div className="flex items-center justify-between mt-1">
+                                                <span className="text-[8px] font-bold text-text-muted/30 flex items-center gap-1 uppercase">
+                                                    <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5-2.24 5-5-2.24 5-5zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" /></svg>
+                                                    {p.views}
+                                                </span>
+                                                {p.aiTag && <span className="text-[7px] font-black text-primary/30 uppercase px-1.5 py-0.5 rounded bg-primary/5 border border-primary/10">{p.aiTag}</span>}
+                                            </div>
                                         </div>
                                     </Link>
                                 ))}
@@ -248,7 +258,10 @@ export default function ArticlePage() {
                         </div>
 
                         {/* CENTER COLUMN - Main Article (Independent Scroll on desktop) */}
-                        <div className="flex-1 min-w-0 lg:h-full lg:overflow-y-auto custom-scrollbar bg-background/30 p-4 sm:p-8 lg:p-12">
+                        <div className="flex-1 min-w-0 lg:h-full lg:overflow-y-auto custom-scrollbar bg-background/20 p-4 sm:p-8 lg:p-12 relative">
+                            {/* Ambient background glow */}
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-64 bg-primary/5 blur-[120px] pointer-events-none rounded-full"></div>
+
                             <article className="max-w-4xl mx-auto">
                                 {/* Eyebrow & Headline */}
                                 <div className="mb-8">
@@ -301,7 +314,7 @@ export default function ArticlePage() {
 
                                 {/* Article Text */}
                                 <div
-                                    className={`prose-editor text-[1.1rem] sm:text-[1.25rem] leading-[2.2] text-foreground/90 space-y-8 [&_a]:text-primary [&_a]:border-b [&_a]:border-primary/30 [&_a:hover]:border-primary [&_a:hover]:text-primary-hover [&_b]:font-black [&_strong]:font-black [&_strong]:text-white [&_i]:text-text-muted whitespace-pre-wrap word-break tracking-wide ${alignClass}`}
+                                    className={`prose-editor text-[1.15rem] sm:text-[1.35rem] leading-[2.1] text-foreground/90 space-y-8 [&_a]:text-primary [&_a]:border-b [&_a]:border-primary/30 [&_a:hover]:border-primary [&_a:hover]:text-primary-hover [&_b]:font-black [&_strong]:font-black [&_strong]:text-white [&_i]:text-text-muted whitespace-pre-wrap word-break tracking-wide ${alignClass}`}
                                     dangerouslySetInnerHTML={{ __html: post.textHtml || (isAr ? "<i>لا توجد بيانات إضافية.</i>" : "<i>No additional data received in this transmission.</i>") }}
                                 />
 
@@ -320,7 +333,7 @@ export default function ArticlePage() {
                         </div>
 
                         {/* RIGHT SIDEBAR - Latest News (Stack below on mobile) */}
-                        <div className="w-full lg:w-[320px] shrink-0 lg:h-full lg:overflow-y-auto custom-scrollbar border-t lg:border-t-0 lg:border-l border-border p-6 sm:p-8 bg-[#02050a]">
+                        <div className="w-full lg:w-[320px] shrink-0 lg:h-full lg:overflow-y-auto custom-scrollbar border-t lg:border-t-0 lg:border-l border-border p-6 sm:p-8 bg-background/40 backdrop-blur-sm">
                             <div className="flex items-center justify-between mb-6 pb-3 border-b border-border/80">
                                 <h3 className={`font-bold text-white uppercase tracking-widest text-sm flex items-center gap-2 ${isAr ? 'flex-row-reverse ml-auto' : ''}`}>
                                     <span className="w-2 h-2 bg-primary rounded-sm shadow-[0_0_8px_var(--primary)]"></span>
@@ -328,36 +341,30 @@ export default function ArticlePage() {
                                 </h3>
                             </div>
 
-                            <div className="flex flex-col gap-5">
+                            <div className="flex flex-col gap-6">
                                 {latestPosts.map((p) => (
-                                    <article key={p.id} className="group relative">
-                                        <Link href={`/news/${getPostId(p.id)}`} className={`flex gap-4 items-start focus:outline-none ${isAr ? 'flex-row-reverse' : ''}`}>
-                                            <div className="w-[80px] h-[60px] shrink-0 bg-surface-hover rounded border border-border overflow-hidden relative group-hover:border-primary/50 transition-colors">
-                                                {p.hasVideo && (
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-10 transition-all group-hover:bg-black/10">
-                                                        <div className="bg-primary/90 rounded-full w-5 h-5 flex items-center justify-center shadow-[0_0_5px_var(--primary)]">
-                                                            <svg className={`w-2.5 h-2.5 text-white ${!isAr && 'translate-x-[0.5px]'}`} fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                                                        </div>
+                                    <Link key={`latest-${p.id}`} href={`/news/${getPostId(p.id)}`} className={`group flex gap-4 ${isAr ? 'flex-row-reverse' : ''}`}>
+                                        <div className="w-20 h-14 bg-surface rounded-lg overflow-hidden shrink-0 border border-border/50 group-hover:border-primary/40 transition-all duration-500 relative">
+                                            {p.hasVideo && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-10 transition-all group-hover:bg-black/10">
+                                                    <div className="bg-primary/90 rounded-full w-5 h-5 flex items-center justify-center shadow-[0_0_5px_var(--primary)] text-white">
+                                                        <svg className={`w-3 h-3 ${!isAr && 'translate-x-[0.5px]'}`} fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                                                     </div>
-                                                )}
-                                                <img src={parseMedia(p.imageUrl)[0] || "/placeholder-news.jpg"} alt="Thumb" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80 group-hover:opacity-100" />
-                                            </div>
-                                            <div className="flex flex-col flex-1 min-w-0">
-                                                <h4 className={`text-[13px] font-bold text-foreground group-hover:text-primary transition-colors leading-[1.4] mb-1 line-clamp-3 ${alignClass}`}>
-                                                    {p.aiTitle}
-                                                </h4>
-                                                <div className="flex items-center justify-between mt-auto">
-                                                    <time className={`text-[10px] text-text-muted/60 font-bold uppercase tracking-wider ${isAr ? 'ml-auto' : ''}`}>
-                                                        {new Date(p.date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-                                                    </time>
-                                                    <span className="text-[10px] text-text-muted/40 flex items-center gap-1">
-                                                        <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5-2.24 5-5-2.24 5-5zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" /></svg>
-                                                        {p.views}
-                                                    </span>
                                                 </div>
+                                            )}
+                                            <img src={parseMedia(p.imageUrl)[0] || "/placeholder-news.jpg"} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700 opacity-60 group-hover:opacity-100" alt="thumb" />
+                                        </div>
+                                        <div className="flex flex-col gap-1 min-w-0">
+                                            <h4 className={`text-[12px] font-bold text-text-muted group-hover:text-white transition-colors leading-snug line-clamp-2 ${alignClass}`}>{p.aiTitle}</h4>
+                                            <div className="flex items-center justify-between mt-0.5">
+                                                <span className="text-[9px] font-black text-primary/40 uppercase tracking-widest">{new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                <span className="text-[8px] font-bold text-text-muted/20 flex items-center gap-1">
+                                                    <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5-2.24 5-5-2.24 5-5zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" /></svg>
+                                                    {p.views}
+                                                </span>
                                             </div>
-                                        </Link>
-                                    </article>
+                                        </div>
+                                    </Link>
                                 ))}
                             </div>
                         </div>
@@ -367,7 +374,7 @@ export default function ArticlePage() {
             </main>
 
             {/* Formal Footer (Full Width) */}
-            <footer className="w-full bg-[#020512] border-t border-border py-16 shrink-0 relative z-50">
+            <footer className="w-full bg-surface border-t border-border py-16 shrink-0 relative z-50">
                 <div className="w-full px-6 flex flex-col lg:flex-row justify-between items-center gap-10">
                     <div className="flex flex-col items-center lg:items-start gap-2">
                         <div className="flex items-center gap-3">
