@@ -267,7 +267,7 @@ export default function ArticlePage() {
 
                                 {/* Article Text */}
                                 <div
-                                    className={`prose-editor text-[1.1rem] sm:text-[1.25rem] leading-[1.8] text-foreground/90 space-y-6 [&_a]:text-primary [&_a]:border-b [&_a]:border-primary/30 [&_a:hover]:border-primary [&_a:hover]:text-primary-hover [&_b]:font-black [&_strong]:font-black [&_strong]:text-white [&_i]:text-text-muted whitespace-pre-wrap word-break tracking-wide ${alignClass}`}
+                                    className={`prose-editor text-[1.1rem] sm:text-[1.25rem] leading-[2.2] text-foreground/90 space-y-8 [&_a]:text-primary [&_a]:border-b [&_a]:border-primary/30 [&_a:hover]:border-primary [&_a:hover]:text-primary-hover [&_b]:font-black [&_strong]:font-black [&_strong]:text-white [&_i]:text-text-muted whitespace-pre-wrap word-break tracking-wide ${alignClass}`}
                                     dangerouslySetInnerHTML={{ __html: post.textHtml || (isAr ? "<i>لا توجد بيانات إضافية.</i>" : "<i>No additional data received in this transmission.</i>") }}
                                 />
 

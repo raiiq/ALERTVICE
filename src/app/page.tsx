@@ -484,7 +484,7 @@ export default function Home() {
 
                         {/* Summary and Read More Side-by-Side with improved XL layout */}
                         <div className={`flex flex-col xl:flex-row items-start xl:items-center gap-8 justify-between ${isAr ? 'xl:flex-row-reverse' : ''}`}>
-                          <p className={`flex-1 text-[1rem] text-text-muted/80 leading-[1.8] font-light tracking-wide ${alignClass} line-clamp-4`}>
+                          <p className={`flex-1 text-[1rem] text-text-muted/80 leading-[2.0] font-light tracking-wide ${alignClass} line-clamp-4`}>
                             {heroPost.aiSummary || ""}
                           </p>
 
@@ -599,8 +599,8 @@ export default function Home() {
                                 {post.views}
                               </span>
                             </div>
-                            <h4 className={`text-xl md:text-2xl font-bold text-white group-hover:text-primary transition-colors leading-[1.25] tracking-tight ${alignClass}`}>{post.aiTitle}</h4>
-                            <p className={`text-text-muted/70 text-[0.95rem] md:text-[1.05rem] leading-[1.7] line-clamp-3 font-light tracking-wide ${alignClass}`}>{post.aiSummary}</p>
+                            <h4 className={`text-xl md:text-2xl font-bold text-white group-hover:text-primary transition-colors leading-[1.3] tracking-tight ${alignClass}`}>{post.aiTitle}</h4>
+                            <p className={`text-text-muted/70 text-[0.95rem] md:text-[1.05rem] leading-[1.9] line-clamp-3 font-light tracking-wide ${alignClass}`}>{post.aiSummary}</p>
                             <div className={`flex items-center gap-4 mt-2 text-[10px] font-black uppercase tracking-widest text-primary ${isAr ? 'flex-row-reverse' : ''}`}>
                               <span>{isAr ? 'اقرأ المزيد' : 'Read Full Story'}</span>
                               <svg className={`w-3 h-3 ${isAr ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
