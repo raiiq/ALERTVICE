@@ -157,22 +157,22 @@ export default function Home() {
           </div>
 
           {/* Search Bar */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-md relative group">
+          <form onSubmit={handleSearch} className="hidden lg:flex flex-1 max-w-xl relative group mx-4 lg:mx-8">
             <input
               type="text"
               placeholder={isAr ? 'ابحث عن الأخبار...' : 'Search intelligence...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full bg-background border border-border focus:border-primary/50 rounded-full py-1.5 px-10 text-xs font-bold tracking-widest text-white outline-none transition-all placeholder:text-text-muted/50 ${alignClass}`}
+              className={`w-full bg-background border border-border focus:border-primary/50 rounded-full py-2 px-10 text-xs font-bold tracking-widest text-white outline-none transition-all placeholder:text-text-muted/50 ${alignClass}`}
             />
-            <button type="submit" className={`absolute ${isAr ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-text-muted group-hover:text-primary transition-colors`}>
+            <button type="submit" className={`absolute ${isAr ? 'left-4' : 'right-4'} top-1/2 -translate-y-1/2 text-text-muted group-hover:text-primary transition-colors`}>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </button>
             {searchQuery && (
               <button
                 type="button"
                 onClick={clearSearch}
-                className={`absolute ${isAr ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors`}
+                className={`absolute ${isAr ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors`}
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
               </button>
@@ -188,24 +188,24 @@ export default function Home() {
             </div>
 
             {/* Premium Language Selector - Visible on all screens */}
-            <div className="flex items-center bg-[#020617] border border-white/5 p-1 rounded-full relative group/lang shadow-lg">
+            <div className="hidden sm:flex items-center bg-[#020617] border border-white/5 p-1 rounded-full relative group/lang shadow-lg">
               {/* Sliding Background */}
               <div className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-primary rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)] ${isAr ? (lang === 'ar' ? 'translate-x-0' : 'translate-x-full') : (lang === 'ar' ? 'translate-x-full' : 'translate-x-0')}`}></div>
 
               <button
                 onClick={() => toggleLang('en')}
-                className={`relative z-10 px-4 py-1.5 flex items-center gap-2 transition-colors duration-500 ${!isAr ? 'text-white' : 'text-text-muted hover:text-white'}`}
+                className={`relative z-10 px-3 lg:px-4 py-1.5 flex items-center gap-2 transition-colors duration-500 ${!isAr ? 'text-white' : 'text-text-muted hover:text-white'}`}
               >
-                <svg className={`w-3 h-3 transition-transform duration-500 ${!isAr ? 'scale-110' : 'opacity-40 group-hover/lang:opacity-100'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <svg className={`hidden lg:block w-3 h-3 transition-transform duration-500 ${!isAr ? 'scale-110' : 'opacity-40 group-hover/lang:opacity-100'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <span className="text-[10px] font-black tracking-widest uppercase">EN</span>
               </button>
 
               <button
                 onClick={() => toggleLang('ar')}
-                className={`relative z-10 px-4 py-1.5 flex items-center gap-2 transition-colors duration-500 ${isAr ? 'text-white' : 'text-text-muted hover:text-white'}`}
+                className={`relative z-10 px-3 lg:px-4 py-1.5 flex items-center gap-2 transition-colors duration-500 ${isAr ? 'text-white' : 'text-text-muted hover:text-white'}`}
               >
                 <span className="text-[10px] font-black tracking-widest uppercase">AR</span>
-                <svg className={`w-3 h-3 transition-transform duration-500 ${isAr ? 'scale-110' : 'opacity-40 group-hover/lang:opacity-100'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <svg className={`hidden lg:block w-3 h-3 transition-transform duration-500 ${isAr ? 'scale-110' : 'opacity-40 group-hover/lang:opacity-100'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
               </button>
             </div>
 
@@ -242,6 +242,28 @@ export default function Home() {
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
               </button>
             </div>
+
+            <form onSubmit={(e) => { handleSearch(e); closeMenu(); }} className="relative group mt-2 lg:hidden">
+              <input
+                type="text"
+                placeholder={isAr ? 'ابحث عن الأخبار...' : 'Search intelligence...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`w-full bg-background border border-border focus:border-primary/50 rounded-lg py-3 px-10 text-xs font-bold tracking-widest text-white outline-none transition-all placeholder:text-text-muted/50 ${alignClass}`}
+              />
+              <button type="submit" className={`absolute ${isAr ? 'left-4' : 'right-4'} top-1/2 -translate-y-1/2 text-text-muted group-hover:text-primary transition-colors`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              </button>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={(e) => { clearSearch(); closeMenu(); }}
+                  className={`absolute ${isAr ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+              )}
+            </form>
 
             <div className="flex flex-col gap-4">
               <h3 className="text-[10px] font-black text-primary tracking-widest uppercase">Categories</h3>
@@ -295,7 +317,7 @@ export default function Home() {
       </header>
 
       {/* Premium Signal Bar (Ticker) */}
-      <div className="w-full bg-[#050810]/80 backdrop-blur-xl border-b border-primary/20 shadow-[0_4px_30px_rgba(0,0,0,0.4),inset_0_-1px_0_rgba(var(--primary-rgb),0.1)] overflow-hidden relative shrink-0 sticky top-[64px] z-[90] h-[48px] sm:h-[40px]">
+      <div className="hidden lg:block w-full bg-[#050810]/80 backdrop-blur-xl border-b border-primary/20 shadow-[0_4px_30px_rgba(0,0,0,0.4),inset_0_-1px_0_rgba(var(--primary-rgb),0.1)] overflow-hidden relative shrink-0 sticky top-[64px] z-[90] h-[40px]">
         <div className="w-full flex items-center h-full">
           {/* Status Badge */}
           <div className="flex items-center gap-3 shrink-0 bg-[#0a1628] z-20 px-5 sm:px-6 h-full border-r border-primary/20 shadow-[10px_0_20px_rgba(0,0,0,0.6)]">
@@ -439,7 +461,7 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <div className="p-8 sm:p-12 flex flex-col justify-center gap-8 flex-1">
+                      <div className="p-5 sm:p-8 lg:p-12 flex flex-col justify-center gap-5 sm:gap-8 flex-1">
                         <div className="flex flex-col gap-4">
                           <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-[1.1] tracking-tight group-hover:text-primary transition-colors duration-500 ${alignClass}`}>
                             {deduplicateTitle(heroPost.aiTitle) || (isAr ? 'القصة تتطور' : 'BREAKING STORY DEVELOPS')}
