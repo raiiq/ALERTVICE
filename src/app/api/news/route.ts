@@ -4,6 +4,7 @@ import { GoogleGenAI } from '@google/genai';
 import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // Vercel Pro allows 300s; Hobby allows 60s
 
 // Optional AI init
 let ai: GoogleGenAI | null = null;
@@ -37,12 +38,18 @@ export async function GET(request: Request) {
         // Only sync with Telegram on the first page load (offset 0 and no search query)
         if (offset === 0 && !q) {
             try {
+                // Set a hard 7s timeout for the Telegram fetch so it never blocks DB reads
+                const controller = new AbortController();
+                const telegramTimeout = setTimeout(() => controller.abort(), 7000);
+
                 const response = await fetch('https://t.me/s/alertvice', {
                     headers: {
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
                     },
-                    cache: 'no-store'
+                    cache: 'no-store',
+                    signal: controller.signal
                 });
+                clearTimeout(telegramTimeout);
 
                 if (response.ok) {
                     const html = await response.text();

@@ -4,6 +4,7 @@ import { GoogleGenAI } from '@google/genai';
 import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // Extend Vercel serverless timeout
 
 // Optional AI init
 let ai: GoogleGenAI | null = null;
