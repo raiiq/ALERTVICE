@@ -24,6 +24,16 @@ async function freeTranslate(text: string, targetLang: string) {
 }
 
 export async function GET(request: Request) {
+    // Guard: check env vars are present
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseKey) {
+        return NextResponse.json(
+            { error: 'Server misconfiguration: Supabase env vars are missing. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to Vercel environment variables.', posts: [] },
+            { status: 503 }
+        );
+    }
+
     try {
         const { searchParams } = new URL(request.url);
         const lang = searchParams.get('lang') || 'en';
@@ -251,7 +261,11 @@ export async function GET(request: Request) {
             .order('post_date', { ascending: false })
             .range(offset, offset + limit - 1);
 
-        if (dbError) throw dbError;
+        if (dbError) {
+            console.error('Supabase DB Error:', dbError);
+            // Return empty instead of crashing — lets the site load even if DB fails
+            return NextResponse.json({ posts: [], hasMore: false, dbError: dbError.message });
+        }
 
         const formattedPosts = (finalPosts || []).map(p => ({
             id: p.telegram_id,
@@ -270,6 +284,9 @@ export async function GET(request: Request) {
         return NextResponse.json({ posts: formattedPosts, hasMore: formattedPosts.length === limit });
     } catch (error: any) {
         console.error('API Error:', error);
-        return NextResponse.json({ error: 'Failed to fetch news', details: error.message }, { status: 500 });
+        return NextResponse.json(
+            { error: 'Failed to fetch news', details: error?.message || String(error), posts: [] },
+            { status: 500 }
+        );
     }
 }
