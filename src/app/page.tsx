@@ -45,7 +45,7 @@ export default function Home() {
       if (!res.ok) throw new Error("Failed to fetch news");
       const data = await res.json();
 
-      // Deduplicate helper
+      // Aggressive Deduplicate helper
       const getUniquePosts = (combinedPosts: NewsPost[]) => {
         const idMap = new Map();
         const titleMap = new Map();
@@ -53,10 +53,15 @@ export default function Home() {
 
         for (const p of combinedPosts) {
           if (idMap.has(p.id)) continue;
-          if (p.aiTitle && titleMap.has(p.aiTitle)) continue;
+
+          let titleKey = "";
+          if (p.aiTitle) {
+            titleKey = p.aiTitle.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]/gi, '');
+            if (titleKey.length > 5 && titleMap.has(titleKey)) continue;
+          }
 
           idMap.set(p.id, true);
-          if (p.aiTitle) titleMap.set(p.aiTitle, true);
+          if (titleKey.length > 5) titleMap.set(titleKey, true);
           unique.push(p);
         }
         return unique;

@@ -81,10 +81,15 @@ export default function ArticlePage() {
 
                 for (const p of rawPosts) {
                     if (idMap.has(p.id)) continue;
-                    if (p.aiTitle && titleMap.has(p.aiTitle)) continue;
+
+                    let titleKey = "";
+                    if (p.aiTitle) {
+                        titleKey = p.aiTitle.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]/gi, '');
+                        if (titleKey.length > 5 && titleMap.has(titleKey)) continue;
+                    }
 
                     idMap.set(p.id, true);
-                    if (p.aiTitle) titleMap.set(p.aiTitle, true);
+                    if (titleKey.length > 5) titleMap.set(titleKey, true);
                     uniquePosts.push(p);
                 }
 
