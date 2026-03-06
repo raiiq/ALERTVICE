@@ -119,17 +119,18 @@ export default function Home() {
     const storedLang = localStorage.getItem("newsLang") || "en";
     setLang(storedLang);
     fetchNews(false, storedLang, true);
+    setMounted(true);
+  }, []);
 
+  useEffect(() => {
     const intervalId = setInterval(() => {
       if (!searchQuery) {
-        fetchNews(true, storedLang, false);
+        fetchNews(true, lang, false);
       }
     }, 5000);
 
-    setMounted(true);
-
     return () => clearInterval(intervalId);
-  }, []);
+  }, [lang, searchQuery]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

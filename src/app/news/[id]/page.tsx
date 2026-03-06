@@ -37,15 +37,16 @@ export default function ArticlePage() {
         const storedLang = localStorage.getItem("newsLang") || "en";
         setLang(storedLang);
         fetchData(storedLang);
+        setMounted(true);
+    }, [id]);
 
+    useEffect(() => {
         const intervalId = setInterval(() => {
-            fetchData(storedLang, true);
+            fetchData(lang, true);
         }, 5000);
 
-        setMounted(true);
-
         return () => clearInterval(intervalId);
-    }, [id]);
+    }, [id, lang]);
 
     const fetchData = async (currentLang: string, isRefresh = false) => {
         if (!id) return;
