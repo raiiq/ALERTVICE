@@ -340,7 +340,7 @@ export default function Home() {
                 {monitorPosts.slice(0, 15).map((post) => (
                   <Link key={`mob-mon-${post.id}`} href={`/news/${getPostId(post.id)}`} onClick={closeMenu} className={`p-2 border-b border-border/10 last:border-0 ${alignClass}`}>
                     <h4 className="text-[10px] font-bold text-text-muted hover:text-white line-clamp-1">{deduplicateTitle(post.aiTitle)}</h4>
-                    <span className="text-[7px] text-text-muted/40">{new Date(post.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span className="text-[7px] text-text-muted/40">{new Date(post.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                   </Link>
                 ))}
               </div>
@@ -449,7 +449,7 @@ export default function Home() {
                     <div className="flex items-center justify-between border-b border-border/30 pb-2">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[12px] font-black text-red-500 font-mono tracking-tighter">
-                          {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                          {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                         </span>
                         <span className="text-[7px] font-black text-text-muted/30 uppercase tracking-[0.1em] border-l border-border/30 pl-1.5 ml-0.5">INTEL_RCV</span>
                       </div>
@@ -571,7 +571,7 @@ export default function Home() {
                         </div>
                         <div className={`flex items-center gap-3 ${isAr ? 'flex-row-reverse' : ''}`}>
                           <span className="text-[10px] font-black text-primary/60 font-mono tracking-tighter">
-                            {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                           </span>
                           <div className="h-px flex-grow bg-white/5"></div>
                         </div>
@@ -754,7 +754,7 @@ export default function Home() {
             <div className={`${isAr ? 'animate-marquee-rtl' : 'animate-marquee'} flex items-center gap-12 whitespace-nowrap`}>
               {(monitorPosts.length > 0 ? [...monitorPosts, ...monitorPosts] : []).map((p, idx) => (
                 <Link key={`mob-sig-${p.id}-${idx}`} href={`/news/${getPostId(p.id)}`} className="text-[10px] font-bold text-white/70 hover:text-primary transition-colors flex items-center gap-3 group">
-                  <span className="text-primary/30 font-black text-[8px]">{new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                  <span className="text-primary/30 font-black text-[8px]">{new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                   <span>{deduplicateTitle(p.aiTitle)}</span>
                   <span className="text-white/10 mx-2">/</span>
                 </Link>
