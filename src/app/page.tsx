@@ -45,15 +45,45 @@ export default function Home() {
       if (!res.ok) throw new Error("Failed to fetch news");
       const data = await res.json();
 
-      if (reset || isRefresh) {
-        setPosts(data.posts || []);
-        setOffset(data.posts?.length || 0);
+      // Deduplicate helper
+      const getUniquePosts = (combinedPosts: NewsPost[]) => {
+        const idMap = new Map();
+        const titleMap = new Map();
+        const unique: NewsPost[] = [];
+
+        for (const p of combinedPosts) {
+          if (idMap.has(p.id)) continue;
+          if (p.aiTitle && titleMap.has(p.aiTitle)) continue;
+
+          idMap.set(p.id, true);
+          if (p.aiTitle) titleMap.set(p.aiTitle, true);
+          unique.push(p);
+        }
+        return unique;
+      };
+
+      const fetchedPosts = data.posts || [];
+
+      if (reset) {
+        const uniquePosts = getUniquePosts(fetchedPosts);
+        setPosts(uniquePosts);
+        setOffset(uniquePosts.length);
+      } else if (isRefresh) {
+        setPosts(prev => {
+          const combined = [...fetchedPosts, ...prev]; // newer posts first
+          const uniquePosts = getUniquePosts(combined);
+          // Only update offset if we actually added new posts
+          const newAdded = uniquePosts.length - prev.length;
+          if (newAdded > 0) {
+            setOffset(currentOffset => currentOffset + newAdded);
+          }
+          return uniquePosts;
+        });
       } else {
         setPosts(prev => {
           const newPosts = data.posts || [];
           const combined = [...prev, ...newPosts];
-          // Deduplicate by ID
-          const uniquePosts = Array.from(new Map(combined.map(p => [p.id, p])).values());
+          const uniquePosts = getUniquePosts(combined);
           return uniquePosts;
         });
         setOffset(prev => prev + (data.posts?.length || 0));

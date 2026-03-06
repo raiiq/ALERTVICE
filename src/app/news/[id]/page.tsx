@@ -72,7 +72,23 @@ export default function ArticlePage() {
 
             if (feedRes.ok) {
                 const feedData = await feedRes.json();
-                setFeedPosts(feedData.posts || []);
+
+                // Comprehensive Deduplication
+                const rawPosts: NewsPost[] = feedData.posts || [];
+                const idMap = new Map();
+                const titleMap = new Map();
+                const uniquePosts: NewsPost[] = [];
+
+                for (const p of rawPosts) {
+                    if (idMap.has(p.id)) continue;
+                    if (p.aiTitle && titleMap.has(p.aiTitle)) continue;
+
+                    idMap.set(p.id, true);
+                    if (p.aiTitle) titleMap.set(p.aiTitle, true);
+                    uniquePosts.push(p);
+                }
+
+                setFeedPosts(uniquePosts);
             }
         } catch (err: any) {
             setError(err.message);
