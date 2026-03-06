@@ -55,36 +55,46 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
         );
     }
 
+    // ENHANCED MULTI-MEDIA GRID (Handles 2-10+ items)
+    const gridLimit = 5;
+    const displayMedia = allMedia.slice(0, gridLimit);
+
     return (
-        <div className="w-full relative overflow-hidden rounded-lg border border-border bg-black shadow-2xl overflow-hidden">
-            <div className="grid grid-cols-2 gap-0.5">
-                {allMedia.slice(0, 4).map((item, idx) => (
-                    <div
-                        key={idx}
-                        className={`relative overflow-hidden bg-surface/40 ${allMedia.length === 3 && idx === 0 ? 'col-span-2 aspect-video' : 'aspect-square'}`}
-                    >
-                        {item.type === 'video' ? (
-                            <video src={item.url} controls className="w-full h-full object-cover" />
-                        ) : (
-                            <img
-                                src={item.url}
-                                alt="Intel"
-                                className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
-                            />
-                        )}
-                        {idx === 3 && allMedia.length > 4 && (
-                            <div className="absolute inset-0 bg-black/80 flex items-center justify-center backdrop-blur-sm z-10 font-black text-2xl text-white">
-                                +{allMedia.length - 4}
-                            </div>
-                        )}
-                    </div>
-                ))}
+        <div className="w-full relative overflow-hidden rounded-xl border border-border bg-background shadow-2xl overflow-hidden">
+            <div className={`grid gap-0.5 ${displayMedia.length >= 3 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                {displayMedia.map((item, idx) => {
+                    const isFeature = (displayMedia.length === 3 && idx === 0) || (displayMedia.length >= 5 && idx === 0);
+                    return (
+                        <div
+                            key={idx}
+                            className={`relative overflow-hidden bg-surface/40 group/mitem ${isFeature ? 'col-span-2 aspect-[16/9]' : 'aspect-square'}`}
+                        >
+                            {item.type === 'video' ? (
+                                <video src={item.url} controls className="w-full h-full object-cover" />
+                            ) : (
+                                <img
+                                    src={item.url}
+                                    alt="Intelligence Asset"
+                                    className="w-full h-full object-cover group-hover/mitem:scale-105 transition-transform duration-1000"
+                                />
+                            )}
+                            {idx === gridLimit - 1 && allMedia.length > gridLimit && (
+                                <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center backdrop-blur-sm z-10">
+                                    <span className="font-black text-2xl text-white">+{allMedia.length - gridLimit}</span>
+                                    <span className="text-[8px] font-black text-primary tracking-widest uppercase mt-1">Files Pending</span>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
             {hasVideo && videos.length === 0 && (
-                <div className="absolute top-4 left-4 bg-primary text-black px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest shadow-[0_0_15px_var(--primary)] z-10">
-                    SECURE VIDEO FEED
+                <div className="absolute top-4 left-4 bg-red-600 text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest shadow-lg z-20 flex items-center gap-1.5 animate-pulse">
+                    <span className="w-1.5 h-1.5 bg-white rounded-full"></span>
+                    SECURE STREAM ACTIVATED
                 </div>
             )}
         </div>
     );
 };
+

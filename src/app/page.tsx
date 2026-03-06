@@ -19,7 +19,10 @@ interface NewsPost {
 }
 
 export default function Home() {
-  const [posts, setPosts] = useState<NewsPost[]>([]);
+  // SEPARATE STORAGE FOR BETTER PERFORMANCE
+  const [articles, setArticles] = useState<NewsPost[]>([]);
+  const [signals, setSignals] = useState<NewsPost[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -32,7 +35,32 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const fetchNews = async (isRefresh = false, currentLang = lang, reset = false, q = searchQuery) => {
+  // CENTRAL DEDUPLICATE ENGINE
+  const getUniquePosts = (prev: NewsPost[], incoming: NewsPost[]) => {
+    const idMap = new Map(prev.map(p => [p.id, true]));
+    const unique = [...prev];
+    for (const p of incoming) {
+      if (!idMap.has(p.id)) {
+        idMap.set(p.id, true);
+        unique.push(p);
+      }
+    }
+    return unique.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  };
+
+  // 1. SIGNAL MONITOR FETCH (Fast & Targeted)
+  const fetchSignals = async (currentLang = lang) => {
+    try {
+      const res = await fetch(`/api/news?lang=${currentLang}&limit=15&type=signal&t=${Date.now()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSignals(prev => getUniquePosts(data.posts, prev).slice(0, 30));
+      }
+    } catch (e) { console.error("Signal fetch failed", e); }
+  };
+
+  // 2. MAIN FEED FETCH (Articles)
+  const fetchArticles = async (isRefresh = false, currentLang = lang, reset = false, q = searchQuery) => {
     if (isRefresh) setRefreshing(true);
     else if (!reset) setLoadingMore(true);
     else setLoading(true);
@@ -41,69 +69,19 @@ export default function Home() {
     const currentOffset = (reset || isRefresh) ? 0 : offset;
 
     try {
-      const res = await fetch(`/api/news?lang=${currentLang}&offset=${currentOffset}&limit=20&q=${encodeURIComponent(q)}&t=${Date.now()}`);
-      if (!res.ok) throw new Error("Failed to fetch news");
+      // Fetch articles specifically if not searching
+      const typeParam = q ? "" : "&type=article";
+      const res = await fetch(`/api/news?lang=${currentLang}&offset=${currentOffset}&limit=12${typeParam}&q=${encodeURIComponent(q)}&t=${Date.now()}`);
+      if (!res.ok) throw new Error("Connection unstable");
       const data = await res.json();
+      const fetched = data.posts || [];
 
-      // Aggressive Deduplicate helper
-      const getUniquePosts = (combinedPosts: NewsPost[]) => {
-        const idMap = new Map();
-        const titleMap = new Map();
-        const mediaMap = new Map();
-        const dateMap = new Map();
-        const unique: NewsPost[] = [];
-
-        for (const p of combinedPosts) {
-          if (idMap.has(p.id)) continue;
-
-          let titleKey = "";
-          if (p.aiTitle) {
-            titleKey = p.aiTitle.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]/gi, '');
-            if (titleKey.length > 5 && titleMap.has(titleKey)) continue;
-          }
-
-          let mediaKey = "";
-          if (p.videoUrl) mediaKey = p.videoUrl;
-          else if (p.imageUrl) mediaKey = p.imageUrl;
-
-          if (mediaKey && mediaMap.has(mediaKey)) continue;
-
-          if (p.date && dateMap.has(p.date)) continue;
-
-          idMap.set(p.id, true);
-          if (titleKey.length > 5) titleMap.set(titleKey, true);
-          if (mediaKey) mediaMap.set(mediaKey, true);
-          if (p.date) dateMap.set(p.date, true);
-          unique.push(p);
-        }
-        return unique;
-      };
-
-      const fetchedPosts = data.posts || [];
-
-      if (reset) {
-        const uniquePosts = getUniquePosts(fetchedPosts);
-        setPosts(uniquePosts);
-        setOffset(uniquePosts.length);
-      } else if (isRefresh) {
-        setPosts(prev => {
-          const combined = [...fetchedPosts, ...prev]; // newer posts first
-          const uniquePosts = getUniquePosts(combined);
-          // Only update offset if we actually added new posts
-          const newAdded = uniquePosts.length - prev.length;
-          if (newAdded > 0) {
-            setOffset(currentOffset => currentOffset + newAdded);
-          }
-          return uniquePosts;
-        });
+      if (reset || isRefresh) {
+        setArticles(prev => getUniquePosts(isRefresh ? fetched : [], isRefresh ? prev : fetched));
+        setOffset(fetched.length);
       } else {
-        setPosts(prev => {
-          const newPosts = data.posts || [];
-          const combined = [...prev, ...newPosts];
-          const uniquePosts = getUniquePosts(combined);
-          return uniquePosts;
-        });
-        setOffset(prev => prev + (data.posts?.length || 0));
+        setArticles(prev => getUniquePosts(prev, fetched));
+        setOffset(prev => prev + fetched.length);
       }
       setHasMore(data.hasMore);
     } catch (err: any) {
@@ -116,38 +94,37 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const storedLang = localStorage.getItem("newsLang") || "en";
-    setLang(storedLang);
-    fetchNews(false, storedLang, true);
+    const stored = localStorage.getItem("newsLang") || "en";
+    setLang(stored);
+
+    // Initial load
+    fetchArticles(false, stored, true);
+    fetchSignals(stored);
+
     setMounted(true);
   }, []);
 
+  // INDEPENDENT SIGNAL REFRESH (Every 8 seconds)
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      if (!searchQuery) {
-        fetchNews(true, lang, false);
-      }
-    }, 5000);
-
-    return () => clearInterval(intervalId);
-  }, [lang, searchQuery]);
+    if (!mounted || searchQuery) return;
+    const interval = setInterval(() => fetchSignals(lang), 8000);
+    return () => clearInterval(interval);
+  }, [lang, mounted, searchQuery]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setOffset(0);
-    fetchNews(false, lang, true, searchQuery);
+    fetchArticles(false, lang, true, searchQuery);
   };
 
   const clearSearch = () => {
     setSearchQuery("");
     setOffset(0);
-    fetchNews(false, lang, true, "");
+    fetchArticles(false, lang, true, "");
   };
 
   const loadMore = () => {
-    if (!loadingMore && hasMore) {
-      fetchNews(false, lang, false);
-    }
+    if (!loadingMore && hasMore) fetchArticles(false, lang, false);
   };
 
   const toggleLang = (newLang: string) => {
@@ -155,15 +132,15 @@ export default function Home() {
     setLang(newLang);
     localStorage.setItem("newsLang", newLang);
     setOffset(0);
-    fetchNews(false, newLang, true);
+    fetchArticles(false, newLang, true);
+    fetchSignals(newLang);
   };
 
   const formatDate = (isoString: string) => {
     const date = new Date(isoString);
-    const time = date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-    const formattedDate = date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    return `${formattedDate} ${time}`;
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true });
   };
+
 
   const closeMenu = () => setIsMenuOpen(false);
 
@@ -172,13 +149,9 @@ export default function Home() {
   const isAr = lang === 'ar';
   const alignClass = isAr ? 'text-right' : 'text-left';
 
-  const monitorPosts = posts.filter(p => !p.imageUrl && !p.hasVideo).slice(0, 20);
+  const monitorPosts = signals.slice(0, 25);
 
-  const filteredPosts = posts.filter(p => {
-    // Only posts with media appear in the main feed
-    const hasMedia = p.imageUrl || p.hasVideo;
-    if (!hasMedia) return false;
-
+  const filteredPosts = articles.filter(p => {
     if (activeCategory === "all" || activeCategory === "world") return true;
     return p.aiTag === activeCategory;
   });
@@ -187,7 +160,7 @@ export default function Home() {
   const secondaryPosts = filteredPosts.length > 1 ? filteredPosts.slice(1, 5) : [];
   const feedPosts = filteredPosts.length > 5 ? filteredPosts.slice(5) : [];
 
-  const sidebarPosts = posts.filter(p => p.imageUrl || p.hasVideo).slice(0, 15);
+  const sidebarPosts = articles.slice(0, 15);
 
   return (
     <div className="min-h-screen bg-background text-foreground tracking-wide flex flex-col font-cairo" dir={isAr ? "rtl" : "ltr"}>
@@ -230,9 +203,9 @@ export default function Home() {
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             {/* Nav Links - Desktop */}
             <div className="hidden lg:flex gap-6 font-bold text-[10px] uppercase tracking-widest">
-              <button onClick={() => { setActiveCategory("world"); setOffset(0); fetchNews(false, lang, true); }} className={`transition-all ${activeCategory === "world" ? 'text-white drop-shadow-[0_0_8px_var(--primary)]' : 'text-text-muted hover:text-primary'}`}>{isAr ? 'عالمي' : 'World'}</button>
-              <button onClick={() => { setActiveCategory("politics"); setOffset(0); fetchNews(false, lang, true); }} className={`transition-all ${activeCategory === "politics" ? 'text-white drop-shadow-[0_0_8px_var(--primary)]' : 'text-text-muted hover:text-primary'}`}>{isAr ? 'سياسة' : 'Politics'}</button>
-              <button onClick={() => { setActiveCategory("market"); setOffset(0); fetchNews(false, lang, true); }} className={`transition-all ${activeCategory === "market" ? 'text-white drop-shadow-[0_0_8px_var(--primary)]' : 'text-text-muted hover:text-primary'}`}>{isAr ? 'الأسواق' : 'Markets'}</button>
+              <button onClick={() => { setActiveCategory("world"); setOffset(0); fetchArticles(false, lang, true); }} className={`transition-all ${activeCategory === "world" ? 'text-white drop-shadow-[0_0_8px_var(--primary)]' : 'text-text-muted hover:text-primary'}`}>{isAr ? 'عالمي' : 'World'}</button>
+              <button onClick={() => { setActiveCategory("politics"); setOffset(0); fetchArticles(false, lang, true); }} className={`transition-all ${activeCategory === "politics" ? 'text-white drop-shadow-[0_0_8px_var(--primary)]' : 'text-text-muted hover:text-primary'}`}>{isAr ? 'سياسة' : 'Politics'}</button>
+              <button onClick={() => { setActiveCategory("market"); setOffset(0); fetchArticles(false, lang, true); }} className={`transition-all ${activeCategory === "market" ? 'text-white drop-shadow-[0_0_8px_var(--primary)]' : 'text-text-muted hover:text-primary'}`}>{isAr ? 'الأسواق' : 'Markets'}</button>
             </div>
 
             {/* Premium Language Selector - Visible on all screens */}
@@ -259,7 +232,7 @@ export default function Home() {
 
             {/* Refresh Button */}
             <button
-              onClick={() => fetchNews(true, lang, true)}
+              onClick={() => { fetchArticles(true, lang, true); fetchSignals(lang); }}
               className={`p-2 rounded-full bg-background border border-border text-text-muted hover:text-primary hover:border-primary/50 transition-all ${refreshing ? 'animate-spin text-primary' : ''}`}
               title={isAr ? 'تحديث' : 'Refresh Feed'}
             >
@@ -319,7 +292,7 @@ export default function Home() {
                 {['all', 'world', 'politics', 'market'].map((cat) => (
                   <button
                     key={cat}
-                    onClick={() => { setActiveCategory(cat); setOffset(0); fetchNews(false, lang, true); closeMenu(); }}
+                    onClick={() => { setActiveCategory(cat); setOffset(0); fetchArticles(false, lang, true); closeMenu(); }}
                     className={`text-left px-4 py-3 rounded-lg border transition-all ${activeCategory === cat ? 'bg-primary/20 border-primary text-white' : 'bg-background/50 border-border text-text-muted hover:border-primary/30'} ${isAr ? 'text-right' : ''}`}
                   >
                     <span className="font-bold uppercase text-xs tracking-widest">
@@ -386,8 +359,8 @@ export default function Home() {
             <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-[#050810]/90 to-transparent z-10 pointer-events-none"></div>
 
             <div className={`${isAr ? 'animate-marquee-rtl' : 'animate-marquee'} flex items-center gap-24 py-2`}>
-              {/* Content items duplicated for seamless loop */}
-              {(posts.length > 0 ? [...posts.slice(0, 10), ...posts.slice(0, 10)] : []).map((p, idx) => (
+              {/* Using Signals for the ticker as they are rapid updates */}
+              {(signals.length > 0 ? [...signals.slice(0, 10), ...signals.slice(0, 10)] : []).map((p, idx) => (
                 <Link key={`ticker-${p.id}-${idx}`} href={`/news/${getPostId(p.id)}`} className="hover:text-primary transition-all duration-300 flex items-center gap-5 shrink-0 group">
                   <div className="flex items-center gap-2 opacity-20 group-hover:opacity-100 transition-opacity">
                     <div className="w-1 h-3 bg-primary/40 rounded-full"></div>
@@ -416,7 +389,7 @@ export default function Home() {
           </div>
         )}
 
-        {loading && !posts.length ? (
+        {loading && articles.length === 0 ? (
           <div className="flex flex-col items-center justify-center grow text-primary gap-4">
             <div className="w-12 h-12 border-4 border-surface border-t-primary rounded-full animate-spin shadow-[0_0_15px_var(--primary)]"></div>
             <span className="font-bold uppercase tracking-widest text-sm animate-pulse drop-shadow-[0_0_8px_var(--primary)]">{isAr ? 'جار مزامنة البيانات العالمية...' : 'Syncing Global Feeds...'}</span>
