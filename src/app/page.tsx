@@ -499,11 +499,22 @@ export default function Home() {
             )}
 
             {monitorPosts.map(p => {
-              const title = deduplicateTitle(p.aiTitle || "");
-              // Hide summary if it's identical to title or very short
-              const showSummary = p.aiSummary &&
-                p.aiSummary.trim().toLowerCase() !== title.trim().toLowerCase() &&
-                p.aiSummary.length > 5;
+              const rawTitle = p.aiTitle || "";
+              const rawSummary = p.aiSummary || "";
+
+              const title = deduplicateTitle(rawTitle) || "";
+              let summary = deduplicateTitle(rawSummary) || "";
+
+              // Remove title from start of summary if present
+              if (summary.toLowerCase().startsWith(title.toLowerCase())) {
+                summary = summary.substring(title.length).trim();
+              }
+
+              // Clean leading punctuation
+              summary = summary.replace(/^[:\s\-–—.]+/, "").trim();
+
+              const showSummary = summary.length > 5 &&
+                summary.toLowerCase() !== title.toLowerCase();
 
               return (
                 <motion.div key={p.id} variants={itemVars}>
@@ -529,7 +540,7 @@ export default function Home() {
                     {showSummary && (
                       <div className={`mt-3 pt-3 border-t border-white/[0.04] ${alignClass}`}>
                         <p className="text-[10px] text-text-muted/40 leading-relaxed line-clamp-2 group-hover:text-text-muted/60 transition-colors italic">
-                          {p.aiSummary}
+                          {summary}
                         </p>
                       </div>
                     )}
