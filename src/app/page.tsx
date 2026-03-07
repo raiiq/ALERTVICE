@@ -505,21 +505,21 @@ export default function Home() {
               const title = deduplicateTitle(rawTitle) || "";
               let summary = deduplicateTitle(rawSummary) || "";
 
-              // NEW: Aggressive redundancy check
-              const clean = (str: string) => str.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]/g, "").trim();
+              // DEFINITIVE redundancy check: strip all non-alnum for perfect comparison
+              const clean = (str: string) => str.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]/g, "");
               const cleanTitle = clean(title);
               const cleanSummary = clean(summary);
 
-              // Remove repetition or identical content
-              if (cleanSummary.startsWith(cleanTitle)) {
-                summary = summary.substring(rawTitle.length).trim();
-              }
+              // If they are essentially the same text, kill the summary
+              const isDuplicate = cleanSummary === cleanTitle ||
+                (cleanSummary.length > 5 && cleanSummary.startsWith(cleanTitle)) ||
+                (cleanTitle.length > 10 && cleanSummary.length > 10 && cleanTitle.includes(cleanSummary));
 
-              // Second pass cleaning
+              if (isDuplicate) summary = "";
+
+              // Clean leading trash if anything remains
               summary = summary.replace(/^[:\s\-–—.]+/, "").trim();
-
-              const finalCleanSummary = clean(summary);
-              const showSummary = summary.length > 5 && finalCleanSummary !== cleanTitle && finalCleanSummary.length > 3;
+              const showSummary = summary.length > 10 && clean(summary) !== cleanTitle;
 
               return (
                 <motion.div key={p.id} variants={itemVars}>
@@ -528,7 +528,7 @@ export default function Home() {
                     <div className={`flex justify-between items-center mb-3 ${isAr ? 'flex-row-reverse' : ''}`}>
                       <div className={`flex items-center gap-2 ${isAr ? 'flex-row-reverse' : ''}`}>
                         <div className="relative flex items-center justify-center">
-                          <span className="absolute w-2 h-2 bg-primary/30 rounded-full animate-ping"></span>
+                          <span className="absolute w-2 h-2 bg-primary/20 rounded-full animate-ping"></span>
                           <span className="relative block w-1 h-1 bg-primary rounded-full"></span>
                         </div>
                         <span className="text-[10px] font-black text-primary font-mono tracking-widest uppercase">
