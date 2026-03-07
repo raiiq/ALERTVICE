@@ -113,55 +113,78 @@ export async function GET(request: Request) {
                     // Sync the 15 most recent unsynced posts
                     let news = toUpsert.filter(p => !existSet.has(p.id)).slice(0, 15);
 
-                    if (news.length > 0 && ai) {
-                        const batch = news.map((p, i) => `[${i}] ${p.plainText.substring(0, 1000) || "Visual Intelligence Report"}`);
+                    if (news.length > 0) {
                         try {
-                            const res = await ai.models.generateContent({
-                                model: 'gemini-2.0-flash',
-                                contents: [{
-                                    role: 'user', parts: [{
-                                        text: `Task: Analyze and translate these 15 news snippets into English AND Arabic. 
-                                For EACH snippet, give:
-                                1. en_title (Catchy, capitalised, max 10 words)
-                                2. en_summary (Professional, max 30 words)
-                                3. ar_title (Clear Arabic headline)
-                                4. ar_summary (Professional Arabic summary)
-                                5. tag (ONE OF: politics, tech, market, world, security)
-                                
-                                Output ONLY RAW JSON in this form: { "items": { "0": { "en_title": "...", ... }, "1": { ... } } }
-                                
-                                Snippets:
-                                ${batch.join('\n')}`
+                            let dbData;
+                            if (ai) {
+                                const batch = news.map((p, i) => `[${i}] ${p.plainText.substring(0, 1000) || "Visual Intelligence Report"}`);
+                                const res = await ai.models.generateContent({
+                                    model: 'gemini-2.0-flash',
+                                    contents: [{
+                                        role: 'user', parts: [{
+                                            text: `Task: Analyze and translate these 15 news snippets into English AND Arabic. 
+                                    For EACH snippet, give:
+                                    1. en_title (Catchy, capitalised, max 10 words)
+                                    2. en_summary (Professional, max 30 words)
+                                    3. ar_title (Clear Arabic headline)
+                                    4. ar_summary (Professional Arabic summary)
+                                    5. tag (ONE OF: politics, tech, market, world, security)
+                                    
+                                    Output ONLY RAW JSON in this form: { "items": { "0": { "en_title": "...", ... }, "1": { ... } } }
+                                    
+                                    Snippets:
+                                    ${batch.join('\n')}`
+                                        }]
                                     }]
-                                }]
-                            });
+                                });
 
-                            const aiRaw = res.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-                            const cleanJson = JSON.parse(aiRaw.replace(/```json|```/gi, '').trim() || '{}');
+                                const aiRaw = res.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+                                const cleanJson = JSON.parse(aiRaw.replace(/```json|```/gi, '').trim() || '{}');
 
-                            const dbData = news.map((p, idx) => {
-                                const item = cleanJson.items?.[idx.toString()] || {};
-                                return {
+                                dbData = news.map((p, idx) => {
+                                    const item = cleanJson.items?.[idx.toString()] || {};
+                                    return {
+                                        id: p.id,
+                                        title_en: item.en_title || (p.plainText ? p.plainText.substring(0, 60) + "..." : "Signal Intercepted"),
+                                        summary_en: item.en_summary || p.plainText.substring(0, 200),
+                                        tag_en: item.tag || "world",
+                                        content_en: p.textHtml,
+                                        title_ar: item.ar_title || "تنبيه استخباراتي",
+                                        summary_ar: item.ar_summary || "تحديث إخباري جديد.",
+                                        tag_ar: item.tag || "world",
+                                        content_ar: p.textHtml,
+                                        image_url: p.imageUrl,
+                                        has_video: p.hasVideo,
+                                        video_url: p.videoUrl,
+                                        date: p.date,
+                                        views: p.views
+                                    };
+                                });
+                            } else {
+                                // NO AI FALLBACK (Commented out in .env)
+                                dbData = news.map(p => ({
                                     id: p.id,
-                                    title_en: item.en_title || "Signal Intercepted",
-                                    summary_en: item.en_summary || "Automated intelligence capture from source.",
-                                    tag_en: item.tag || "world",
+                                    title_en: p.plainText.substring(0, 70) || "Intelligence Update",
+                                    summary_en: p.plainText.substring(0, 150) + "...",
+                                    tag_en: "world",
                                     content_en: p.textHtml,
-                                    title_ar: item.ar_title || "تم اعتراض إشارة",
-                                    summary_ar: item.ar_summary || "التقاط استخباراتي آلي من المصدر.",
-                                    tag_ar: item.tag || "world",
+                                    title_ar: "تحديث استخباراتي",
+                                    summary_ar: "تقرير لم يتم ترجمته آلياً.",
+                                    tag_ar: "world",
                                     content_ar: p.textHtml,
                                     image_url: p.imageUrl,
                                     has_video: p.hasVideo,
                                     video_url: p.videoUrl,
                                     date: p.date,
                                     views: p.views
-                                };
-                            });
+                                }));
+                            }
 
-                            await supabase.from('global_posts').upsert(dbData, { onConflict: 'id' });
+                            if (dbData && dbData.length > 0) {
+                                await supabase.from('global_posts').upsert(dbData, { onConflict: 'id' });
+                            }
                         } catch (e) {
-                            console.error("AI Sync Error:", e);
+                            console.error("Critical Sync Catch:", e);
                             const fallbackData = news.map(p => ({
                                 id: p.id,
                                 title_en: "Intelligence Alert",
@@ -187,9 +210,12 @@ export async function GET(request: Request) {
         query = query.or(`title_en.ilike.%${q}%,title_ar.ilike.%${q}%,summary_en.ilike.%${q}%,summary_ar.ilike.%${q}%`);
     }
 
+    // RELAX FEED FILTERS (Show all messages if specifically not requested)
     if (type === 'article') {
-        query = query.or('image_url.not.is.null,video_url.not.is.null');
+        // Only show items with media in the main feed
+        query = query.not('image_url', 'is', null);
     } else if (type === 'signal') {
+        // Show text-only in signals
         query = query.is('image_url', null).is('video_url', null);
     }
 
