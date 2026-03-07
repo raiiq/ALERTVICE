@@ -675,66 +675,20 @@ body {
 
 .liquid-sidebar-card {
   position: relative;
-  border-radius: 18px;
+  border-radius: 12px;
   padding: 16px 20px;
-  /* Deep base for glass */
-  background: linear-gradient(165deg,
-      rgba(255, 255, 255, 0.035) 0%,
-      rgba(255, 255, 255, 0.01) 100%);
-  backdrop-filter: blur(40px) saturate(180%);
-  -webkit-backdrop-filter: blur(40px) saturate(180%);
-
-  /* Modern soft border */
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.2),
-    0 1px 0 rgba(255, 255, 255, 0.04) inset;
-
-  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   cursor: pointer;
-}
-
-/* Subtle glass highlight sheen */
-.liquid-sidebar-card::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 50% 50%,
-      rgba(56, 189, 248, 0.03) 0%,
-      transparent 50%);
-  opacity: 0;
-  transition: opacity 0.6s ease;
-  pointer-events: none;
+  display: block;
 }
 
 .liquid-sidebar-card:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(56, 189, 248, 0.3);
-  transform: translateY(-2px);
-  box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.6),
-    0 0 20px rgba(56, 189, 248, 0.1);
-}
-
-.liquid-sidebar-card:hover::before {
-  opacity: 1;
-}
-
-/* Clean corner accent - very subtle */
-.liquid-sidebar-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 60px;
-  height: 60px;
-  background: radial-gradient(circle at top right,
-      rgba(56, 189, 248, 0.12),
-      transparent 80%);
-  opacity: 0.6;
-  pointer-events: none;
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: translateX(4px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }

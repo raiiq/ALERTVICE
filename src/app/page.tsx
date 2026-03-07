@@ -505,44 +505,29 @@ export default function Home() {
               const title = deduplicateTitle(rawTitle) || "";
               let summary = deduplicateTitle(rawSummary) || "";
 
-              // AGGRESSIVE HYGIENE: strip everything but alphanum for deep comparison
-              const clean = (str: string) => {
-                let s = str.toLowerCase();
-                // Remove common prefixes that cause fake "differences"
-                s = s.replace(/^(the|this|that|an|a|announced|reported|breaking)\s+/i, "");
-                return s.replace(/[^a-z0-9\u0600-\u06FF]/g, "");
-              };
+              // HYGIENE: Word-based overlap check
+              const getWords = (s: string) => s.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]/g, " ").split(/\s+/).filter(w => w.length > 3);
+              const titleWords = getWords(title);
+              const summaryWords = getWords(summary);
 
-              const cleanTitle = clean(title);
-              const cleanSummary = clean(summary);
+              const overlapCount = summaryWords.filter(w => titleWords.includes(w)).length;
+              const isSignificantOverlap = overlapCount > (summaryWords.length * 0.4) || summaryWords.length < 5;
 
-              // If summary is essentially the same as title, suppress it
-              const isDuplicate = cleanSummary === cleanTitle ||
-                (cleanSummary.length > 5 && cleanSummary.startsWith(cleanTitle)) ||
-                (cleanTitle.length > 8 && cleanSummary.length > 8 && cleanTitle.includes(cleanSummary));
+              if (isSignificantOverlap) summary = "";
 
-              if (isDuplicate) summary = "";
-
-              // Clean leading garbage from any remaining summary
-              summary = summary.replace(/^[:\s\-–—.]+/, "").trim();
-
-              // Only show if summary actually adds substantial info (at least 15 more characters of unique content)
-              const showSummary = summary.length > 15 && clean(summary) !== cleanTitle;
+              const showSummary = summary.length > 20 && summary.toLowerCase() !== title.toLowerCase();
 
               return (
                 <motion.div key={p.id} variants={itemVars}>
                   <Link href={`/news/${getPostId(p.id)}`} className="liquid-sidebar-card group">
                     <div className={`flex justify-between items-center mb-3 ${isAr ? 'flex-row-reverse' : ''}`}>
                       <div className={`flex items-center gap-2 ${isAr ? 'flex-row-reverse' : ''}`}>
-                        <div className="relative flex items-center justify-center">
-                          <span className="absolute w-2.5 h-2.5 bg-primary/30 rounded-full animate-ping"></span>
-                          <span className="relative block w-1 h-1 bg-primary rounded-full"></span>
-                        </div>
-                        <span className="text-[10px] font-bold text-primary/80 font-mono tracking-widest uppercase">
+                        <div className="w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_rgba(56,189,248,0.5)]"></div>
+                        <span className="text-[10px] font-bold text-primary/70 font-mono tracking-widest uppercase">
                           {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
                         </span>
                       </div>
-                      <span className="text-[8px] font-black text-white/10 font-mono tracking-[0.2em] uppercase">ID-{getPostId(p.id).slice(-4)}</span>
+                      <span className="text-[8px] font-bold text-white/10 font-mono tracking-[0.2em] uppercase">ID-{getPostId(p.id).slice(-4)}</span>
                     </div>
 
                     <h4 className={`text-[13px] font-bold text-white/90 group-hover:text-primary transition-colors leading-relaxed ${alignClass} line-clamp-3`}>
@@ -551,7 +536,7 @@ export default function Home() {
 
                     {showSummary && (
                       <div className={`mt-3 pt-3 border-t border-white/[0.04] ${alignClass}`}>
-                        <p className="text-[10px] text-text-muted/50 leading-relaxed line-clamp-2 group-hover:text-text-muted/70 transition-colors italic">
+                        <p className="text-[10px] text-white/40 leading-relaxed line-clamp-2 group-hover:text-white/60 transition-colors italic">
                           {summary}
                         </p>
                       </div>
