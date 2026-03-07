@@ -241,10 +241,10 @@ export default function Home() {
           </div>
           <div className="relative flex-1 overflow-hidden px-8">
             <div className={`${isAr ? 'animate-marquee-rtl' : 'animate-marquee'} flex items-center gap-24`}>
-              {[...signals, ...signals].map((p, idx) => (
-                <Link key={`ticker-${idx}`} href={`/news/${getPostId(p.id)}`} className="text-[11px] font-bold text-white/90 hover:text-primary transition-all uppercase whitespace-nowrap">
-                  {deduplicateTitle(p.aiTitle)}
-                </Link>
+              {Array.from(new Set(signals.map(s => deduplicateTitle(s.aiTitle)))).map((title, idx) => (
+                <div key={`ticker-${idx}`} className="text-[11px] font-bold text-white/90 uppercase whitespace-nowrap px-4 border-l border-white/10 first:border-0 lowercase first-letter:uppercase">
+                  {title}
+                </div>
               ))}
             </div>
           </div>
@@ -263,12 +263,13 @@ export default function Home() {
           <motion.div variants={containerVars} initial="hidden" animate="show" className="p-4 flex flex-col gap-4">
             {monitorPosts.map(p => (
               <motion.div key={p.id} variants={itemVars}>
-                <Link href={`/news/${getPostId(p.id)}`} className="group block p-3 rounded-xl bg-surface/20 border border-white/5 hover:border-primary/40 transition-all">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-[10px] font-black text-red-500 font-mono">{new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    <span className="text-[8px] text-text-muted/40 uppercase">#{getPostId(p.id)}</span>
+                <Link href={`/news/${getPostId(p.id)}`} className="group block p-4 rounded-2xl bg-surface/10 border border-white/5 hover:border-primary/20 transition-all relative overflow-hidden">
+                  <div className={`absolute top-0 ${isAr ? 'right-0' : 'left-0'} w-1 h-full bg-primary/20 scale-y-0 group-hover:scale-y-100 transition-transform origin-top`}></div>
+                  <div className={`flex justify-between items-center mb-2 ${isAr ? 'flex-row-reverse' : ''}`}>
+                    <span className="text-[10px] font-black text-primary font-mono">{new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span className="text-[9px] text-text-muted/40 uppercase">#{getPostId(p.id)}</span>
                   </div>
-                  <h4 className={`text-[13px] font-bold text-text-muted/80 group-hover:text-white transition-colors leading-relaxed ${alignClass}`}>{deduplicateTitle(p.aiTitle)}</h4>
+                  <h4 className={`text-[13px] font-bold text-white/90 group-hover:text-white transition-colors leading-relaxed ${alignClass}`}>{deduplicateTitle(p.aiTitle)}</h4>
                 </Link>
               </motion.div>
             ))}
@@ -296,11 +297,13 @@ export default function Home() {
             {heroPost && (
               <motion.article variants={itemVars} className="group overflow-hidden rounded-[2.5rem] bg-surface/10 border border-white/5 hover:border-primary/20 transition-all duration-700 shadow-3xl">
                 <Link href={`/news/${getPostId(heroPost.id)}`} className={`flex flex-col lg:flex-row ${isAr ? 'lg:flex-row-reverse' : ''}`}>
-                  <div className="w-full lg:w-[50%] aspect-video lg:aspect-auto overflow-hidden bg-black shrink-0 relative">
-                    <MediaDisplay images={parseMedia(heroPost.imageUrl)} videos={parseMedia(heroPost.videoUrl)} hasVideo={heroPost.hasVideo} isAr={isAr} aspect="h-full" singleMode={true} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent opacity-40"></div>
-                  </div>
-                  <div className="p-8 lg:p-12 flex flex-col justify-center gap-8">
+                  {heroPost.imageUrl || heroPost.videoUrl ? (
+                    <div className="w-full lg:w-[50%] aspect-video lg:aspect-auto overflow-hidden bg-black shrink-0 relative">
+                      <MediaDisplay images={parseMedia(heroPost.imageUrl)} videos={parseMedia(heroPost.videoUrl)} hasVideo={heroPost.hasVideo} isAr={isAr} aspect="h-full" singleMode={true} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent opacity-40"></div>
+                    </div>
+                  ) : null}
+                  <div className={`p-8 lg:p-12 flex flex-col justify-center gap-8 ${(!heroPost.imageUrl && !heroPost.videoUrl) ? 'w-full' : 'lg:w-[50%]'}`}>
                     <div className="flex flex-col gap-4">
                       <h2 className={`text-4xl lg:text-5xl font-black text-white leading-tight group-hover:text-primary transition-colors ${alignClass}`}>{deduplicateTitle(heroPost.aiTitle)}</h2>
                       <div className={`flex items-center gap-6 text-[10px] font-black uppercase tracking-widest text-text-muted/40 ${isAr ? 'flex-row-reverse' : ''}`}>
@@ -323,9 +326,11 @@ export default function Home() {
               {secondaryPosts.map(p => (
                 <motion.article key={p.id} variants={itemVars} className="group flex flex-col gap-4">
                   <Link href={`/news/${getPostId(p.id)}`} className="flex flex-col gap-4">
-                    <div className="aspect-video rounded-3xl overflow-hidden border border-white/5 group-hover:border-primary/30 transition-all">
-                      <MediaDisplay images={parseMedia(p.imageUrl)} videos={parseMedia(p.videoUrl)} hasVideo={p.hasVideo} isAr={isAr} aspect="aspect-video" singleMode={true} />
-                    </div>
+                    {p.imageUrl || p.videoUrl ? (
+                      <div className="aspect-video rounded-3xl overflow-hidden border border-white/5 group-hover:border-primary/30 transition-all">
+                        <MediaDisplay images={parseMedia(p.imageUrl)} videos={parseMedia(p.videoUrl)} hasVideo={p.hasVideo} isAr={isAr} aspect="aspect-video" singleMode={true} />
+                      </div>
+                    ) : null}
                     <h3 className={`text-lg font-bold text-white group-hover:text-primary transition-colors leading-snug ${alignClass}`}>{deduplicateTitle(p.aiTitle)}</h3>
                     <div className="text-[10px] text-text-muted/40 font-black uppercase tracking-widest">{formatDate(p.date)}</div>
                   </Link>
@@ -338,10 +343,12 @@ export default function Home() {
               {feedPosts.map(p => (
                 <motion.article key={p.id} variants={itemVars} className="group">
                   <Link href={`/news/${getPostId(p.id)}`} className={`flex flex-col md:flex-row gap-8 ${isAr ? 'md:flex-row-reverse' : ''}`}>
-                    <div className="w-full md:w-[300px] shrink-0 rounded-2xl overflow-hidden border border-white/5">
-                      <MediaDisplay images={parseMedia(p.imageUrl)} videos={parseMedia(p.videoUrl)} hasVideo={p.hasVideo} isAr={isAr} aspect="aspect-video" singleMode={true} />
-                    </div>
-                    <div className="flex flex-col gap-3 justify-center">
+                    {p.imageUrl || p.videoUrl ? (
+                      <div className="w-full md:w-[300px] shrink-0 rounded-2xl overflow-hidden border border-white/5">
+                        <MediaDisplay images={parseMedia(p.imageUrl)} videos={parseMedia(p.videoUrl)} hasVideo={p.hasVideo} isAr={isAr} aspect="aspect-video" singleMode={true} />
+                      </div>
+                    ) : null}
+                    <div className={`flex flex-col gap-3 justify-center ${(!p.imageUrl && !p.videoUrl) ? 'w-full' : ''}`}>
                       <h4 className={`text-2xl font-bold text-white group-hover:text-primary transition-colors ${alignClass}`}>{deduplicateTitle(p.aiTitle)}</h4>
                       <p className={`reading-text opacity-70 line-clamp-2 ${alignClass}`}>{p.aiSummary}</p>
                       <div className="text-[10px] text-text-muted/40 font-black uppercase tracking-widest">{formatDate(p.date)}</div>

@@ -161,23 +161,34 @@ export async function GET(request: Request) {
                                     };
                                 });
                             } else {
-                                // NO AI FALLBACK (Commented out in .env)
-                                dbData = news.map(p => ({
-                                    id: p.id,
-                                    title_en: p.plainText.substring(0, 70) || "Intelligence Update",
-                                    summary_en: p.plainText.substring(0, 150) + "...",
-                                    tag_en: "world",
-                                    content_en: p.textHtml,
-                                    title_ar: "تحديث استخباراتي",
-                                    summary_ar: "تقرير لم يتم ترجمته آلياً.",
-                                    tag_ar: "world",
-                                    content_ar: p.textHtml,
-                                    image_url: p.imageUrl,
-                                    has_video: p.hasVideo,
-                                    video_url: p.videoUrl,
-                                    date: p.date,
-                                    views: p.views
-                                }));
+                                // NO AI FALLBACK - SMART EXTRACTION
+                                dbData = news.map(p => {
+                                    const lines = p.plainText.split('\n').filter((l: string) => l.trim().length > 0);
+                                    let title = lines[0] || "Intelligence Report";
+                                    if (title.length > 80) title = title.substring(0, 77) + "...";
+
+                                    let summary = lines.slice(1).join(' ').substring(0, 200);
+                                    if (!summary && p.plainText.length > title.length) {
+                                        summary = p.plainText.substring(title.length, title.length + 200).trim();
+                                    }
+
+                                    return {
+                                        id: p.id,
+                                        title_en: title,
+                                        summary_en: summary || "Automated intelligence capture.",
+                                        tag_en: "world",
+                                        content_en: p.textHtml,
+                                        title_ar: title, // Use same title as fallback if no AI
+                                        summary_ar: summary || "التقاط استخباراتي آلي.",
+                                        tag_ar: "world",
+                                        content_ar: p.textHtml,
+                                        image_url: p.imageUrl,
+                                        has_video: p.hasVideo,
+                                        video_url: p.videoUrl,
+                                        date: p.date,
+                                        views: p.views
+                                    };
+                                });
                             }
 
                             if (dbData && dbData.length > 0) {
