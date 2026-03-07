@@ -478,7 +478,7 @@ export default function Home() {
       <main className="flex-grow w-full flex flex-col lg:flex-row">
         {/* LEFT SIDEBAR (SIGNAL MONITOR) */}
         <div className="hidden lg:flex w-[340px] shrink-0 border-r border-white/5 flex-col sticky top-[120px] h-[calc(100vh-120px)] overflow-y-auto scrollbar-none">
-          <div className="p-6 border-b border-white/5 bg-surface/30 backdrop-blur-md sticky top-0 z-20">
+          <div className="px-8 py-6 border-b border-white/5 bg-surface/30 backdrop-blur-md sticky top-0 z-20">
             <div className={`flex items-center gap-3 ${isAr ? 'flex-row-reverse' : ''}`}>
               <div className="relative">
                 <span className="absolute inset-0 bg-red-500/40 rounded-full animate-ping"></span>
