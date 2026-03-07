@@ -505,40 +505,47 @@ export default function Home() {
               const title = deduplicateTitle(rawTitle) || "";
               let summary = deduplicateTitle(rawSummary) || "";
 
-              // DEFINITIVE redundancy check: strip all non-alnum for perfect comparison
-              const clean = (str: string) => str.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]/g, "");
+              // AGGRESSIVE HYGIENE: strip everything but alphanum for deep comparison
+              const clean = (str: string) => {
+                let s = str.toLowerCase();
+                // Remove common prefixes that cause fake "differences"
+                s = s.replace(/^(the|this|that|an|a|announced|reported|breaking)\s+/i, "");
+                return s.replace(/[^a-z0-9\u0600-\u06FF]/g, "");
+              };
+
               const cleanTitle = clean(title);
               const cleanSummary = clean(summary);
 
-              // If they are essentially the same text, kill the summary
+              // If summary is essentially the same as title, suppress it
               const isDuplicate = cleanSummary === cleanTitle ||
                 (cleanSummary.length > 5 && cleanSummary.startsWith(cleanTitle)) ||
-                (cleanTitle.length > 10 && cleanSummary.length > 10 && cleanTitle.includes(cleanSummary));
+                (cleanTitle.length > 8 && cleanSummary.length > 8 && cleanTitle.includes(cleanSummary));
 
               if (isDuplicate) summary = "";
 
-              // Clean leading trash if anything remains
+              // Clean leading garbage from any remaining summary
               summary = summary.replace(/^[:\s\-–—.]+/, "").trim();
-              const showSummary = summary.length > 10 && clean(summary) !== cleanTitle;
+
+              // Only show if summary actually adds substantial info (at least 15 more characters of unique content)
+              const showSummary = summary.length > 15 && clean(summary) !== cleanTitle;
 
               return (
                 <motion.div key={p.id} variants={itemVars}>
                   <Link href={`/news/${getPostId(p.id)}`} className="liquid-sidebar-card group">
-                    <div className="glow-accent"></div>
                     <div className={`flex justify-between items-center mb-3 ${isAr ? 'flex-row-reverse' : ''}`}>
                       <div className={`flex items-center gap-2 ${isAr ? 'flex-row-reverse' : ''}`}>
                         <div className="relative flex items-center justify-center">
-                          <span className="absolute w-2 h-2 bg-primary/20 rounded-full animate-ping"></span>
+                          <span className="absolute w-2.5 h-2.5 bg-primary/30 rounded-full animate-ping"></span>
                           <span className="relative block w-1 h-1 bg-primary rounded-full"></span>
                         </div>
-                        <span className="text-[10px] font-black text-primary font-mono tracking-widest uppercase">
+                        <span className="text-[10px] font-bold text-primary/80 font-mono tracking-widest uppercase">
                           {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
                         </span>
                       </div>
                       <span className="text-[8px] font-black text-white/10 font-mono tracking-[0.2em] uppercase">ID-{getPostId(p.id).slice(-4)}</span>
                     </div>
 
-                    <h4 className={`text-[13px] font-black text-white/90 group-hover:text-primary transition-colors leading-relaxed ${alignClass} line-clamp-3`}>
+                    <h4 className={`text-[13px] font-bold text-white/90 group-hover:text-primary transition-colors leading-relaxed ${alignClass} line-clamp-3`}>
                       {title}
                     </h4>
 
