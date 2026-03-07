@@ -1,19 +1,18 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { deduplicateTitle } from "../components/MediaDisplay";
 import dynamic from 'next/dynamic';
 
-// Leaflet markers/popups are tricky in Next.js SSR, so we dynamic import the Map components
+// Leaflet dynamic imports for SSR compatibility
 const MapContainer = dynamic(() => import('react-leaflet').then(m => m.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import('react-leaflet').then(m => m.TileLayer), { ssr: false });
 const CircleMarker = dynamic(() => import('react-leaflet').then(m => m.CircleMarker), { ssr: false });
 const Popup = dynamic(() => import('react-leaflet').then(m => m.Popup), { ssr: false });
 const useMap = dynamic(() => import('react-leaflet').then(m => m.useMap), { ssr: false });
 
-// Leaflet CSS needs to be loaded for the map to render correctly
 import 'leaflet/dist/leaflet.css';
 
 interface NewsPost {
@@ -51,41 +50,35 @@ const IRAQ_CITIES = [
     { name: "Tikrit", ar: "تكريت", lat: 34.6074, lng: 43.6782 },
 ];
 
-// Helper to center and zoom map
 function MapController({ center, zoom }: { center: [number, number], zoom: number }) {
     const map = (useMap as any)();
     useEffect(() => {
-        if (center && map) {
-            map.flyTo(center, zoom, { duration: 1.5, easeLinearity: 0.25 });
-        }
+        if (center && map) map.flyTo(center, zoom, { duration: 1.5 });
     }, [center, zoom, map]);
     return null;
 }
 
-export default function GlobalMonitorSystem() {
+export default function MonitorTheSituation() {
     const [signals, setSignals] = useState<NewsPost[]>([]);
-    const [lang, setLang] = useState("en");
+    const [activeTab, setActiveTab] = useState("FEED");
     const [mapCenter, setMapCenter] = useState<[number, number]>([33.3152, 44.3661]);
     const [mapZoom, setMapZoom] = useState(6);
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
         setIsClient(true);
-        const stored = localStorage.getItem("newsLang") || "en";
-        setLang(stored);
-
         const fetchSignals = async () => {
             try {
-                const res = await fetch(`/api/news?lang=${stored}&limit=60&type=signal&t=${Date.now()}`);
+                const stored = localStorage.getItem("newsLang") || "en";
+                const res = await fetch(`/api/news?lang=${stored}&limit=100&type=signal&t=${Date.now()}`);
                 if (res.ok) {
                     const data = await res.json();
                     setSignals(data.posts || []);
                 }
             } catch (e) { console.error(e); }
         };
-
         fetchSignals();
-        const interval = setInterval(fetchSignals, 20000);
+        const interval = setInterval(fetchSignals, 30000);
         return () => clearInterval(interval);
     }, []);
 
@@ -99,171 +92,201 @@ export default function GlobalMonitorSystem() {
         });
     }, [signals]);
 
-    const focusTo = (cityName: string) => {
-        const city = IRAQ_CITIES.find(c => c.name === cityName);
-        if (city) {
-            setMapCenter([city.lat, city.lng]);
-            setMapZoom(12);
-        }
+    const getTimeAgo = (dateStr: string) => {
+        const d = new Date(dateStr);
+        const diff = Date.now() - d.getTime();
+        const mins = Math.floor(diff / 60000);
+        if (mins < 60) return `${mins} minutes ago`;
+        const hours = Math.floor(mins / 60);
+        return `${hours} hours ago`;
     };
 
-    const isAr = lang === "ar";
-    const getPostId = (idString: string) => idString.split('/').pop() || "";
-
-    if (!isClient) return <div className="min-h-screen bg-black" />;
+    if (!isClient) return <div className="min-h-screen bg-[#0d0d0f]" />;
 
     return (
-        <div className="fixed inset-0 bg-black text-white flex overflow-hidden">
+        <div className="fixed inset-0 bg-[#0d0d0f] text-white flex flex-col font-sans overflow-hidden">
 
-            {/* 1. FULL-WIDTH MAP BACKGROUND */}
-            <div className="absolute inset-0 z-10">
-                <MapContainer
-                    center={mapCenter}
-                    zoom={mapZoom}
-                    zoomControl={false}
-                    scrollWheelZoom={true}
-                    className="w-full h-full grayscale-[0.1] contrast-[1.2] brightness-[0.6]"
-                    style={{ background: '#020203' }}
-                >
-                    {/* REAL GOOGLE SATELLITE MAP DATA */}
-                    <TileLayer
-                        url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
-                        attribution='&copy; Google Maps'
-                        maxZoom={20}
-                    />
-
-                    <MapController center={mapCenter} zoom={mapZoom} />
-
-                    {/* Tactical Indicators for Cities */}
-                    {IRAQ_CITIES.map(city => {
-                        const activePackets = signalsWithLocations.filter(s => s.location?.name === city.name);
-                        const hasActivity = activePackets.length > 0;
-
-                        return (
-                            <CircleMarker
-                                key={city.name}
-                                center={[city.lat, city.lng]}
-                                radius={hasActivity ? 15 : 6}
-                                pathOptions={{
-                                    fillColor: hasActivity ? '#38bdf8' : 'rgba(255,255,255,0.2)',
-                                    fillOpacity: hasActivity ? 0.7 : 0.4,
-                                    color: hasActivity ? '#38bdf8' : 'rgba(255,255,255,0.1)',
-                                    weight: hasActivity ? 3 : 1,
-                                    dashArray: hasActivity ? '5, 5' : 'none'
-                                }}
-                                eventHandlers={{
-                                    click: () => { setMapCenter([city.lat, city.lng]); setMapZoom(11); }
-                                }}
-                            >
-                                <Popup className="tactical-popup">
-                                    <div className="bg-[#0a0a0c] text-white p-4 rounded-xl border border-primary/30 min-w-[200px]">
-                                        <div className="flex items-center gap-2 mb-3 border-b border-white/10 pb-2">
-                                            <span className={`w-2 h-2 rounded-full ${hasActivity ? 'bg-primary animate-pulse' : 'bg-white/20'}`}></span>
-                                            <h4 className="text-xs font-black uppercase tracking-[0.2em]">{city.name}</h4>
-                                        </div>
-                                        <div className="flex flex-col gap-1 text-[10px] font-mono text-white/50">
-                                            <span>Coordinates: {city.lat.toFixed(4)}°, {city.lng.toFixed(4)}°</span>
-                                            <span>Signal Load: {activePackets.length} Active</span>
-                                        </div>
-                                    </div>
-                                </Popup>
-                            </CircleMarker>
-                        );
-                    })}
-                </MapContainer>
-            </div>
-
-            {/* 2. OVERLAY UI: HEADER & CONTROLS */}
-            <div className="absolute inset-0 z-20 pointer-events-none">
-
-                {/* TOP INTERFACE */}
-                <div className="p-8 flex items-start justify-between">
-                    <div className="flex items-center gap-6 pointer-events-auto">
-                        <Link href="/" className="w-12 h-12 border border-white/10 rounded-full flex items-center justify-center bg-black/60 backdrop-blur-3xl hover:border-primary/50 hover:bg-primary/10 transition-all group">
-                            <svg className="w-6 h-6 text-white/60 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            {/* TOP HEADER BAR (Monitor The Situation Style) */}
+            <header className="h-12 border-b border-white/5 bg-[#121216] px-4 flex items-center justify-between z-[1000]">
+                <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2">
+                        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                            <div className="w-5 h-5 bg-white rounded-sm flex items-center justify-center">
+                                <div className="w-3 h-3 border-2 border-black rounded-full"></div>
+                            </div>
+                            <span className="font-bold text-sm tracking-tight text-white/90">Monitor the Situation</span>
                         </Link>
-                        <div className="flex flex-col">
-                            <h1 className="text-sm font-black uppercase tracking-[0.5em] text-white/90">Signal Monitor <span className="text-primary/70">Tactical</span></h1>
-                            <span className="text-[9px] font-mono text-white/30 uppercase tracking-[0.2em] mt-1">Live Geo-Sector: Iraq / Kuwait / Saudi</span>
-                        </div>
                     </div>
+                    <div className="relative group">
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            className="bg-[#1c1c22] border-none rounded py-1 px-3 pl-8 text-xs text-white/60 focus:outline-none focus:ring-1 focus:ring-primary/40 w-48 transition-all"
+                        />
+                        <svg className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </div>
+                </div>
 
-                    <div className="flex flex-col items-end gap-2 text-[10px] font-mono text-white/40 tracking-widest uppercase pointer-events-auto bg-black/40 backdrop-blur-xl px-5 py-3 rounded-2xl border border-white/5">
-                        <div className="flex items-center gap-3">
-                            <span className="text-primary animate-pulse font-black">●</span>
-                            <span>Global Intelligence Link: Established</span>
-                        </div>
-                        <div className="h-px w-full bg-white/5 my-1"></div>
-                        <div className="flex gap-4">
-                            <span>Signals: {signals.length}</span>
-                            <span>Sync: 100%</span>
+                {/* TOP TICKER / TOOLS */}
+                <div className="hidden lg:flex items-center gap-4 flex-1 justify-center px-10">
+                    <div className="flex items-center gap-1 overflow-hidden h-6">
+                        <div className="flex items-center gap-3 animate-marquee whitespace-nowrap text-[10px] font-bold text-white/40 tracking-wider">
+                            {signals.slice(0, 5).map(s => (
+                                <span key={s.id} className="flex items-center gap-2">
+                                    <span className="text-primary/60">●</span> {deduplicateTitle(s.aiTitle)}
+                                    <span className="mx-4 opacity-20">|</span>
+                                </span>
+                            ))}
                         </div>
                     </div>
                 </div>
 
-                {/* CRT SCANLINE AND EFFECTS */}
-                <div className="absolute inset-0 opacity-[0.04] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black opacity-40"></div>
-
-                {/* ZOOM CONTROLS (BOTTOM RIGHT) */}
-                <div className="absolute bottom-10 right-10 flex flex-col gap-3 pointer-events-auto z-50">
-                    <button onClick={() => setMapZoom(z => Math.min(z + 1, 20))} className="w-12 h-12 bg-black/80 backdrop-blur-2xl border border-white/10 rounded-2xl flex items-center justify-center text-primary text-2xl font-black hover:bg-primary/10 hover:border-primary/40 transition-all shadow-2xl">+</button>
-                    <button onClick={() => setMapZoom(z => Math.max(z - 1, 1))} className="w-12 h-12 bg-black/80 backdrop-blur-2xl border border-white/10 rounded-2xl flex items-center justify-center text-primary text-2xl font-black hover:bg-primary/10 hover:border-primary/40 transition-all shadow-2xl">-</button>
-                    <button onClick={() => { setMapCenter([33.3152, 44.3661]); setMapZoom(6); }} className="w-12 h-12 bg-black/80 backdrop-blur-2xl border border-white/10 rounded-2xl flex items-center justify-center text-white/40 hover:text-white transition-all shadow-2xl">⟲</button>
-                </div>
-            </div>
-
-            {/* 3. FLOAT INTELLIGENCE FEED (Overlay Panel) */}
-            <aside className="fixed top-32 bottom-10 right-10 w-[420px] bg-[#050507]/80 backdrop-blur-3xl border border-white/5 rounded-[2.5rem] flex flex-col z-[500] shadow-[0_30px_100px_rgba(0,0,0,0.9)] overflow-hidden">
-                <div className="p-8 pb-6 border-b border-white/[0.04] bg-white/[0.01]">
-                    <h2 className="text-[11px] font-black text-white/90 uppercase tracking-[0.3em] mb-6 flex items-center justify-between">
-                        Sector Analysis
-                        <span className="text-primary/40 text-[9px] font-mono tracking-tighter">Live Uplink</span>
-                    </h2>
-                    <div className="flex gap-2">
-                        <button className="flex-1 py-3 bg-primary/10 border border-primary/20 rounded-xl text-[9px] font-black text-primary uppercase tracking-widest">All Signals</button>
-                        <button className="flex-1 py-3 bg-white/[0.02] border border-white/5 rounded-xl text-[9px] font-black text-white/30 uppercase tracking-widest hover:text-white/60">Urgent Only</button>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1 bg-[#1c1c22] rounded p-0.5">
+                        <button className="px-2 py-0.5 text-[10px] font-bold text-white/30 hover:text-white transition-colors">6H</button>
+                        <button className="px-2 py-0.5 text-[10px] font-bold bg-[#2d2d38] text-white rounded-sm shadow-sm">24H</button>
+                    </div>
+                    <div className="flex items-center gap-2 text-white/40 text-[10px] font-bold uppercase tracking-widest">
+                        <span className="text-green-500 animate-pulse">●</span>
+                        <span>8,689 MONITORS</span>
                     </div>
                 </div>
+            </header>
 
-                <div className="flex-1 overflow-y-auto scrollbar-none p-6 flex flex-col gap-4">
-                    {signalsWithLocations.map((post, idx) => (
-                        <motion.div key={post.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}>
-                            <button onClick={() => post.location && focusTo(post.location.name)} className="w-full text-left group">
-                                <div className="p-6 rounded-[1.8rem] bg-white/[0.02] border border-white/[0.06] group-hover:border-primary/40 group-hover:bg-primary/5 transition-all duration-300 relative">
-                                    {post.location && (
-                                        <div className="absolute top-5 right-6 flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
-                                            <span className="w-1 h-1 bg-primary rounded-full shadow-[0_0_10px_#38bdf8]"></span>
-                                            <span className="text-[9px] font-black text-primary uppercase tracking-widest">{post.location.name}</span>
-                                        </div>
-                                    )}
-                                    <span className="text-[9px] font-mono text-white/20 mb-3 block uppercase tracking-widest">{new Date(post.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                    <h3 className={`text-[13px] font-bold text-white/70 leading-relaxed group-hover:text-white transition-colors ${isAr ? 'text-right' : ''}`}>
-                                        {deduplicateTitle(post.aiTitle || "")}
-                                    </h3>
-                                    <div className="mt-4 text-[9px] font-black text-white/20 uppercase tracking-widest group-hover:text-primary transition-colors flex items-center gap-2">
-                                        {post.location ? '⌖ CENTERING SECTOR' : 'ANALYZE DATA →'}
+            <div className="flex-1 flex overflow-hidden">
+
+                {/* LEFT SIDEBAR (FEED) */}
+                <aside className="w-[340px] bg-[#121216] border-r border-white/5 flex flex-col z-50">
+                    <div className="p-3 border-b border-white/5">
+                        <div className="flex items-center gap-4 mb-3">
+                            {["FEED", "LIVE", "REPORTS"].map(tab => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`text-[10px] font-black tracking-widest uppercase transition-all pb-1 border-b-2 ${activeTab === tab ? 'text-white border-primary' : 'text-white/20 border-transparent hover:text-white/40'}`}
+                                >
+                                    {tab}
+                                </button>
+                            ))}
+                            <div className="ml-auto flex items-center gap-2">
+                                <span className="text-[9px] font-bold text-white/20 font-mono">{signals.length} events</span>
+                                <button className="p-1 bg-[#1c1c22] rounded hover:bg-[#2d2d38] transition-colors">
+                                    <svg className="w-3 h-3 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/5 hover:scrollbar-thumb-white/10 scrollbar-track-transparent pr-1">
+                        {signalsWithLocations.map((s, i) => (
+                            <button
+                                key={s.id}
+                                onClick={() => s.location && setMapCenter([s.location.lat, s.location.lng])}
+                                className="w-full p-4 text-left border-b border-white/[0.03] hover:bg-white/[0.03] transition-all group relative border-l-2 border-l-transparent hover:border-l-primary"
+                            >
+                                <div className="flex justify-between items-start mb-1.5 font-mono text-[9px] font-bold">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`px-1.5 py-0.5 rounded-sm uppercase tracking-tighter ${s.aiTag === 'Conflict' ? 'bg-red-500/20 text-red-500' : 'bg-purple-500/20 text-purple-400'}`}>
+                                            {s.aiTag || 'Event'}
+                                        </span>
+                                        <span className="text-white/20">S2</span>
                                     </div>
+                                    <span className="text-white/20">{getTimeAgo(s.date)}</span>
                                 </div>
+                                <h4 className="text-[12px] font-bold leading-snug text-white/80 group-hover:text-white transition-colors line-clamp-2">
+                                    {deduplicateTitle(s.aiTitle)}
+                                </h4>
+                                {s.location && (
+                                    <div className="mt-2 flex items-center gap-1.5 text-white/20 group-hover:text-white/40 transition-colors">
+                                        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider">{s.location.name}</span>
+                                    </div>
+                                )}
                             </button>
-                        </motion.div>
-                    ))}
-                </div>
-            </aside>
+                        ))}
+                    </div>
+                </aside>
+
+                {/* RIGHT: MAP AREA */}
+                <main className="flex-1 relative bg-[#070709]">
+                    <MapContainer
+                        center={mapCenter}
+                        zoom={mapZoom}
+                        className="w-full h-full grayscale-[0.3] contrast-[1.2] brightness-[0.7]"
+                        zoomControl={false}
+                        style={{ background: '#070709' }}
+                    >
+                        <TileLayer
+                            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                            attribution='&copy; CARTO'
+                        />
+                        <MapController center={mapCenter} zoom={mapZoom} />
+
+                        {IRAQ_CITIES.map(city => {
+                            const activeEvents = signalsWithLocations.filter(s => s.location?.name === city.name);
+                            const hasEvents = activeEvents.length > 0;
+
+                            return (
+                                <CircleMarker
+                                    key={city.name}
+                                    center={[city.lat, city.lng]}
+                                    radius={hasEvents ? 10 : 4}
+                                    pathOptions={{
+                                        fillColor: hasEvents ? '#f97316' : 'rgba(255,255,255,0.1)',
+                                        fillOpacity: 0.8,
+                                        color: hasEvents ? '#fff' : 'rgba(255,255,255,0.05)',
+                                        weight: hasEvents ? 2 : 1
+                                    }}
+                                    eventHandlers={{
+                                        click: () => { setMapCenter([city.lat, city.lng]); setMapZoom(11); }
+                                    }}
+                                >
+                                    <Popup className="compact-popup">
+                                        <div className="bg-[#121216] text-white p-2 rounded shadow-xl border border-white/5">
+                                            <p className="text-[10px] font-black uppercase mb-1">{city.name}</p>
+                                            <p className="text-[9px] text-white/40">{activeEvents.length} Recent Events</p>
+                                        </div>
+                                    </Popup>
+                                </CircleMarker>
+                            );
+                        })}
+                    </MapContainer>
+
+                    {/* ZOOM CONTROLS (Floating Right) */}
+                    <div className="absolute right-4 bottom-1/2 -translate-y-1/2 flex flex-col gap-1 z-50">
+                        <button onClick={() => setMapZoom(z => z + 1)} className="w-8 h-8 bg-[#1c1c22]/80 border border-white/10 flex items-center justify-center hover:bg-[#2d2d38] transition-all">+</button>
+                        <button onClick={() => setMapZoom(z => z - 1)} className="w-8 h-8 bg-[#1c1c22]/80 border border-white/10 flex items-center justify-center hover:bg-[#2d2d38] transition-all">-</button>
+                    </div>
+
+                    {/* STAR FIELD BACKGROUND (Top/Bottom Overlays) */}
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
+                        {[...Array(50)].map((_, i) => (
+                            <div key={i} className="absolute bg-white rounded-full" style={{
+                                width: Math.random() * 2 + 'px',
+                                height: Math.random() * 2 + 'px',
+                                top: Math.random() * 100 + '%',
+                                left: Math.random() * 100 + '%',
+                                boxShadow: '0 0 10px white'
+                            }} />
+                        ))}
+                    </div>
+                </main>
+            </div>
 
             <style jsx global>{`
-        .leaflet-container { background: #020203 !important; }
-        .tactical-popup .leaflet-popup-content-wrapper {
-          background: rgba(10,10,12,0.98);
-          border: 1px solid rgba(56,189,248,0.4);
-          color: white;
-          border-radius: 20px;
-          padding: 0;
-          box-shadow: 0 0 50px rgba(0,0,0,1);
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
-        .tactical-popup .leaflet-popup-tip { background: rgba(56,189,248,0.4); }
-        .scrollbar-none::-webkit-scrollbar { display: none; }
-        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+        .animate-marquee {
+          display: inline-block;
+          animation: marquee 30s linear infinite;
+        }
+        .leaflet-container { background: #070709 !important; }
+        .compact-popup .leaflet-popup-content-wrapper { background: transparent; padding: 0; box-shadow: none; border-radius: 0; }
+        .compact-popup .leaflet-popup-tip-container { display: none; }
+        .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { border-radius: 10px; }
       `}</style>
         </div>
     );
