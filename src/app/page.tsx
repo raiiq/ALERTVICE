@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { MediaDisplay, parseMedia, deduplicateTitle } from "./components/MediaDisplay";
 import { motion, AnimatePresence } from "framer-motion";
@@ -35,6 +35,9 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [loadingFading, setLoadingFading] = useState(false);
+  const [loadingGone, setLoadingGone] = useState(false);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   // Animation Variants
   const containerVars = {
@@ -120,6 +123,15 @@ export default function Home() {
     setMounted(true);
   }, []);
 
+  // Dismiss loading screen once data is fetched
+  useEffect(() => {
+    if (!loading && mounted && !loadingFading) {
+      setLoadingFading(true);
+      const t = setTimeout(() => setLoadingGone(true), 650);
+      return () => clearTimeout(t);
+    }
+  }, [loading, mounted]);
+
   useEffect(() => {
     if (!mounted || searchQuery) return;
     const interval = setInterval(() => {
@@ -147,6 +159,24 @@ export default function Home() {
   const loadMore = () => {
     if (!loadingMore && hasMore) fetchArticles(false, lang, false);
   };
+
+  // Infinite Scroll Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loadingMore && hasMore && articles.length > 0) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [loadingMore, hasMore, articles.length]);
 
   const toggleLang = (newLang: string) => {
     if (newLang === lang) return;
@@ -177,10 +207,42 @@ export default function Home() {
   const feedPosts = filteredPosts.length > 5 ? filteredPosts.slice(5) : [];
   const sidebarPosts = articles.slice(0, 15);
 
-  if (!mounted) return null;
+  if (!mounted) return (
+    <div className="loading-screen">
+      <div className="loading-radar">
+        <div className="loading-radar-ring" />
+        <div className="loading-radar-ring" />
+        <div className="loading-radar-ring" />
+        <div className="loading-radar-sweep" />
+        <div className="loading-radar-ping" />
+        <div className="loading-radar-core" />
+      </div>
+      <div className="loading-title font-cairo" data-text="ALERTVICE">ALERTVICE</div>
+      <div className="loading-subtitle font-cairo">Global Intelligence Network</div>
+      <div className="loading-dots"><span /><span /><span /></div>
+      <div className="loading-status">Initializing feed...</div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background text-foreground tracking-wide flex flex-col font-cairo" dir={isAr ? "rtl" : "ltr"}>
+      {/* LOADING SCREEN OVERLAY */}
+      {!loadingGone && (
+        <div className={`loading-screen${loadingFading ? ' fade-out' : ''}`}>
+          <div className="loading-radar">
+            <div className="loading-radar-ring" />
+            <div className="loading-radar-ring" />
+            <div className="loading-radar-ring" />
+            <div className="loading-radar-sweep" />
+            <div className="loading-radar-ping" />
+            <div className="loading-radar-core" />
+          </div>
+          <div className="loading-title font-cairo" data-text="ALERTVICE">ALERTVICE</div>
+          <div className="loading-subtitle font-cairo">Global Intelligence Network</div>
+          <div className="loading-dots"><span /><span /><span /></div>
+          <div className="loading-status">{lang === 'ar' ? 'جارٍ تحميل البيانات...' : 'Acquiring intelligence feed...'}</div>
+        </div>
+      )}
       {/* ===== FLOATING PILL NAVBAR ===== */}
       <div className="navbar-band">
         <nav className="liquid-glass-nav px-4 sm:px-6 lg:px-8" dir="ltr">
@@ -331,8 +393,8 @@ export default function Home() {
                         key={cat.key}
                         onClick={() => { setActiveCategory(cat.key); setOffset(0); fetchArticles(false, lang, true); closeMenu(); }}
                         className={`px-4 py-2 rounded-full text-[11px] font-black tracking-wider uppercase transition-all ${activeCategory === cat.key
-                            ? 'bg-primary text-black shadow-[0_0_16px_rgba(56,189,248,0.4)]'
-                            : 'bg-white/[0.04] text-white/40 border border-white/10 hover:text-white/80 hover:border-white/20'
+                          ? 'bg-primary text-black shadow-[0_0_16px_rgba(56,189,248,0.4)]'
+                          : 'bg-white/[0.04] text-white/40 border border-white/10 hover:text-white/80 hover:border-white/20'
                           }`}
                       >
                         {isAr ? cat.ar : cat.en}
@@ -371,8 +433,8 @@ export default function Home() {
                   <button
                     onClick={() => { fetchArticles(true, lang, true); fetchSignals(lang); closeMenu(); }}
                     className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest border transition-all ${refreshing
-                        ? 'border-primary/40 text-primary bg-primary/10'
-                        : 'border-white/10 text-white/40 hover:text-white/70 hover:border-white/20'
+                      ? 'border-primary/40 text-primary bg-primary/10'
+                      : 'border-white/10 text-white/40 hover:text-white/70 hover:border-white/20'
                       }`}
                   >
                     <svg className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
@@ -532,6 +594,9 @@ export default function Home() {
 
             {/* PAGINATION / LOAD MORE */}
             <div className="flex flex-col items-center gap-8 py-12 mt-8 border-t border-white/5">
+              {/* Observer Target for Infinite Scroll */}
+              <div ref={observerTarget} className="h-4 w-full" />
+
               {hasMore ? (
                 <button
                   onClick={loadMore}
