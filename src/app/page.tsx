@@ -479,12 +479,17 @@ export default function Home() {
         {/* LEFT SIDEBAR (SIGNAL MONITOR) */}
         <div className="hidden lg:flex w-[380px] shrink-0 sidebar-container flex-col sticky top-[140px] h-[calc(100vh-200px)] overflow-hidden rounded-[2rem] border border-white/5 bg-[#0a0a0b]/40 backdrop-blur-3xl transition-all duration-700">
           <div className="px-8 py-8 border-b border-white/[0.03] bg-white/[0.01] backdrop-blur-md sticky top-0 z-20">
-            <div className={`flex items-center gap-4 ${isAr ? 'flex-row-reverse' : ''}`}>
-              <div className="relative flex items-center justify-center">
-                <span className="absolute w-4 h-4 bg-red-500/20 rounded-full animate-ping"></span>
-                <span className="relative block w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]"></span>
+            <div className={`flex items-center justify-between ${isAr ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex items-center gap-4 ${isAr ? 'flex-row-reverse' : ''}`}>
+                <div className="relative flex items-center justify-center">
+                  <span className="absolute w-4 h-4 bg-red-500/20 rounded-full animate-ping"></span>
+                  <span className="relative block w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]"></span>
+                </div>
+                <h3 className="font-black text-white uppercase tracking-[0.3em] text-[12px]">{isAr ? 'راصد الإشارات' : 'Signal Monitor'}</h3>
               </div>
-              <h3 className="font-black text-white uppercase tracking-[0.3em] text-[12px]">{isAr ? 'راصد الإشارات' : 'Signal Monitor'}</h3>
+              <Link href="/monitor" className="text-[9px] font-black text-primary border border-primary/20 bg-primary/5 px-3 py-1.5 rounded-md hover:bg-primary/20 transition-all uppercase tracking-widest">
+                {isAr ? 'توسيع' : 'EXPAND'}
+              </Link>
             </div>
           </div>
 

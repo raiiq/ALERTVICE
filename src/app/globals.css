@@ -704,3 +704,28 @@ body {
   transform: translateX(4px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
+
+/* ==========================================
+   COMMAND CENTER MONITOR SYSTEM
+   ========================================== */
+
+.animate-scan {
+  animation: scan 8s linear infinite;
+}
+
+@keyframes scan {
+  0% {
+    transform: translateY(-100vh);
+  }
+
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+.monitor-grid {
+  background-image:
+    linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
