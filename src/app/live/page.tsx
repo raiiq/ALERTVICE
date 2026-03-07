@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
 import { deduplicateTitle } from "../components/MediaDisplay";
 
 interface NewsPost {
@@ -47,10 +47,17 @@ const BOUNDS = {
     maxLat: 38.5
 };
 
-export default function LiveMonitorPage() {
+export default function InteractiveMonitorPage() {
     const [signals, setSignals] = useState<NewsPost[]>([]);
-    const [loading, setLoading] = useState(true);
     const [lang, setLang] = useState("en");
+    const [zoom, setZoom] = useState(1);
+    const mapX = useMotionValue(0);
+    const mapY = useMotionValue(0);
+
+    // Smooth spring physics for auto-navigation
+    const sprX = useSpring(mapX, { stiffness: 100, damping: 20 });
+    const sprY = useSpring(mapY, { stiffness: 100, damping: 20 });
+    const sprZoom = useSpring(zoom, { stiffness: 100, damping: 20 });
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -65,7 +72,6 @@ export default function LiveMonitorPage() {
                     setSignals(data.posts || []);
                 }
             } catch (e) { console.error(e); }
-            finally { setLoading(false); }
         };
 
         fetchSignals();
@@ -95,207 +101,163 @@ export default function LiveMonitorPage() {
         return { x, y };
     };
 
+    const focusCity = (cityName: string) => {
+        const city = IRAQ_CITIES.find(c => c.name === cityName);
+        if (city) {
+            const { x, y } = getXY(city.lat, city.lng);
+            // Center on the city (viewbox is 1000x800, so we want city at 500x400)
+            // This logic depends on the zoom and container size
+            setZoom(3);
+            mapX.set(500 - x);
+            mapY.set(400 - y);
+        }
+    };
+
     const getPostId = (idString: string) => idString.split('/').pop() || "";
 
     return (
         <div className="fixed inset-0 bg-[#050506] text-white overflow-hidden flex font-sans">
-            {/* LEFT: SATELLITE COMMAND MAP (STATIC BACKGROUND) */}
-            <main className="flex-1 relative overflow-hidden bg-black selection:bg-primary/30">
 
-                {/* TACTICAL OVERLAY */}
-                <div className="absolute inset-0 pointer-events-none z-10">
-                    <div className="absolute top-8 left-8 flex flex-col gap-1 items-start">
-                        <div className="flex items-center gap-3">
-                            <Link href="/" className="w-10 h-10 border border-white/10 rounded-full flex items-center justify-center bg-black/40 backdrop-blur-xl hover:border-primary/50 hover:bg-primary/5 transition-all pointer-events-auto shadow-2xl">
-                                <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-                            </Link>
-                            <div className="flex flex-col">
-                                <h1 className="text-xs font-black uppercase tracking-[0.4em] text-white/90">Signal Monitor <span className="text-primary/70">V3.0</span></h1>
-                                <span className="text-[8px] font-mono text-white/30 tracking-widest uppercase mt-0.5">Tactical Command Sector - Iraq</span>
-                            </div>
+            {/* LEFT: INTERACTIVE SATELLITE MAP */}
+            <main className="flex-1 relative overflow-hidden bg-black cursor-grab active:cursor-grabbing">
+
+                {/* TOP OVERLAY UI */}
+                <div className="absolute top-8 left-8 z-50 pointer-events-none">
+                    <div className="flex items-center gap-4">
+                        <Link href="/" className="w-10 h-10 border border-white/10 rounded-full flex items-center justify-center bg-black/60 backdrop-blur-xl hover:border-primary/50 hover:bg-primary/5 transition-all pointer-events-auto">
+                            <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        </Link>
+                        <div className="flex flex-col">
+                            <h1 className="text-xs font-black uppercase tracking-[0.4em] text-white/90">Signal Monitor <span className="text-primary/70">Tactical</span></h1>
+                            <span className="text-[8px] font-mono text-white/30 tracking-widest uppercase">Live Geo-Sector Intelligence</span>
                         </div>
-                    </div>
-
-                    {/* Map Statistics */}
-                    <div className="absolute top-8 right-8 flex flex-col items-end gap-2 font-mono text-[9px] text-white/40 tracking-widest uppercase">
-                        <div className="flex items-center gap-3 bg-black/40 px-4 py-2 rounded-lg border border-white/5 backdrop-blur-md">
-                            <span className="text-primary animate-pulse">●</span>
-                            <span>Scanning: {signals.length} Active Packets</span>
-                        </div>
-                    </div>
-
-                    {/* Bottom Coordinates Strip */}
-                    <div className="absolute bottom-6 left-8 flex items-center gap-8 text-[8px] font-mono text-white/20 uppercase tracking-[0.3em]">
-                        <span>33.3152° N, 44.3661° E</span>
-                        <span className="w-px h-3 bg-white/10"></span>
-                        <span>Ref: Alertvice-Hub-2</span>
-                        <span className="w-px h-3 bg-white/10"></span>
-                        <span>Time: {new Date().toLocaleTimeString('en-GB')} UTC</span>
                     </div>
                 </div>
 
-                {/* MAP CONTENT - FIXED / Non-scrollable */}
-                <div className="absolute inset-0 flex items-center justify-center p-12 lg:p-24">
-                    <div className="relative aspect-[1000/800] w-full max-h-full">
+                {/* CONTROLS */}
+                <div className="absolute bottom-8 right-8 z-50 flex flex-col gap-2 pointer-events-auto">
+                    <button onClick={() => setZoom(prev => Math.min(prev + 0.5, 6))} className="w-10 h-10 bg-black/60 backdrop-blur-md border border-white/10 rounded-lg flex items-center justify-center text-primary hover:bg-white/5 transition-all">+</button>
+                    <button onClick={() => setZoom(prev => Math.max(prev - 0.5, 1))} className="w-10 h-10 bg-black/60 backdrop-blur-md border border-white/10 rounded-lg flex items-center justify-center text-primary hover:bg-white/5 transition-all">-</button>
+                    <button onClick={() => { setZoom(1); mapX.set(0); mapY.set(0); }} className="w-10 h-10 bg-black/60 backdrop-blur-md border border-white/10 rounded-lg flex items-center justify-center text-white/40 hover:bg-white/5 transition-all">⟲</button>
+                </div>
 
-                        {/* SATELLITE IMAGE STYLE BACKGROUND */}
+                {/* THE MAP CANVAS */}
+                <motion.div
+                    drag
+                    dragMomentum={false}
+                    style={{ x: sprX, y: sprY, scale: sprZoom }}
+                    className="absolute inset-0 flex items-center justify-center origin-center"
+                >
+                    <div className="relative w-[1000px] h-[800px]">
+                        {/* GOOGLE SATELLITE BASE MAP */}
                         <div
-                            className="absolute inset-0 rounded-[2rem] overflow-hidden border border-white/[0.03] shadow-[0_0_100px_rgba(0,0,0,1)]"
+                            className="absolute inset-0 rounded-[4rem] border-2 border-primary/20 bg-[#0a0a0b] overflow-hidden shadow-[0_0_100px_rgba(56,189,248,0.1)]"
                             style={{
-                                backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(56,189,248,0.05) 0%, transparent 100%), url("https://www.google.com/maps/vt/pb=!1m4!1m3!1i10!2i630!3i420!2m3!1e0!2sm!3i12345678!3m8!2sen!3siq!5e1105!12m4!1e68!2m2!1sset!2ssatellite!4e0!5m1!1e4")',
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center',
-                                filter: 'brightness(0.5) contrast(1.2) saturate(0.8) hue-rotate(-10deg)',
+                                backgroundImage: `url('https://mt1.google.com/vt/lyrs=s&x=631&y=421&z=10'), url('https://mt1.google.com/vt/lyrs=s&x=630&y=421&z=10'), url('https://mt1.google.com/vt/lyrs=s&x=631&y=420&z=10'), url('https://mt1.google.com/vt/lyrs=s&x=630&y=420&z=10')`,
+                                backgroundSize: '50% 50%',
+                                backgroundRepeat: 'no-repeat',
+                                backgroundPosition: '0% 0%, 100% 0%, 0% 100%, 100% 100%',
+                                filter: 'brightness(0.6) contrast(1.2) saturate(0.8)',
                             }}
                         >
-                            {/* Land Grain Overlay */}
-                            <div className="absolute inset-0 opacity-[0.05] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] blend-overlay"></div>
-                            {/* Darkening Gradient */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60"></div>
+                            {/* Tactical Borders / Scan Grid */}
+                            <div className="absolute inset-0 opacity-[0.1] monitor-grid"></div>
                         </div>
 
-                        {/* SVG Overlay Layers */}
+                        {/* SVG OVERLAY (Borders & Markers) */}
                         <svg className="absolute inset-0 w-full h-full z-20 pointer-events-none" viewBox="0 0 1000 800">
-                            {/* Iraq Border Path (Tactical Line) */}
+                            <defs>
+                                <filter id="glow">
+                                    <feGaussianBlur stdDeviation="2.5" result="blur" />
+                                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                                </filter>
+                            </defs>
+
+                            {/* IRAQ BORDER - Precise Tactical Path */}
                             <path
                                 d="M130,300 L200,180 L350,140 L480,120 L580,180 L700,200 L850,280 L920,350 L950,550 L880,720 L650,780 L450,750 L320,780 L200,720 L150,550 Z"
-                                stroke="rgba(56,189,248,0.2)"
+                                stroke="#38bdf8"
                                 strokeWidth="2"
-                                fill="none"
+                                fill="rgba(56,189,248,0.05)"
+                                strokeDasharray="10,5"
                                 className="animate-pulse"
+                                filter="url(#glow)"
                             />
 
-                            {/* Grid Dots */}
-                            {[...Array(20)].map((_, i) => [...Array(16)].map((_, j) => (
-                                <circle key={`dot-${i}-${j}`} cx={i * 50} cy={j * 50} r="0.5" fill="rgba(255,255,255,0.05)" />
-                            )))}
-
-                            {/* City Markers with Interactive Logic */}
+                            {/* City Pulsing Indicators */}
                             {IRAQ_CITIES.map(city => {
                                 const { x, y } = getXY(city.lat, city.lng);
-                                const activeSignals = signalsWithLocations.filter(s => s.location?.name === city.name);
-                                const hasActivity = activeSignals.length > 0;
+                                const packets = signalsWithLocations.filter(s => s.location?.name === city.name);
+                                const hasActivity = packets.length > 0;
 
                                 return (
                                     <g key={city.name} className="pointer-events-auto cursor-help group/city">
-                                        {/* Glow Behind */}
                                         {hasActivity && (
-                                            <circle cx={x} cy={y} r={16} fill="rgba(56,189,248,0.15)" className="animate-pulse animate-duration-[2s]" />
+                                            <circle cx={x} cy={y} r={12} fill="none" stroke="#38bdf8" strokeWidth="1" className="animate-ping" style={{ transformOrigin: `${x}px ${y}px` }} />
                                         )}
-                                        {/* Center Point */}
-                                        <circle cx={x} cy={y} r={2.5} fill={hasActivity ? "#38bdf8" : "rgba(255,255,255,0.2)"} className="transition-all duration-300 group-hover/city:r-4 flex items-center justify-center shadow-[0_0_10px_rgba(56,189,248,0.8)]" />
+                                        <circle cx={x} cy={y} r={4} fill={hasActivity ? "#38bdf8" : "rgba(255,255,255,0.4)"} className="transition-all duration-300 group-hover/city:r-6 shadow-2xl" />
 
-                                        {/* Label Label */}
-                                        <g className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                                            <rect x={x + 10} y={y - 25} width="140" height="50" rx="8" fill="rgba(10,13,18,0.9)" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-                                            <text x={x + 22} y={y - 3} fill="white" fontSize="10" className="font-sans font-black tracking-widest uppercase">{city.name}</text>
-                                            <text x={x + 22} y={y + 10} fill={hasActivity ? "#38bdf8" : "#999"} fontSize="8" className="font-mono">{hasActivity ? `SIG: ${activeSignals.length} CAPTURED` : "STANDBY"}</text>
+                                        <g className="opacity-0 group-hover/city:opacity-100 transition-opacity duration-300">
+                                            <rect x={x + 12} y={y - 20} width="120" height="40" rx="4" fill="rgba(0,0,0,0.8)" stroke="#38bdf8" strokeWidth="0.5" />
+                                            <text x={x + 20} y={y} fill="white" fontSize="10" fontWeight="bold" className="uppercase tracking-widest">{city.name}</text>
+                                            {hasActivity && <text x={x + 20} y={y + 10} fill="#38bdf8" fontSize="7" className="font-mono">SIG: {packets.length} ACTIVE</text>}
                                         </g>
                                     </g>
                                 );
                             })}
                         </svg>
                     </div>
-                </div>
+                </motion.div>
 
-                {/* Scanline Effect Layer */}
-                <div className="absolute inset-0 pointer-events-none z-30 opacity-[0.02] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]"></div>
+                {/* CRT Scanline Overlay */}
+                <div className="absolute inset-0 pointer-events-none z-[100] opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]"></div>
             </main>
 
-            {/* RIGHT: SCROLLABLE INTEL FEED */}
-            <aside className="w-[420px] bg-[#0a0a0c]/90 backdrop-blur-3xl border-l border-white/[0.04] flex flex-col relative z-40 selection:bg-primary/20 shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
-
-                {/* Sidebar Header */}
-                <div className="p-8 pb-6 border-b border-white/[0.03] bg-white/[0.01]">
+            {/* RIGHT: INDEPENDENTLY SCROLLABLE INTEL FEED */}
+            <aside className="w-[420px] bg-[#0a0a0c]/90 backdrop-blur-3xl border-l border-white/[0.04] flex flex-col z-[200] shadow-[-20px_0_50px_rgba(0,0,0,0.7)]">
+                <div className="p-8 pb-6 border-b border-white/[0.03]">
                     <div className="flex items-center justify-between mb-6">
-                        <div className="flex flex-col gap-1">
-                            <h2 className="text-[10px] font-black text-white/90 uppercase tracking-[0.3em]">Sector Analysis</h2>
-                            <span className="text-[8px] font-mono text-primary/60 tracking-widest uppercase">Streaming Real-Time Intel</span>
+                        <div className="flex flex-col">
+                            <h2 className="text-[11px] font-black text-white/90 uppercase tracking-widest">Active Intelligence</h2>
+                            <span className="text-[8px] font-mono text-primary animate-pulse uppercase mt-1">Status: Deep-Sync Active</span>
                         </div>
-                        <div className="w-8 h-8 rounded-lg bg-primary/5 border border-primary/20 flex items-center justify-center animate-spin-slow">
-                            <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                        </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                        <button className="flex-1 px-4 py-2.5 bg-primary/10 border border-primary/30 rounded-xl text-[9px] font-black text-primary uppercase tracking-widest transition-all">All Signal</button>
-                        <button className="flex-1 px-4 py-2.5 bg-white/[0.03] border border-white/5 rounded-xl text-[9px] font-black text-white/30 uppercase tracking-widest hover:text-white/60 hover:bg-white/[0.05] transition-all">Prioritized</button>
                     </div>
                 </div>
 
-                {/* Scrollable Feed Area */}
-                <div className="flex-1 overflow-y-auto scrollbar-none p-6 pt-4 flex flex-col gap-5">
-                    <AnimatePresence mode="popLayout">
-                        {signalsWithLocations.map((post, idx) => (
-                            <motion.div
-                                key={post.id}
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.4, delay: idx * 0.05 }}
+                <div className="flex-1 overflow-y-auto scrollbar-none p-6 flex flex-col gap-4">
+                    {signalsWithLocations.map((post, idx) => (
+                        <motion.div key={post.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}>
+                            <button
+                                onClick={() => post.location && focusCity(post.location.name)}
+                                className="w-full text-left group"
                             >
-                                <Link href={`/news/${getPostId(post.id)}`} className="block group">
-                                    <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.03] group-hover:bg-white/[0.04] group-hover:border-primary/20 transition-all duration-300 relative overflow-hidden">
-
-                                        {/* Location Chip */}
-                                        {post.location && (
-                                            <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2 py-0.5 bg-primary/5 rounded border border-primary/20">
-                                                <div className="w-1 h-1 bg-primary rounded-full animate-pulse"></div>
-                                                <span className="text-[8px] font-black text-primary/80 uppercase tracking-wider">{post.location.name}</span>
-                                            </div>
-                                        )}
-
-                                        <div className="flex items-center gap-3 mb-3 text-white/30">
-                                            <span className="text-[9px] font-mono font-bold tracking-widest">{new Date(post.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                            <span className="w-1 h-1 bg-white/10 rounded-full"></span>
-                                            <span className="text-[8px] font-mono uppercase tracking-[0.2em]">ID-{getPostId(post.id).slice(-4)}</span>
+                                <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05] group-hover:border-primary/40 group-hover:bg-primary/5 transition-all duration-300 relative">
+                                    {post.location && (
+                                        <div className="absolute top-4 right-4 flex items-center gap-1 px-2 py-0.5 bg-primary/10 rounded-md border border-primary/20">
+                                            <div className="w-1 h-1 bg-primary rounded-full"></div>
+                                            <span className="text-[8px] font-black text-primary uppercase">{post.location.name}</span>
                                         </div>
-
-                                        <h3 className={`text-[13px] font-bold text-white/80 leading-relaxed group-hover:text-white transition-colors line-clamp-2 ${isAr ? 'text-right' : ''}`}>
-                                            {deduplicateTitle(post.aiTitle || "")}
-                                        </h3>
-
-                                        {(post.aiSummary || post.plainText) && (
-                                            <div className={`mt-3 pt-3 border-t border-white/[0.02] ${isAr ? 'text-right' : ''}`}>
-                                                <p className="text-[10px] text-white/40 leading-relaxed line-clamp-3 italic font-light group-hover:text-white/50 transition-colors">
-                                                    {post.aiSummary || post.plainText}
-                                                </p>
-                                            </div>
-                                        )}
-
-                                        <div className="mt-4 flex items-center justify-between">
-                                            <div className="text-[8px] font-black text-white/10 uppercase tracking-[0.3em] group-hover:text-primary/40 transition-colors">Tactical View →</div>
-                                            <div className="flex -space-x-1.5">
-                                                {[...Array(3)].map((_, i) => (
-                                                    <div key={i} className="w-1.5 h-1.5 rounded-full border border-black bg-white/5"></div>
-                                                ))}
-                                            </div>
-                                        </div>
+                                    )}
+                                    <div className="text-[9px] font-mono text-white/30 mb-2">{new Date(post.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                    <h3 className={`text-[13px] font-bold text-white/80 leading-relaxed group-hover:text-white transition-colors ${isAr ? 'text-right' : ''}`}>
+                                        {deduplicateTitle(post.aiTitle || "")}
+                                    </h3>
+                                    <div className="mt-4 text-[8px] font-black text-white/10 tracking-[0.3em] uppercase group-hover:text-primary transition-colors flex items-center gap-2">
+                                        {post.location ? '⌖ CENTERING VECTOR' : 'VIEW SIG DATA →'}
                                     </div>
-                                </Link>
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
-                </div>
-
-                {/* Sidebar Footer */}
-                <div className="p-4 border-t border-white/[0.03] bg-black/20">
-                    <div className="flex items-center justify-between px-3 text-[8px] font-mono text-white/20 uppercase tracking-widest">
-                        <span>Data Stream: Active</span>
-                        <span className="animate-pulse">Live Sync</span>
-                    </div>
+                                </div>
+                            </button>
+                        </motion.div>
+                    ))}
                 </div>
             </aside>
 
             <style jsx>{`
-        .scrollbar-none::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-none {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .animate-duration-[2s] {
-          animation-duration: 2s;
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+        .monitor-grid {
+          background-image: linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
+          background-size: 40px 40px;
         }
       `}</style>
         </div>
