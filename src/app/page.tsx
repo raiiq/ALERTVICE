@@ -238,8 +238,8 @@ export default function Home() {
               {/* DIVIDER */}
               <div className="hidden lg:block w-px h-5 bg-white/10 mx-1"></div>
 
-              {/* LANGUAGE TOGGLE — dir=ltr pinned: EN always left, AR always right. Pill slides via CSS class */}
-              <div className="hidden sm:block lang-toggle" dir="ltr">
+              {/* LANGUAGE TOGGLE — always EN left, AR right, fixed width. Shown on all sizes now */}
+              <div className="lang-toggle" dir="ltr">
                 <div className={`lang-toggle-pill ${lang === 'ar' ? 'is-ar' : ''}`}></div>
                 <button onClick={() => toggleLang('en')} className={`lang-toggle-btn ${lang === 'en' ? 'text-white' : 'text-white/30'}`}>EN</button>
                 <button onClick={() => toggleLang('ar')} className={`lang-toggle-btn ${lang === 'ar' ? 'text-white' : 'text-white/30'}`}>AR</button>
@@ -254,14 +254,145 @@ export default function Home() {
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
               </button>
 
-              {/* MOBILE MENU */}
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="lg:hidden w-8 h-8 flex items-center justify-center text-white/50 hover:text-white transition-colors rounded-full border border-white/[0.06]">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+              {/* MOBILE MENU TOGGLE */}
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="lg:hidden w-8 h-8 flex items-center justify-center text-white/60 hover:text-white transition-all rounded-full border border-white/[0.08] hover:border-white/20"
+                aria-label="Toggle menu"
+              >
+                <svg
+                  className={`w-4 h-4 transition-all duration-300 ${isMenuOpen ? 'rotate-45 scale-90' : ''}`}
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                >
+                  {isMenuOpen
+                    ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                  }
+                </svg>
               </button>
             </div>
           </div>
         </nav>
       </div>
+
+      {/* ===== MOBILE SLIDE-DOWN MENU ===== */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="lg:hidden fixed inset-0 z-[85] bg-black/60 backdrop-blur-sm"
+              onClick={closeMenu}
+            />
+            {/* Panel — floats below the navbar band */}
+            <motion.div
+              initial={{ opacity: 0, y: -16, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -12, scale: 0.97 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="lg:hidden fixed top-[80px] left-4 right-4 z-[90] rounded-3xl overflow-hidden"
+              dir="ltr"
+              style={{
+                background: 'linear-gradient(135deg, rgba(10,20,45,0.96) 0%, rgba(2,8,24,0.98) 100%)',
+                border: '1px solid rgba(56,189,248,0.2)',
+                boxShadow: '0 8px 40px rgba(0,0,0,0.8), 0 0 60px rgba(56,189,248,0.07)',
+                backdropFilter: 'blur(28px)'
+              }}
+            >
+              {/* Top shimmer line */}
+              <div className="absolute top-0 left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent rounded-full" />
+
+              <div className="p-5 flex flex-col gap-5">
+
+                {/* SEARCH */}
+                <form onSubmit={(e) => { handleSearch(e); closeMenu(); }} className="relative">
+                  <input
+                    type="text"
+                    placeholder={isAr ? 'ابحث في الأخبار...' : 'Search intelligence...'}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={`w-full bg-white/[0.05] border border-white/10 focus:border-primary/40 rounded-2xl py-3 pl-5 pr-12 text-sm font-bold text-white outline-none transition-all placeholder:text-white/20 ${isAr ? 'text-right' : 'text-left'}`}
+                  />
+                  <button type="submit" className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-primary transition-colors">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                  </button>
+                </form>
+
+                {/* CATEGORIES */}
+                <div>
+                  <p className="text-[9px] font-black tracking-[0.25em] text-white/20 uppercase mb-3">CATEGORIES</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[{ key: 'all', en: 'All', ar: 'الكل' }, { key: 'world', en: 'World', ar: 'عالمي' }, { key: 'politics', en: 'Politics', ar: 'سياسة' }, { key: 'market', en: 'Market', ar: 'سوق' }].map(cat => (
+                      <button
+                        key={cat.key}
+                        onClick={() => { setActiveCategory(cat.key); setOffset(0); fetchArticles(false, lang, true); closeMenu(); }}
+                        className={`px-4 py-2 rounded-full text-[11px] font-black tracking-wider uppercase transition-all ${activeCategory === cat.key
+                            ? 'bg-primary text-black shadow-[0_0_16px_rgba(56,189,248,0.4)]'
+                            : 'bg-white/[0.04] text-white/40 border border-white/10 hover:text-white/80 hover:border-white/20'
+                          }`}
+                      >
+                        {isAr ? cat.ar : cat.en}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* LIVE SIGNALS STRIP */}
+                {signals.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                      <p className="text-[9px] font-black tracking-[0.25em] text-white/20 uppercase">{isAr ? 'إشارات حية' : 'LIVE SIGNALS'}</p>
+                    </div>
+                    <div className="flex flex-col gap-1.5 max-h-40 overflow-hidden">
+                      {signals.slice(0, 5).map(p => (
+                        <Link
+                          key={p.id}
+                          href={`/news/${getPostId(p.id)}`}
+                          onClick={closeMenu}
+                          className="flex items-center gap-3 py-2 px-3 rounded-xl bg-white/[0.03] border border-white/5 hover:border-primary/20 hover:bg-white/[0.06] transition-all group"
+                        >
+                          <span className="w-1 h-1 rounded-full bg-primary/60 shrink-0" />
+                          <span className="text-[11px] font-bold text-white/60 group-hover:text-white/90 transition-colors line-clamp-1">
+                            {deduplicateTitle(p.aiTitle)}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* BOTTOM ROW: Refresh + Telegram */}
+                <div className="flex gap-3 pt-1 border-t border-white/5">
+                  <button
+                    onClick={() => { fetchArticles(true, lang, true); fetchSignals(lang); closeMenu(); }}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest border transition-all ${refreshing
+                        ? 'border-primary/40 text-primary bg-primary/10'
+                        : 'border-white/10 text-white/40 hover:text-white/70 hover:border-white/20'
+                      }`}
+                  >
+                    <svg className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    {isAr ? 'تحديث' : 'Refresh'}
+                  </button>
+                  <a
+                    href="https://t.me/alertvice"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest border border-white/10 text-white/40 hover:text-primary hover:border-primary/30 transition-all"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.008 9.456c-.15.664-.54.826-1.092.514l-3-2.21-1.447 1.393c-.16.16-.295.295-.605.295l.216-3.053 5.56-5.023c.242-.213-.052-.332-.374-.12l-6.871 4.326-2.962-.924c-.644-.2-.657-.644.134-.953l11.564-4.459c.537-.195 1.007.13.885.758z" /></svg>
+                    Telegram
+                  </a>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <div className="hidden lg:block w-full glass border-b border-primary/20 sticky top-[72px] z-[90] h-[40px] overflow-hidden">
         <div className="flex items-center h-full">
