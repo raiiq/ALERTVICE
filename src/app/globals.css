@@ -1,17 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --background: #020617;
-  /* Very dark slate, almost black-blue */
-  --foreground: #f8fafc;
+  --background: #02040a;
+  --foreground: #f0f5ff;
   --primary: #38bdf8;
-  /* Cyan blue for glow */
-  --primary-hover: #0ea5e9;
-  --surface: #0f172a;
-  --surface-hover: #1e293b;
-  --border-color: #334155;
+  --primary-rgb: 56, 189, 248;
+  --surface: #0b1120;
+  --surface-hover: #161e31;
+  --border-color: rgba(255, 255, 255, 0.08);
   --text-muted: #94a3b8;
   --glow-color: rgba(56, 189, 248, 0.4);
+  
+  /* Reading Experience Tokens */
+  --line-height-reading: 1.85;
+  --letter-spacing-reading: 0.01em;
 }
 
 @theme inline {
@@ -27,37 +29,53 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-cairo), system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+/* Glassmorphism Utilities */
+.glass {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Typography for Reading */
+.reading-text {
+  line-height: var(--line-height-reading);
+  letter-spacing: var(--letter-spacing-reading);
+  color: rgba(240, 245, 255, 0.85);
 }
 
 .prose-editor {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+[dir="rtl"] .prose-editor {
+  font-family: var(--font-cairo), system-ui;
+  line-height: 2;
 }
 
 .prose-editor a {
   color: var(--primary);
-  font-weight: bold;
-  transition: all 0.2s ease;
-  position: relative;
+  font-weight: 700;
+  transition: border 0.3s ease;
+  border-bottom: 2px solid transparent;
   text-decoration: none;
 }
 
 .prose-editor a:hover {
-  color: #fff;
-  text-shadow: 0 0 8px var(--glow-color);
+  border-bottom-color: var(--primary);
+  text-shadow: 0 0 12px var(--glow-color);
 }
 
-.glow-box:hover {
-  box-shadow: 0 0 20px var(--glow-color);
-  border-color: var(--primary);
-}
-
-/* Custom Scrollbar */
+/* Enhanced Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -65,33 +83,33 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--surface-hover);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary);
-  box-shadow: 0 0 10px var(--glow-color);
+  box-shadow: 0 0 15px var(--glow-color);
 }
 
+/* Animations */
 @keyframes marquee {
-  0% {
-    transform: translateX(0);
-  }
-
-  100% {
-    transform: translateX(-50%);
-  }
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 @keyframes marquee-rtl {
-  0% {
-    transform: translateX(0);
-  }
+  0% { transform: translateX(0); }
+  100% { transform: translateX(50%); }
+}
 
-  100% {
-    transform: translateX(50%);
-  }
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-reveal {
+  animation: reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 .animate-marquee {
