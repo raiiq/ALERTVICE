@@ -85,17 +85,19 @@ export async function GET(request: Request) {
                     }
                 });
 
-                // Deduping
+                // Deduping & Album Packaging
                 const groupedMap = new Map();
                 for (const p of scraped) {
-                    const key = `${p.date}_${p.plainText.substring(0, 10)}`;
+                    // Use date + first 20 chars as a heuristic for albums (Telegram posts albums with same text)
+                    const key = `${p.date}_${p.plainText.substring(0, 20)}`;
                     if (groupedMap.has(key)) {
                         const existing = groupedMap.get(key);
                         const parse = (v: any) => v ? JSON.parse(v) : [];
-                        const mI = [...new Set([...parse(existing.imageUrl), ...parse(p.imageUrl)])].slice(0, 5);
+                        const mI = [...new Set([...parse(existing.imageUrl), ...parse(p.imageUrl)])].slice(0, 10);
                         const mV = [...new Set([...parse(existing.videoUrl), ...parse(p.videoUrl)])].slice(0, 5);
                         existing.imageUrl = mI.length > 0 ? JSON.stringify(mI) : null;
                         existing.videoUrl = mV.length > 0 ? JSON.stringify(mV) : null;
+                        if (p.hasVideo) existing.hasVideo = true;
                     } else {
                         groupedMap.set(key, p);
                     }
@@ -103,31 +105,50 @@ export async function GET(request: Request) {
 
                 const toUpsert = Array.from(groupedMap.values()).reverse();
                 if (toUpsert.length > 0) {
-                    const { data: exist } = await supabase.from('global_posts').select('telegram_id').in('telegram_id', toUpsert.map(p => p.id));
+                    // Check existence by telegram_id
+                    const idsJson = toUpsert.map(p => p.id);
+                    const { data: exist } = await supabase.from('global_posts').select('telegram_id').in('telegram_id', idsJson);
                     const existSet = new Set(exist?.map(p => p.telegram_id));
 
-                    let news = toUpsert.filter(p => !existSet.has(p.id)).slice(0, 20);
+                    // Sync the 15 most recent unsynced posts
+                    let news = toUpsert.filter(p => !existSet.has(p.id)).slice(0, 15);
 
                     if (news.length > 0 && ai) {
-                        const batch = news.map((p, i) => `[${i}] ${p.plainText.substring(0, 800) || "Media"}`);
+                        const batch = news.map((p, i) => `[${i}] ${p.plainText.substring(0, 1000) || "Visual Intelligence Report"}`);
                         try {
                             const res = await ai.models.generateContent({
                                 model: 'gemini-2.0-flash',
-                                contents: [{ role: 'user', parts: [{ text: `Task: Translate the following news snippets into English AND Arabic. Output ONLY JSON. Form: { "items": { "0": { "en_title": "...", "en_summary": "...", "ar_title": "...", "ar_summary": "...", "tag": "politics|tech|market|world" } } } \n\nBatch: ${batch.join('\n')}` }] }]
+                                contents: [{
+                                    role: 'user', parts: [{
+                                        text: `Task: Analyze and translate these 15 news snippets into English AND Arabic. 
+                                For EACH snippet, give:
+                                1. en_title (Catchy, capitalised, max 10 words)
+                                2. en_summary (Professional, max 30 words)
+                                3. ar_title (Clear Arabic headline)
+                                4. ar_summary (Professional Arabic summary)
+                                5. tag (ONE OF: politics, tech, market, world, security)
+                                
+                                Output ONLY RAW JSON in this form: { "items": { "0": { "en_title": "...", ... }, "1": { ... } } }
+                                
+                                Snippets:
+                                ${batch.join('\n')}`
+                                    }]
+                                }]
                             });
-                            const aiText = res.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-                            const json = JSON.parse(aiText.replace(/```json|```/gi, '').trim() || '{}');
+
+                            const aiRaw = res.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+                            const cleanJson = JSON.parse(aiRaw.replace(/```json|```/gi, '').trim() || '{}');
 
                             const dbData = news.map((p, idx) => {
-                                const item = json.items?.[idx.toString()] || {};
+                                const item = cleanJson.items?.[idx.toString()] || {};
                                 return {
                                     telegram_id: p.id,
-                                    title_en: item.en_title || "Intelligence Alert",
-                                    summary_en: item.en_summary || "See detailed report.",
+                                    title_en: item.en_title || "Signal Intercepted",
+                                    summary_en: item.en_summary || "Automated intelligence capture from source.",
                                     tag_en: item.tag || "world",
                                     content_html_en: p.textHtml,
-                                    title_ar: item.ar_title || "تنبيه استخباراتي",
-                                    summary_ar: item.ar_summary || "انظر التقرير المفضل.",
+                                    title_ar: item.ar_title || "تم اعتراض إشارة",
+                                    summary_ar: item.ar_summary || "التقاط استخباراتي آلي من المصدر.",
                                     tag_ar: item.tag || "world",
                                     content_html_ar: p.textHtml,
                                     image_url: p.imageUrl,
@@ -137,8 +158,23 @@ export async function GET(request: Request) {
                                     views: p.views
                                 };
                             });
+
                             await supabase.from('global_posts').upsert(dbData, { onConflict: 'telegram_id' });
-                        } catch (e) { console.error("Atomic Sync Failed", e); }
+                        } catch (e) {
+                            console.error("AI Sync Error:", e);
+                            // Fallback sync without AI if AI fails
+                            const fallbackData = news.map(p => ({
+                                telegram_id: p.id,
+                                title_en: "Intelligence Alert",
+                                title_ar: "تنبيه استخباراتي",
+                                post_date: p.date,
+                                image_url: p.imageUrl,
+                                content_html_en: p.textHtml,
+                                content_html_ar: p.textHtml,
+                                views: p.views
+                            }));
+                            await supabase.from('global_posts').upsert(fallbackData, { onConflict: 'telegram_id' });
+                        }
                     }
                 }
             }
@@ -154,13 +190,20 @@ export async function GET(request: Request) {
 
     if (type === 'article') {
         query = query.or('image_url.not.is.null,video_url.not.is.null');
+    } else if (type === 'signal') {
+        // Signals are typically text-only updates, or we just want the absolute latest.
+        // If we want signals to be specifically text-only:
+        query = query.is('image_url', null).is('video_url', null);
     }
 
     const { data: posts, error: err } = await query
         .order('post_date', { ascending: false })
         .range(offset, offset + limit - 1);
 
-    if (err) throw err;
+    if (err) {
+        console.error("Supabase query error:", err);
+        return NextResponse.json({ posts: [], hasMore: false });
+    }
 
     const formatted = (posts || []).map(p => ({
         id: p.telegram_id,

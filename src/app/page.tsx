@@ -52,24 +52,29 @@ export default function Home() {
 
   // CENTRAL DEDUPLICATE ENGINE
   const getUniquePosts = (prev: NewsPost[], incoming: NewsPost[]) => {
-    const idMap = new Map(prev.map(p => [p.id, true]));
-    const unique = [...prev];
-    for (const p of incoming) {
-      if (!idMap.has(p.id)) {
+    // Priority: incoming > prev
+    const combined = [...incoming, ...prev];
+    const idMap = new Map();
+    const result: NewsPost[] = [];
+
+    for (const p of combined) {
+      if (p.id && !idMap.has(p.id)) {
         idMap.set(p.id, true);
-        unique.push(p);
+        result.push(p);
       }
     }
-    return unique.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   };
 
   // 1. SIGNAL MONITOR FETCH (Fast & Targeted)
-  const fetchSignals = async (currentLang = lang) => {
+  const fetchSignals = async (currentLang = lang, reset = false) => {
     try {
-      const res = await fetch(`/api/news?lang=${currentLang}&limit=15&type=signal&t=${Date.now()}`);
+      const res = await fetch(`/api/news?lang=${currentLang}&limit=20&type=signal&t=${Date.now()}`);
       if (res.ok) {
         const data = await res.json();
-        setSignals(prev => getUniquePosts(data.posts, prev).slice(0, 30));
+        const incoming = data.posts || [];
+        setSignals(prev => getUniquePosts(reset ? [] : prev, incoming).slice(0, 40));
       }
     } catch (e) { console.error("Signal fetch failed", e); }
   };
@@ -91,7 +96,7 @@ export default function Home() {
       const fetched = data.posts || [];
 
       if (reset || isRefresh) {
-        setArticles(prev => getUniquePosts(isRefresh ? fetched : [], isRefresh ? prev : fetched));
+        setArticles(prev => getUniquePosts(reset ? [] : prev, fetched));
         setOffset(fetched.length);
       } else {
         setArticles(prev => getUniquePosts(prev, fetched));
@@ -143,7 +148,7 @@ export default function Home() {
     localStorage.setItem("newsLang", newLang);
     setOffset(0);
     fetchArticles(false, newLang, true);
-    fetchSignals(newLang);
+    fetchSignals(newLang, true);
   };
 
   const formatDate = (isoString: string) => {
