@@ -122,9 +122,15 @@ export default function Home() {
 
   useEffect(() => {
     if (!mounted || searchQuery) return;
-    const interval = setInterval(() => fetchSignals(lang), 8000);
+    const interval = setInterval(() => {
+      fetchSignals(lang);
+      // Auto-refresh main feed if it's empty to catch initial sync
+      if (articles.length === 0 && !loading) {
+        fetchArticles(false, lang, true);
+      }
+    }, 8000);
     return () => clearInterval(interval);
-  }, [lang, mounted, searchQuery]);
+  }, [lang, mounted, searchQuery, articles.length, loading]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -270,8 +276,23 @@ export default function Home() {
         </div>
 
         {/* FEED */}
-        <div className="flex-1 p-4 sm:p-8 lg:p-12">
+        <div className="flex-1 p-4 sm:p-8 lg:p-12 min-h-screen">
           <motion.div variants={containerVars} initial="hidden" animate="show" className="flex flex-col gap-16">
+            {!loading && articles.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-32 text-center gap-6">
+                <div className="w-16 h-16 border border-primary/20 bg-primary/5 rounded-full flex items-center justify-center animate-pulse">
+                  <svg className="w-8 h-8 text-primary/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-xl font-black text-white uppercase tracking-widest">{isAr ? 'لا توجد بيانات حالياً' : 'No Intelligence Found'}</h3>
+                  <p className="text-sm text-text-muted max-w-xs">{isAr ? 'نحن نقوم بمسح القنوات الآن، يرجى الانتظار...' : 'Scanning active sectors. New signals will appear here shortly.'}</p>
+                </div>
+                <button onClick={() => fetchArticles(true, lang, true)} className="text-[10px] font-black text-primary border border-primary/20 px-6 py-3 rounded-full hover:bg-primary/10 transition-all uppercase tracking-widest">
+                  FORCED RE-SCAN
+                </button>
+              </div>
+            )}
+
             {heroPost && (
               <motion.article variants={itemVars} className="group overflow-hidden rounded-[2.5rem] bg-surface/10 border border-white/5 hover:border-primary/20 transition-all duration-700 shadow-3xl">
                 <Link href={`/news/${getPostId(heroPost.id)}`} className={`flex flex-col lg:flex-row ${isAr ? 'lg:flex-row-reverse' : ''}`}>
@@ -330,11 +351,35 @@ export default function Home() {
               ))}
             </div>
 
-            {hasMore && (
-              <button onClick={loadMore} disabled={loadingMore} className="w-full py-6 rounded-3xl border border-white/5 bg-surface/30 hover:bg-surface/50 text-white font-black uppercase tracking-widest group">
-                {loadingMore ? "Processing..." : "Load More Intelligence"}
-              </button>
-            )}
+            {/* PAGINATION / LOAD MORE */}
+            <div className="flex flex-col items-center gap-8 py-12 mt-8 border-t border-white/5">
+              {hasMore ? (
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="w-full max-w-md py-6 rounded-2xl border border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary font-black uppercase tracking-[0.3em] transition-all duration-300 shadow-[0_0_30px_rgba(var(--primary-rgb),0.1)] hover:shadow-[0_0_50px_rgba(var(--primary-rgb),0.2)] disabled:opacity-50 disabled:cursor-not-allowed group"
+                >
+                  <div className="flex items-center justify-center gap-4">
+                    {loadingMore ? (
+                      <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                    ) : (
+                      <>
+                        <span>{isAr ? 'تحميل المزيد من البيانات' : 'Query More Intelligence'}</span>
+                        <svg className="w-4 h-4 group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"></path></svg>
+                      </>
+                    )}
+                  </div>
+                </button>
+              ) : (
+                articles.length > 0 && (
+                  <div className="flex flex-col items-center gap-2 opacity-30">
+                    <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white">END OF AVAILABLE INTELLIGENCE TRANSMISSION</span>
+                    <div className="w-px h-12 bg-gradient-to-b from-white to-transparent mt-4"></div>
+                  </div>
+                )
+              )}
+            </div>
           </motion.div>
         </div>
       </main>
