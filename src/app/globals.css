@@ -56,46 +56,83 @@ body {
   border-color: var(--primary);
 }
 
-/* Liquid Glass Navbar */
+/* ==========================================
+   FLOATING LIQUID GLASS NAVBAR
+   ========================================== */
+
+/* Sticky band — full width, holds the floating pill */
+.navbar-band {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  pointer-events: none;
+}
+
+/* The floating pill */
 .liquid-glass-nav {
-  background: var(--glass-bg);
-  backdrop-filter: blur(24px) saturate(180%) brightness(1.08);
-  -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.08);
-  border-bottom: 1px solid var(--glass-border);
+  pointer-events: all;
+  width: 100%;
+  height: 52px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+
+  /* Rich glass background */
+  background: linear-gradient(135deg,
+      rgba(15, 23, 42, 0.82) 0%,
+      rgba(2, 14, 36, 0.90) 50%,
+      rgba(15, 23, 42, 0.82) 100%);
+
+  /* Real blur */
+  backdrop-filter: blur(28px) saturate(200%) brightness(1.15);
+  -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.15);
+
+  /* Glowing cyan border */
+  border: 1px solid rgba(56, 189, 248, 0.22);
+
+  /* Drop shadow with glow */
   box-shadow:
-    0 1px 0 0 var(--glass-highlight) inset,
-    0 8px 32px var(--glass-shadow),
-    0 2px 8px rgba(56, 189, 248, 0.04);
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 1px 0 rgba(255, 255, 255, 0.07) inset,
+    0 4px 24px rgba(0, 0, 0, 0.7),
+    0 0 40px rgba(56, 189, 248, 0.08),
+    0 1px 2px rgba(56, 189, 248, 0.15);
+
   position: relative;
   overflow: hidden;
 }
 
+/* Top-edge highlight shimmer */
 .liquid-glass-nav::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background: linear-gradient(120deg,
-      rgba(255, 255, 255, 0.04) 0%,
-      rgba(56, 189, 248, 0.03) 40%,
-      rgba(255, 255, 255, 0.01) 60%,
-      transparent 100%);
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.35) 30%,
+      rgba(56, 189, 248, 0.6) 50%,
+      rgba(255, 255, 255, 0.35) 70%,
+      transparent);
+  border-radius: 999px;
   pointer-events: none;
-  z-index: 0;
 }
 
+/* Inner glass sheen sweep */
 .liquid-glass-nav::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg,
-      transparent 0%,
-      rgba(56, 189, 248, 0.5) 30%,
-      rgba(255, 255, 255, 0.3) 50%,
-      rgba(56, 189, 248, 0.5) 70%,
-      transparent 100%);
+  inset: 0;
+  background: linear-gradient(110deg,
+      rgba(255, 255, 255, 0.05) 0%,
+      rgba(56, 189, 248, 0.03) 35%,
+      transparent 60%);
+  border-radius: 999px;
   pointer-events: none;
 }
 
