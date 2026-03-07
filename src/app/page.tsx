@@ -498,30 +498,45 @@ export default function Home() {
               </div>
             )}
 
-            {monitorPosts.map(p => (
-              <motion.div key={p.id} variants={itemVars}>
-                <Link href={`/news/${getPostId(p.id)}`} className="liquid-sidebar-card group">
-                  <div className="glow-accent"></div>
-                  <div className={`flex justify-between items-center mb-3 ${isAr ? 'flex-row-reverse' : ''}`}>
-                    <div className={`flex items-center gap-2 ${isAr ? 'flex-row-reverse' : ''}`}>
-                      <span className="w-1 h-1 bg-primary rounded-full animate-pulse"></span>
-                      <span className="text-[10px] font-black text-primary/80 font-mono tracking-tighter uppercase whitespace-nowrap">
-                        {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-                      </span>
+            {monitorPosts.map(p => {
+              const title = deduplicateTitle(p.aiTitle);
+              // Hide summary if it's identical to title or very short
+              const showSummary = p.aiSummary &&
+                p.aiSummary.trim().toLowerCase() !== title.trim().toLowerCase() &&
+                p.aiSummary.length > 5;
+
+              return (
+                <motion.div key={p.id} variants={itemVars}>
+                  <Link href={`/news/${getPostId(p.id)}`} className="liquid-sidebar-card group">
+                    <div className="glow-accent"></div>
+                    <div className={`flex justify-between items-center mb-3 ${isAr ? 'flex-row-reverse' : ''}`}>
+                      <div className={`flex items-center gap-2 ${isAr ? 'flex-row-reverse' : ''}`}>
+                        <div className="relative flex items-center justify-center">
+                          <span className="absolute w-2 h-2 bg-primary/40 rounded-full animate-ping"></span>
+                          <span className="relative block w-1 h-1 bg-primary rounded-full"></span>
+                        </div>
+                        <span className="text-[10px] font-black text-primary font-mono tracking-widest uppercase">
+                          {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                        </span>
+                      </div>
+                      <span className="text-[8px] font-black text-white/10 font-mono tracking-[0.2em] uppercase">INTEL-{getPostId(p.id).slice(-4)}</span>
                     </div>
-                    <span className="text-[9px] text-white/10 font-mono uppercase">ID-{getPostId(p.id).slice(-4)}</span>
-                  </div>
-                  <h4 className={`text-[13px] font-bold text-white/80 group-hover:text-white transition-colors leading-relaxed ${alignClass} line-clamp-2 mb-2`}>
-                    {deduplicateTitle(p.aiTitle)}
-                  </h4>
-                  {p.aiSummary && (
-                    <p className={`text-[10px] text-text-muted/40 mt-2 leading-relaxed line-clamp-2 ${alignClass} group-hover:text-text-muted/60 transition-colors italic`}>
-                      {p.aiSummary}
-                    </p>
-                  )}
-                </Link>
-              </motion.div>
-            ))}
+
+                    <h4 className={`text-[13px] font-black text-white/90 group-hover:text-primary transition-colors leading-relaxed ${alignClass} line-clamp-3`}>
+                      {title}
+                    </h4>
+
+                    {showSummary && (
+                      <div className={`mt-3 pt-3 border-t border-white/[0.04] ${alignClass}`}>
+                        <p className="text-[10px] text-text-muted/40 leading-relaxed line-clamp-2 group-hover:text-text-muted/60 transition-colors italic">
+                          {p.aiSummary}
+                        </p>
+                      </div>
+                    )}
+                  </Link>
+                </motion.div>
+              );
+            })}
           </motion.div>
         </div>
 
