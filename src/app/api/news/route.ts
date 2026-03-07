@@ -210,12 +210,11 @@ export async function GET(request: Request) {
         query = query.or(`title_en.ilike.%${q}%,title_ar.ilike.%${q}%,summary_en.ilike.%${q}%,summary_ar.ilike.%${q}%`);
     }
 
-    // RELAX FEED FILTERS (Show all messages if specifically not requested)
     if (type === 'article') {
-        // Only show items with media in the main feed
-        query = query.not('image_url', 'is', null);
+        // Main feed should show EVERYTHING to avoid empty sections.
+        // We don't filter by image_url here anymore.
     } else if (type === 'signal') {
-        // Show text-only in signals
+        // Signals are specific text-only alerts for the sidebar
         query = query.is('image_url', null).is('video_url', null);
     }
 
