@@ -459,12 +459,12 @@ export default function Home() {
       {/* ===== LIQUID GLASS SIGNAL FLASH TICKER ===== */}
       <div className="hidden lg:flex ticker-wrapper">
         <div className="liquid-glass-ticker">
-          <div className="ticker-badge">
+          <div className={`ticker-badge ${isAr ? 'border-l border-r-0' : ''}`}>
             <div className="ticker-badge-dot"></div>
             <span className="text-primary font-black text-[10px] tracking-[0.2em] uppercase">{isAr ? 'عاجل' : 'SIGNAL FLASH'}</span>
           </div>
-          <div className="ticker-content relative">
-            <div className={`${isAr ? 'animate-marquee-rtl' : 'animate-marquee'} flex items-center gap-24`}>
+          <div className="ticker-content relative overflow-hidden flex-1 h-full flex items-center">
+            <div className={`${isAr ? 'animate-marquee-rtl' : 'animate-marquee'} flex items-center gap-32`}>
               {[...signals, ...signals].map((p, idx) => (
                 <Link key={`ticker-${idx}`} href={`/news/${getPostId(p.id)}`} className="text-[10px] font-bold text-white/80 hover:text-primary transition-all uppercase whitespace-nowrap tracking-wider">
                   {deduplicateTitle(p.aiTitle)}
@@ -476,34 +476,48 @@ export default function Home() {
       </div>
 
       <main className="flex-grow w-full flex flex-col lg:flex-row">
-        {/* LEFT SIDEBAR */}
-        <div className="hidden lg:flex w-[320px] shrink-0 border-r border-white/5 flex-col sticky top-[104px] h-[calc(100vh-104px)] overflow-y-auto">
-          <div className="p-5 border-b border-white/5 bg-surface/30 backdrop-blur-sm sticky top-0 z-10">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
-              <h3 className="font-black text-white uppercase tracking-widest text-[11px]">{isAr ? 'راصد الإشارات' : 'Signal Monitor'}</h3>
+        {/* LEFT SIDEBAR (SIGNAL MONITOR) */}
+        <div className="hidden lg:flex w-[340px] shrink-0 border-r border-white/5 flex-col sticky top-[120px] h-[calc(100vh-120px)] overflow-y-auto scrollbar-none">
+          <div className="p-6 border-b border-white/5 bg-surface/30 backdrop-blur-md sticky top-0 z-20">
+            <div className={`flex items-center gap-3 ${isAr ? 'flex-row-reverse' : ''}`}>
+              <div className="relative">
+                <span className="absolute inset-0 bg-red-500/40 rounded-full animate-ping"></span>
+                <span className="relative block w-2.5 h-2.5 bg-red-600 rounded-full"></span>
+              </div>
+              <h3 className="font-black text-white uppercase tracking-[0.2em] text-[11px]">{isAr ? 'راصد الإشارات' : 'Signal Monitor'}</h3>
             </div>
           </div>
-          <motion.div variants={containerVars} initial="hidden" animate="show" className="p-4 flex flex-col gap-2">
+
+          <motion.div variants={containerVars} initial="hidden" animate="show" className="sidebar-monitor">
             {monitorPosts.length === 0 && (
-              <div className="flex flex-col items-center gap-3 py-8 opacity-40">
-                <div className="w-8 h-8 border border-primary/30 rounded-full flex items-center justify-center animate-pulse">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+              <div className="flex flex-col items-center gap-4 py-20 opacity-30">
+                <div className="w-10 h-10 border border-primary/20 rounded-full flex items-center justify-center animate-spin-slow">
+                  <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">{isAr ? 'جارٍ المسح...' : 'Scanning...'}</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.4em] text-primary">{isAr ? 'جارٍ المسح...' : 'Scanning Deep Net...'}</span>
               </div>
             )}
+
             {monitorPosts.map(p => (
               <motion.div key={p.id} variants={itemVars}>
-                <Link href={`/news/${getPostId(p.id)}`} className="group block p-3 rounded-xl bg-surface/10 border border-white/5 hover:border-primary/20 hover:bg-surface/20 transition-all relative overflow-hidden">
-                  <div className={`absolute top-0 ${isAr ? 'right-0' : 'left-0'} w-0.5 h-full bg-primary/0 group-hover:bg-primary/40 transition-colors`}></div>
-                  <div className={`flex justify-between items-center mb-1.5 ${isAr ? 'flex-row-reverse' : ''}`}>
-                    <span className="text-[9px] font-black text-primary font-mono">{new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    <span className="text-[9px] text-text-muted/30 uppercase font-mono">#{getPostId(p.id)}</span>
+                <Link href={`/news/${getPostId(p.id)}`} className="liquid-sidebar-card group">
+                  <div className="glow-accent"></div>
+                  <div className={`flex justify-between items-center mb-3 ${isAr ? 'flex-row-reverse' : ''}`}>
+                    <div className={`flex items-center gap-2 ${isAr ? 'flex-row-reverse' : ''}`}>
+                      <span className="w-1 h-1 bg-primary rounded-full animate-pulse"></span>
+                      <span className="text-[10px] font-black text-primary/80 font-mono tracking-tighter uppercase whitespace-nowrap">
+                        {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                      </span>
+                    </div>
+                    <span className="text-[9px] text-white/10 font-mono uppercase">ID-{getPostId(p.id).slice(-4)}</span>
                   </div>
-                  <h4 className={`text-[12px] font-bold text-white/80 group-hover:text-white transition-colors leading-snug ${alignClass} line-clamp-2`}>{deduplicateTitle(p.aiTitle)}</h4>
+                  <h4 className={`text-[13px] font-bold text-white/80 group-hover:text-white transition-colors leading-relaxed ${alignClass} line-clamp-2 mb-2`}>
+                    {deduplicateTitle(p.aiTitle)}
+                  </h4>
                   {p.aiSummary && (
-                    <p className={`text-[10px] text-text-muted/50 mt-1 leading-relaxed line-clamp-2 ${alignClass}`}>{p.aiSummary}</p>
+                    <p className={`text-[10px] text-text-muted/40 mt-2 leading-relaxed line-clamp-2 ${alignClass} group-hover:text-text-muted/60 transition-colors italic`}>
+                      {p.aiSummary}
+                    </p>
                   )}
                 </Link>
               </motion.div>
