@@ -456,16 +456,17 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <div className="hidden lg:block w-full glass border-b border-primary/20 sticky top-[72px] z-[90] h-[40px] overflow-hidden">
-        <div className="flex items-center h-full">
-          <div className="flex items-center gap-3 shrink-0 bg-surface px-6 h-full border-r border-white/5 shadow-xl z-20">
-            <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
-            <span className="text-primary font-black text-[11px] tracking-widest uppercase">{isAr ? 'عاجل' : 'SIGNAL FLASH'}</span>
+      {/* ===== LIQUID GLASS SIGNAL FLASH TICKER ===== */}
+      <div className="hidden lg:flex ticker-wrapper">
+        <div className="liquid-glass-ticker">
+          <div className="ticker-badge">
+            <div className="ticker-badge-dot"></div>
+            <span className="text-primary font-black text-[10px] tracking-[0.2em] uppercase">{isAr ? 'عاجل' : 'SIGNAL FLASH'}</span>
           </div>
-          <div className="relative flex-1 overflow-hidden px-8">
+          <div className="ticker-content relative">
             <div className={`${isAr ? 'animate-marquee-rtl' : 'animate-marquee'} flex items-center gap-24`}>
               {[...signals, ...signals].map((p, idx) => (
-                <Link key={`ticker-${idx}`} href={`/news/${getPostId(p.id)}`} className="text-[11px] font-bold text-white/90 hover:text-primary transition-all uppercase whitespace-nowrap">
+                <Link key={`ticker-${idx}`} href={`/news/${getPostId(p.id)}`} className="text-[10px] font-bold text-white/80 hover:text-primary transition-all uppercase whitespace-nowrap tracking-wider">
                   {deduplicateTitle(p.aiTitle)}
                 </Link>
               ))}
