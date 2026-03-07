@@ -217,8 +217,8 @@ export default function Home() {
         <div className="loading-radar-ping" />
         <div className="loading-radar-core" />
       </div>
-      <div className="loading-title font-cairo" data-text="ALERTVICE">ALERTVICE</div>
-      <div className="loading-subtitle font-cairo">Global Intelligence Network</div>
+      <div className="loading-title font-inter" data-text="ALERTVICE">ALERTVICE</div>
+      <div className="loading-subtitle font-inter">Global Intelligence Network</div>
       <div className="loading-dots"><span /><span /><span /></div>
       <div className="loading-status">Initializing feed...</div>
     </div>
@@ -237,8 +237,8 @@ export default function Home() {
             <div className="loading-radar-ping" />
             <div className="loading-radar-core" />
           </div>
-          <div className="loading-title font-cairo" data-text="ALERTVICE">ALERTVICE</div>
-          <div className="loading-subtitle font-cairo">Global Intelligence Network</div>
+          <div className="loading-title font-inter" data-text="ALERTVICE">ALERTVICE</div>
+          <div className="loading-subtitle font-inter">Global Intelligence Network</div>
           <div className="loading-dots"><span /><span /><span /></div>
           <div className="loading-status">{lang === 'ar' ? 'جارٍ تحميل البيانات...' : 'Acquiring intelligence feed...'}</div>
         </div>
@@ -461,7 +461,7 @@ export default function Home() {
         <div className="liquid-glass-ticker">
           <div className={`ticker-badge ${isAr ? 'border-l border-r-0' : ''}`}>
             <div className="ticker-badge-dot"></div>
-            <span className="text-primary font-black text-[10px] tracking-[0.2em] uppercase">{isAr ? 'عاجل' : 'SIGNAL FLASH'}</span>
+            <span className="text-primary font-black text-[10px] tracking-[0.2em] uppercase font-inter">{isAr ? 'عاجل' : 'RADAR FLASH'}</span>
           </div>
           <div className="ticker-content relative overflow-hidden flex-1 h-full flex items-center">
             <div className={`${isAr ? 'animate-marquee-rtl' : 'animate-marquee'} flex items-center gap-32`}>
@@ -485,10 +485,10 @@ export default function Home() {
                   <span className="absolute w-4 h-4 bg-red-500/20 rounded-full animate-ping"></span>
                   <span className="relative block w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]"></span>
                 </div>
-                <h3 className="font-black text-white uppercase tracking-[0.3em] text-[12px]">{isAr ? 'راصد الإشارات' : 'Signal Monitor'}</h3>
+                <h3 className="font-black text-white uppercase tracking-[0.3em] text-[12px] font-inter">{isAr ? 'رادار التنبيه' : 'ALERT RADAR'}</h3>
               </div>
-              <Link href="/live" className="text-[10px] font-black text-primary border border-primary/20 bg-primary/5 px-4 py-2 rounded-xl hover:bg-primary/20 transition-all uppercase tracking-widest shadow-[0_0_20px_rgba(56,189,248,0.15)]">
-                {isAr ? 'فتح راصد الكرة الأرضية' : 'OPEN 3D GLOBE MONITOR'}
+              <Link href="/live" className="text-[10px] font-black text-primary border border-primary/20 bg-primary/5 px-4 py-2 rounded-xl hover:bg-primary/20 transition-all uppercase tracking-widest shadow-[0_0_20px_rgba(56,189,248,0.15)] font-inter">
+                {isAr ? 'فتح راصد الكرة الأرضية' : 'OPEN 3D RADAR MONITOR'}
               </Link>
             </div>
           </div>
