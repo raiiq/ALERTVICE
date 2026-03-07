@@ -1,32 +1,17 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
 import { deduplicateTitle } from "../components/MediaDisplay";
-import dynamic from 'next/dynamic';
-
-// Leaflet dynamic imports for SSR compatibility
-const MapContainer = dynamic(() => import('react-leaflet').then(m => m.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import('react-leaflet').then(m => m.TileLayer), { ssr: false });
-const CircleMarker = dynamic(() => import('react-leaflet').then(m => m.CircleMarker), { ssr: false });
-const Popup = dynamic(() => import('react-leaflet').then(m => m.Popup), { ssr: false });
-const useMap = dynamic(() => import('react-leaflet').then(m => m.useMap), { ssr: false });
-
-import 'leaflet/dist/leaflet.css';
 
 interface NewsPost {
     id: string;
-    textHtml: string;
     plainText: string;
-    imageUrl: string | null;
-    hasVideo: boolean;
-    videoUrl: string | null;
     date: string;
-    views: string;
     aiTitle: string | null;
     aiSummary?: string | null;
     aiTag?: string | null;
+    location?: { name: string; lat: number; lng: number } | null;
 }
 
 const IRAQ_CITIES = [
@@ -50,225 +35,294 @@ const IRAQ_CITIES = [
     { name: "Tikrit", ar: "تكريت", lat: 34.6074, lng: 43.6782 },
 ];
 
-function MapController({ center, zoom }: { center: [number, number], zoom: number }) {
-    const map = (useMap as any)();
-    useEffect(() => {
-        if (center && map) map.flyTo(center, zoom, { duration: 1.5 });
-    }, [center, zoom, map]);
-    return null;
+const TAG_COLORS: Record<string, { bg: string; text: string }> = {
+    Conflict: { bg: "#7f1d1d", text: "#fca5a5" },
+    Political: { bg: "#3b0764", text: "#c4b5fd" },
+    Military: { bg: "#1e3a5f", text: "#7dd3fc" },
+    Security: { bg: "#1a2e1a", text: "#86efac" },
+    default: { bg: "#1c1c22", text: "#9ca3af" },
+};
+
+function getTimeAgo(dateStr: string): string {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins} minutes ago`;
+    return `${Math.floor(mins / 60)} hours ago`;
 }
 
-export default function MonitorTheSituation() {
+// Globe component — uses globe.gl loaded client-side
+function GlobeMap({
+    signals,
+    onFlyTo,
+    targetLat,
+    targetLng,
+}: {
+    signals: NewsPost[];
+    onFlyTo: (lat: number, lng: number) => void;
+    targetLat: number | null;
+    targetLng: number | null;
+}) {
+    const globeRef = useRef<HTMLDivElement>(null);
+    const globeInstance = useRef<any>(null);
+
+    const points = useMemo(() => {
+        return IRAQ_CITIES.map(city => {
+            const events = signals.filter(s => s.location?.name === city.name);
+            return {
+                lat: city.lat,
+                lng: city.lng,
+                city: city.name,
+                count: events.length,
+                color: events.length > 0 ? "#f97316" : "rgba(255,255,255,0.2)",
+                radius: events.length > 0 ? 0.5 + events.length * 0.1 : 0.2,
+            };
+        });
+    }, [signals]);
+
+    useEffect(() => {
+        if (!globeRef.current) return;
+
+        let globe: any = null;
+
+        import("globe.gl").then((mod) => {
+            const Globe = (mod.default || mod) as any;
+            globe = Globe({ rendererConfig: { antialias: true, alpha: true } })(globeRef.current!);
+
+            // Satellite imagery layer + night lights blend
+            globe
+                .globeImageUrl("https://unpkg.com/three-globe/example/img/earth-night.jpg")
+                .backgroundImageUrl("//unpkg.com/three-globe/example/img/night-sky.png")
+                .showAtmosphere(true)
+                .atmosphereColor("rgba(56,189,248,0.12)")
+                .atmosphereAltitude(0.08)
+                // Points
+                .pointsData(points)
+                .pointLat("lat")
+                .pointLng("lng")
+                .pointColor("color")
+                .pointAltitude(0.01)
+                .pointRadius("radius")
+                .pointLabel((d: any) => `
+          <div style="background:rgba(10,10,14,0.95);border:1px solid rgba(56,189,248,0.4);padding:8px 12px;border-radius:8px;color:white;font-size:11px;font-weight:bold;letter-spacing:0.05em;">
+            ${d.city}<br/><span style="color:#38bdf8;font-size:9px">${d.count} signals</span>
+          </div>
+        `)
+                .onPointClick((d: any) => { onFlyTo(d.lat, d.lng); });
+
+            // Start view centered on Iraq
+            globe.pointOfView({ lat: 33.3, lng: 44.4, altitude: 1.5 }, 0);
+
+            globeInstance.current = globe;
+
+            // Auto-rotate slowly
+            globe.controls().autoRotate = true;
+            globe.controls().autoRotateSpeed = 0.3;
+            globe.controls().enableZoom = true;
+        });
+
+        return () => {
+            if (globeRef.current) globeRef.current.innerHTML = "";
+        };
+    }, []);
+
+    // Update points when signals change
+    useEffect(() => {
+        if (!globeInstance.current) return;
+        globeInstance.current.pointsData(points);
+    }, [points]);
+
+    // Fly to city on event click
+    useEffect(() => {
+        if (!globeInstance.current || targetLat == null || targetLng == null) return;
+        globeInstance.current.pointOfView({ lat: targetLat, lng: targetLng, altitude: 0.5 }, 1500);
+        // Stop auto-rotate when user selects an event
+        globeInstance.current.controls().autoRotate = false;
+    }, [targetLat, targetLng]);
+
+    return <div ref={globeRef} className="w-full h-full" />;
+}
+
+// ─────────────────────────────────────────
+export default function MonitorPage() {
     const [signals, setSignals] = useState<NewsPost[]>([]);
-    const [activeTab, setActiveTab] = useState("FEED");
-    const [mapCenter, setMapCenter] = useState<[number, number]>([33.3152, 44.3661]);
-    const [mapZoom, setMapZoom] = useState(6);
+    const [activeTab, setActiveTab] = useState<"FEED" | "LIVE" | "REPORTS">("FEED");
+    const [targetLat, setTargetLat] = useState<number | null>(null);
+    const [targetLng, setTargetLng] = useState<number | null>(null);
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
         setIsClient(true);
+        const stored = typeof window !== "undefined" ? localStorage.getItem("newsLang") || "en" : "en";
         const fetchSignals = async () => {
             try {
-                const stored = localStorage.getItem("newsLang") || "en";
                 const res = await fetch(`/api/news?lang=${stored}&limit=100&type=signal&t=${Date.now()}`);
                 if (res.ok) {
                     const data = await res.json();
-                    setSignals(data.posts || []);
+                    const posts = (data.posts || []) as any[];
+                    // Attach location
+                    const enriched = posts.map((p: any) => {
+                        const text = ((p.aiTitle || "") + " " + (p.plainText || "")).toLowerCase();
+                        const location = IRAQ_CITIES.find(c =>
+                            text.includes(c.name.toLowerCase()) || text.includes(c.ar)
+                        );
+                        return { ...p, location: location || null };
+                    });
+                    setSignals(enriched);
                 }
             } catch (e) { console.error(e); }
         };
         fetchSignals();
-        const interval = setInterval(fetchSignals, 30000);
-        return () => clearInterval(interval);
+        const t = setInterval(fetchSignals, 30000);
+        return () => clearInterval(t);
     }, []);
 
-    const signalsWithLocations = useMemo(() => {
-        return signals.map(s => {
-            const text = ((s.aiTitle || "") + " " + (s.aiSummary || "") + " " + s.plainText).toLowerCase();
-            const location = IRAQ_CITIES.find(city =>
-                text.includes(city.name.toLowerCase()) || text.includes(city.ar)
-            );
-            return { ...s, location };
-        });
-    }, [signals]);
+    const handleFlyTo = useCallback((lat: number, lng: number) => {
+        setTargetLat(lat);
+        setTargetLng(lng);
+    }, []);
 
-    const getTimeAgo = (dateStr: string) => {
-        const d = new Date(dateStr);
-        const diff = Date.now() - d.getTime();
-        const mins = Math.floor(diff / 60000);
-        if (mins < 60) return `${mins} minutes ago`;
-        const hours = Math.floor(mins / 60);
-        return `${hours} hours ago`;
-    };
-
-    if (!isClient) return <div className="min-h-screen bg-[#0d0d0f]" />;
+    const getPostId = (id: string) => id.split("/").pop() || "";
 
     return (
-        <div className="fixed inset-0 bg-[#0d0d0f] text-white flex flex-col font-sans overflow-hidden">
+        <div
+            className="fixed inset-0 text-white flex flex-col overflow-hidden"
+            style={{ background: "#0d0d10", fontFamily: "'Inter', system-ui, sans-serif" }}
+        >
+            {/* ── TOP HEADER ── */}
+            <header className="h-11 border-b border-white/[0.06] bg-[#111115] flex items-center gap-4 px-4 shrink-0 z-[900]">
+                {/* Logo */}
+                <Link href="/" className="flex items-center gap-2 mr-2 hover:opacity-80 transition-opacity shrink-0">
+                    <div className="w-5 h-5 rounded-sm bg-white flex items-center justify-center">
+                        <div className="w-2.5 h-2.5 bg-[#0d0d10] rounded-full" />
+                    </div>
+                    <span className="font-bold text-[13px] tracking-tight whitespace-nowrap text-white/90">Monitor the Situation</span>
+                </Link>
 
-            {/* TOP HEADER BAR (Monitor The Situation Style) */}
-            <header className="h-12 border-b border-white/5 bg-[#121216] px-4 flex items-center justify-between z-[1000]">
-                <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-2">
-                        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                            <div className="w-5 h-5 bg-white rounded-sm flex items-center justify-center">
-                                <div className="w-3 h-3 border-2 border-black rounded-full"></div>
-                            </div>
-                            <span className="font-bold text-sm tracking-tight text-white/90">Monitor the Situation</span>
-                        </Link>
-                    </div>
-                    <div className="relative group">
-                        <input
-                            type="text"
-                            placeholder="Search..."
-                            className="bg-[#1c1c22] border-none rounded py-1 px-3 pl-8 text-xs text-white/60 focus:outline-none focus:ring-1 focus:ring-primary/40 w-48 transition-all"
-                        />
-                        <svg className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                    </div>
+                {/* Search */}
+                <div className="relative">
+                    <svg className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <input type="text" placeholder="Search..." className="bg-[#1c1c24] text-white/60 placeholder:text-white/20 text-[11px] py-1.5 pl-8 pr-3 rounded w-40 outline-none border border-white/5 focus:border-primary/30" />
                 </div>
 
-                {/* TOP TICKER / TOOLS */}
-                <div className="hidden lg:flex items-center gap-4 flex-1 justify-center px-10">
-                    <div className="flex items-center gap-1 overflow-hidden h-6">
-                        <div className="flex items-center gap-3 animate-marquee whitespace-nowrap text-[10px] font-bold text-white/40 tracking-wider">
-                            {signals.slice(0, 5).map(s => (
-                                <span key={s.id} className="flex items-center gap-2">
-                                    <span className="text-primary/60">●</span> {deduplicateTitle(s.aiTitle)}
-                                    <span className="mx-4 opacity-20">|</span>
+                {/* Ticker */}
+                <div className="flex-1 overflow-hidden h-full flex items-center mx-4">
+                    <div className="whitespace-nowrap overflow-hidden h-full flex items-center">
+                        <div className="inline-flex gap-8 items-center animate-marquee text-[10px] font-semibold text-white/30 tracking-wider">
+                            {[...signals, ...signals].slice(0, 20).map((s, i) => (
+                                <span key={i} className="flex items-center gap-2 shrink-0">
+                                    <span className="text-orange-500/60">■</span>
+                                    {deduplicateTitle(s.aiTitle)}
                                 </span>
                             ))}
                         </div>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1 bg-[#1c1c22] rounded p-0.5">
-                        <button className="px-2 py-0.5 text-[10px] font-bold text-white/30 hover:text-white transition-colors">6H</button>
-                        <button className="px-2 py-0.5 text-[10px] font-bold bg-[#2d2d38] text-white rounded-sm shadow-sm">24H</button>
+                {/* Right Controls */}
+                <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex items-center gap-0.5 bg-[#1c1c24] rounded p-0.5 border border-white/5">
+                        <button className="px-2.5 py-0.5 text-[10px] font-bold text-white/30 hover:text-white transition-colors">6H</button>
+                        <button className="px-2.5 py-0.5 text-[10px] font-bold bg-[#2d2d3e] rounded text-white">24H</button>
                     </div>
-                    <div className="flex items-center gap-2 text-white/40 text-[10px] font-bold uppercase tracking-widest">
-                        <span className="text-green-500 animate-pulse">●</span>
-                        <span>8,689 MONITORS</span>
+                    <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded px-3 py-1">
+                        <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                        <span className="text-[10px] font-bold text-green-400 tracking-widest uppercase">8,689 Monitors</span>
                     </div>
                 </div>
             </header>
 
+            {/* ── MAIN BODY ── */}
             <div className="flex-1 flex overflow-hidden">
 
-                {/* LEFT SIDEBAR (FEED) */}
-                <aside className="w-[340px] bg-[#121216] border-r border-white/5 flex flex-col z-50">
-                    <div className="p-3 border-b border-white/5">
-                        <div className="flex items-center gap-4 mb-3">
-                            {["FEED", "LIVE", "REPORTS"].map(tab => (
+                {/* ── LEFT FEED PANEL ── */}
+                <aside className="w-[300px] bg-[#111115] border-r border-white/[0.05] flex flex-col shrink-0 z-50">
+                    {/* Tabs */}
+                    <div className="px-4 pt-3 pb-0 border-b border-white/[0.04]">
+                        <div className="flex items-center gap-5 mb-3">
+                            {(["FEED", "LIVE", "REPORTS"] as const).map(tab => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
-                                    className={`text-[10px] font-black tracking-widest uppercase transition-all pb-1 border-b-2 ${activeTab === tab ? 'text-white border-primary' : 'text-white/20 border-transparent hover:text-white/40'}`}
+                                    className={`text-[10px] font-black tracking-[0.15em] uppercase pb-2 border-b-2 transition-all ${activeTab === tab
+                                        ? "text-white border-primary"
+                                        : "text-white/25 border-transparent hover:text-white/50"
+                                        }`}
                                 >
                                     {tab}
                                 </button>
                             ))}
-                            <div className="ml-auto flex items-center gap-2">
-                                <span className="text-[9px] font-bold text-white/20 font-mono">{signals.length} events</span>
-                                <button className="p-1 bg-[#1c1c22] rounded hover:bg-[#2d2d38] transition-colors">
-                                    <svg className="w-3 h-3 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
-                                </button>
-                            </div>
+                            <span className="ml-auto text-[9px] font-mono text-white/20">{signals.length} events</span>
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/5 hover:scrollbar-thumb-white/10 scrollbar-track-transparent pr-1">
-                        {signalsWithLocations.map((s, i) => (
-                            <button
-                                key={s.id}
-                                onClick={() => s.location && setMapCenter([s.location.lat, s.location.lng])}
-                                className="w-full p-4 text-left border-b border-white/[0.03] hover:bg-white/[0.03] transition-all group relative border-l-2 border-l-transparent hover:border-l-primary"
-                            >
-                                <div className="flex justify-between items-start mb-1.5 font-mono text-[9px] font-bold">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`px-1.5 py-0.5 rounded-sm uppercase tracking-tighter ${s.aiTag === 'Conflict' ? 'bg-red-500/20 text-red-500' : 'bg-purple-500/20 text-purple-400'}`}>
-                                            {s.aiTag || 'Event'}
-                                        </span>
-                                        <span className="text-white/20">S2</span>
+                    {/* Scrollable Event List */}
+                    <div
+                        className="flex-1 overflow-y-auto"
+                        style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.06) transparent" }}
+                    >
+                        {signals.map((post, idx) => {
+                            const tagStyle = TAG_COLORS[post.aiTag ?? "default"] ?? TAG_COLORS.default;
+                            const title = deduplicateTitle(post.aiTitle) || post.plainText?.slice(0, 120);
+                            return (
+                                <button
+                                    key={post.id + idx}
+                                    onClick={() => post.location && handleFlyTo(post.location.lat, post.location.lng)}
+                                    className="w-full text-left px-4 py-3 border-b border-white/[0.03] border-l-2 border-l-transparent hover:border-l-orange-500 hover:bg-white/[0.025] transition-all group"
+                                >
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <div className="flex items-center gap-1.5">
+                                            <span
+                                                className="text-[9px] font-black uppercase tracking-tight px-1.5 py-0.5 rounded"
+                                                style={{ background: tagStyle.bg, color: tagStyle.text }}
+                                            >
+                                                {post.aiTag || "Event"}
+                                            </span>
+                                            <span className="text-[9px] font-mono text-white/15 font-bold">S{Math.min(idx + 1, 9)}</span>
+                                        </div>
+                                        <span className="text-[9px] text-white/20 font-mono">{getTimeAgo(post.date)}</span>
                                     </div>
-                                    <span className="text-white/20">{getTimeAgo(s.date)}</span>
-                                </div>
-                                <h4 className="text-[12px] font-bold leading-snug text-white/80 group-hover:text-white transition-colors line-clamp-2">
-                                    {deduplicateTitle(s.aiTitle)}
-                                </h4>
-                                {s.location && (
-                                    <div className="mt-2 flex items-center gap-1.5 text-white/20 group-hover:text-white/40 transition-colors">
-                                        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                        <span className="text-[10px] font-bold uppercase tracking-wider">{s.location.name}</span>
-                                    </div>
-                                )}
-                            </button>
-                        ))}
+
+                                    <p className="text-[12px] font-semibold text-white/75 group-hover:text-white leading-snug line-clamp-2 transition-colors">
+                                        {title}
+                                    </p>
+
+                                    {post.location && (
+                                        <div className="flex items-center gap-1 mt-1.5">
+                                            <svg className="w-2.5 h-2.5 text-orange-500/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                            <span className="text-[10px] font-bold text-orange-500/60 uppercase tracking-wider">{post.location.name}</span>
+                                        </div>
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
                 </aside>
 
-                {/* RIGHT: MAP AREA */}
-                <main className="flex-1 relative bg-[#070709]">
-                    <MapContainer
-                        center={mapCenter}
-                        zoom={mapZoom}
-                        className="w-full h-full grayscale-[0.3] contrast-[1.2] brightness-[0.7]"
-                        zoomControl={false}
-                        style={{ background: '#070709' }}
-                    >
-                        <TileLayer
-                            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                            attribution='&copy; CARTO'
+                {/* ── GLOBE / MAP ── */}
+                <main className="flex-1 relative overflow-hidden bg-[#07070c]">
+                    {isClient && (
+                        <GlobeMap
+                            signals={signals}
+                            onFlyTo={handleFlyTo}
+                            targetLat={targetLat}
+                            targetLng={targetLng}
                         />
-                        <MapController center={mapCenter} zoom={mapZoom} />
+                    )}
 
-                        {IRAQ_CITIES.map(city => {
-                            const activeEvents = signalsWithLocations.filter(s => s.location?.name === city.name);
-                            const hasEvents = activeEvents.length > 0;
+                    {/* Vignette Overlay */}
+                    <div className="absolute inset-0 pointer-events-none z-10 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(7,7,12,0.6)_100%)]" />
 
-                            return (
-                                <CircleMarker
-                                    key={city.name}
-                                    center={[city.lat, city.lng]}
-                                    radius={hasEvents ? 10 : 4}
-                                    pathOptions={{
-                                        fillColor: hasEvents ? '#f97316' : 'rgba(255,255,255,0.1)',
-                                        fillOpacity: 0.8,
-                                        color: hasEvents ? '#fff' : 'rgba(255,255,255,0.05)',
-                                        weight: hasEvents ? 2 : 1
-                                    }}
-                                    eventHandlers={{
-                                        click: () => { setMapCenter([city.lat, city.lng]); setMapZoom(11); }
-                                    }}
-                                >
-                                    <Popup className="compact-popup">
-                                        <div className="bg-[#121216] text-white p-2 rounded shadow-xl border border-white/5">
-                                            <p className="text-[10px] font-black uppercase mb-1">{city.name}</p>
-                                            <p className="text-[9px] text-white/40">{activeEvents.length} Recent Events</p>
-                                        </div>
-                                    </Popup>
-                                </CircleMarker>
-                            );
-                        })}
-                    </MapContainer>
-
-                    {/* ZOOM CONTROLS (Floating Right) */}
-                    <div className="absolute right-4 bottom-1/2 -translate-y-1/2 flex flex-col gap-1 z-50">
-                        <button onClick={() => setMapZoom(z => z + 1)} className="w-8 h-8 bg-[#1c1c22]/80 border border-white/10 flex items-center justify-center hover:bg-[#2d2d38] transition-all">+</button>
-                        <button onClick={() => setMapZoom(z => z - 1)} className="w-8 h-8 bg-[#1c1c22]/80 border border-white/10 flex items-center justify-center hover:bg-[#2d2d38] transition-all">-</button>
-                    </div>
-
-                    {/* STAR FIELD BACKGROUND (Top/Bottom Overlays) */}
-                    <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
-                        {[...Array(50)].map((_, i) => (
-                            <div key={i} className="absolute bg-white rounded-full" style={{
-                                width: Math.random() * 2 + 'px',
-                                height: Math.random() * 2 + 'px',
-                                top: Math.random() * 100 + '%',
-                                left: Math.random() * 100 + '%',
-                                boxShadow: '0 0 10px white'
-                            }} />
-                        ))}
+                    {/* Top-Right Status Badge */}
+                    <div className="absolute top-4 right-4 z-30 flex flex-col gap-2 items-end pointer-events-none">
+                        <div className="bg-black/60 backdrop-blur-xl rounded border border-white/5 px-3 py-2 text-[9px] font-mono tracking-widest text-white/30 uppercase">
+                            <span className="text-green-400 animate-pulse mr-2">●</span>LIVE GLOBAL FEED
+                        </div>
+                        <div className="bg-black/60 backdrop-blur-xl rounded border border-white/5 px-3 py-2 text-[9px] font-mono text-white/20 uppercase tracking-widest">
+                            Iraq Sector · {signals.length} Signals
+                        </div>
                     </div>
                 </main>
             </div>
@@ -279,14 +333,11 @@ export default function MonitorTheSituation() {
           100% { transform: translateX(-50%); }
         }
         .animate-marquee {
-          display: inline-block;
-          animation: marquee 30s linear infinite;
+          animation: marquee 40s linear infinite;
         }
-        .leaflet-container { background: #070709 !important; }
-        .compact-popup .leaflet-popup-content-wrapper { background: transparent; padding: 0; box-shadow: none; border-radius: 0; }
-        .compact-popup .leaflet-popup-tip-container { display: none; }
-        .scrollbar-thin::-webkit-scrollbar { width: 4px; }
-        .scrollbar-thin::-webkit-scrollbar-thumb { border-radius: 10px; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
       `}</style>
         </div>
     );
