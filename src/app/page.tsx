@@ -183,7 +183,7 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground tracking-wide flex flex-col font-cairo" dir={isAr ? "rtl" : "ltr"}>
       {/* ===== FLOATING PILL NAVBAR ===== */}
       <div className="navbar-band">
-        <nav className="liquid-glass-nav px-4 sm:px-6 lg:px-8">
+        <nav className="liquid-glass-nav px-4 sm:px-6 lg:px-8" dir="ltr">
           <div className="relative z-10 w-full flex items-center justify-between gap-4 h-full">
 
             {/* LOGO */}
@@ -209,7 +209,7 @@ export default function Home() {
                 placeholder={isAr ? 'ابحث...' : 'Search signals...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`relative w-full bg-white/[0.04] border border-white/[0.08] focus:border-primary/30 rounded-full py-1.5 pl-4 pr-9 text-[11px] font-bold tracking-wider text-white outline-none transition-all placeholder:text-white/20 ${alignClass}`}
+                className={`relative w-full bg-white/[0.04] border border-white/[0.08] focus:border-primary/30 rounded-full py-1.5 ps-4 pe-9 text-[11px] font-bold tracking-wider text-white outline-none transition-all placeholder:text-white/20 ${isAr ? 'text-right' : 'text-left'}`}
               />
               <button type="submit" className={`absolute ${isAr ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-white/25 group-hover:text-primary/70 transition-colors`}>
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -238,8 +238,8 @@ export default function Home() {
               {/* DIVIDER */}
               <div className="hidden lg:block w-px h-5 bg-white/10 mx-1"></div>
 
-              {/* LANGUAGE TOGGLE — always EN left, AR right, fixed width */}
-              <div className="hidden sm:block lang-toggle">
+              {/* LANGUAGE TOGGLE — dir=ltr pinned: EN always left, AR always right. Pill slides via CSS class */}
+              <div className="hidden sm:block lang-toggle" dir="ltr">
                 <div className={`lang-toggle-pill ${lang === 'ar' ? 'is-ar' : ''}`}></div>
                 <button onClick={() => toggleLang('en')} className={`lang-toggle-btn ${lang === 'en' ? 'text-white' : 'text-white/30'}`}>EN</button>
                 <button onClick={() => toggleLang('ar')} className={`lang-toggle-btn ${lang === 'ar' ? 'text-white' : 'text-white/30'}`}>AR</button>
