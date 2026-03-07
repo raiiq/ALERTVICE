@@ -181,53 +181,83 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground tracking-wide flex flex-col font-cairo" dir={isAr ? "rtl" : "ltr"}>
-      <header className="w-full glass border-b border-white/5 z-[100] shadow-2xl shrink-0 sticky top-0 h-[64px]">
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4 h-full">
+      <header className="liquid-glass-nav w-full z-[100] shrink-0 sticky top-0 h-[64px]">
+        <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 h-full">
+
+          {/* LOGO */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-3 shrink-0">
-            <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-[0_0_10px_var(--primary)]"></div>
+            <div className="relative w-3 h-3 shrink-0">
+              <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-40"></span>
+              <span className="relative block w-3 h-3 bg-primary rounded-full shadow-[0_0_12px_var(--primary)]"></span>
+            </div>
             <h1
-              className="text-lg sm:text-xl lg:text-2xl font-black tracking-tighter text-white cursor-pointer uppercase drop-shadow-[0_0_8px_var(--primary)] hover:text-primary transition-all duration-300"
+              className="text-lg sm:text-xl lg:text-2xl font-black tracking-tighter text-white cursor-pointer uppercase drop-shadow-[0_0_10px_var(--primary)] hover:text-primary transition-all duration-300"
               onClick={() => { setActiveCategory("all"); clearSearch(); window.scrollTo(0, 0); }}
             >
               ALERTVICE
             </h1>
           </motion.div>
 
+          {/* SEARCH */}
           <form onSubmit={handleSearch} className="hidden lg:flex flex-1 max-w-xl relative group mx-4 lg:mx-8">
             <input
               type="text"
               placeholder={isAr ? 'ابحث عن الأخبار...' : 'Search intelligence...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full bg-surface/50 border border-white/5 focus:border-primary/50 rounded-full py-2 px-10 text-xs font-bold tracking-widest text-white outline-none transition-all placeholder:text-text-muted/50 ${alignClass}`}
+              className={`w-full bg-white/[0.03] border border-white/[0.07] focus:border-primary/40 rounded-full py-2 px-5 text-xs font-bold tracking-widest text-white outline-none transition-all placeholder:text-text-muted/40 backdrop-blur-sm ${alignClass}`}
+              style={{ boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset' }}
             />
-            <button type="submit" className={`absolute ${isAr ? 'left-4' : 'right-4'} top-1/2 -translate-y-1/2 text-text-muted group-hover:text-primary transition-colors`}>
+            <button type="submit" className={`absolute ${isAr ? 'left-4' : 'right-4'} top-1/2 -translate-y-1/2 text-text-muted/50 group-hover:text-primary transition-colors`}>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </button>
           </form>
 
-          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-            <div className="hidden lg:flex gap-6 font-bold text-[10px] uppercase tracking-widest text-text-muted">
+          {/* RIGHT CONTROLS */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+
+            {/* NAV LINKS */}
+            <div className="hidden lg:flex gap-5 font-bold text-[10px] uppercase tracking-widest text-text-muted/60 mr-2">
               {['world', 'politics', 'market'].map(cat => (
-                <button key={cat} onClick={() => { setActiveCategory(cat); setOffset(0); fetchArticles(false, lang, true); }} className={`transition-all ${activeCategory === cat ? 'text-white' : 'hover:text-primary'}`}>{isAr ? (cat === 'world' ? 'عالمي' : cat === 'politics' ? 'سياسة' : 'الأسواق') : cat.toUpperCase()}</button>
+                <button
+                  key={cat}
+                  onClick={() => { setActiveCategory(cat); setOffset(0); fetchArticles(false, lang, true); }}
+                  className={`transition-all duration-200 hover:text-primary ${activeCategory === cat ? 'text-white' : ''}`}
+                >
+                  {isAr ? (cat === 'world' ? 'عالمي' : cat === 'politics' ? 'سياسة' : 'الأسواق') : cat.toUpperCase()}
+                </button>
               ))}
             </div>
 
-            <div className="hidden sm:flex items-center bg-black/40 border border-white/5 p-1 rounded-full relative shadow-lg">
-              <div className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-primary rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${lang === 'ar' ? (isAr ? 'translate-x-0' : 'translate-x-full') : (isAr ? 'translate-x-full' : 'translate-x-0')}`}></div>
-              <button onClick={() => toggleLang('en')} className={`relative z-10 px-4 py-1.5 text-[10px] font-black tracking-widest ${lang === 'en' ? 'text-white' : 'text-text-muted'}`}>EN</button>
-              <button onClick={() => toggleLang('ar')} className={`relative z-10 px-4 py-1.5 text-[10px] font-black tracking-widest ${lang === 'ar' ? 'text-white' : 'text-text-muted'}`}>AR</button>
+            {/* LANGUAGE TOGGLE — Fixed width, always EN left / AR right, pill slides */}
+            <div className="hidden sm:block lang-toggle">
+              <div className={`lang-toggle-pill ${lang === 'ar' ? 'is-ar' : ''}`}></div>
+              <button
+                onClick={() => toggleLang('en')}
+                className={`lang-toggle-btn ${lang === 'en' ? 'text-white' : 'text-text-muted/50'}`}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => toggleLang('ar')}
+                className={`lang-toggle-btn ${lang === 'ar' ? 'text-white' : 'text-text-muted/50'}`}
+              >
+                AR
+              </button>
             </div>
 
+            {/* REFRESH */}
             <button
               onClick={() => { fetchArticles(true, lang, true); fetchSignals(lang); }}
-              className={`p-2 rounded-full border border-white/5 text-text-muted hover:text-primary transition-all ${refreshing ? 'animate-spin text-primary' : ''}`}
+              className={`p-2 rounded-full text-text-muted/50 hover:text-primary transition-all duration-300 border border-white/[0.06] hover:border-primary/30 hover:bg-primary/5 ${refreshing ? 'animate-spin text-primary' : ''}`}
+              style={{ backdropFilter: 'blur(8px)' }}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
             </button>
 
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="lg:hidden p-2 text-white">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            {/* MOBILE MENU */}
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="lg:hidden p-2 text-white/70 hover:text-white transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
             </button>
           </div>
         </div>
