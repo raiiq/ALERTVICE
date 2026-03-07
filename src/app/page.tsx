@@ -499,7 +499,7 @@ export default function Home() {
             )}
 
             {monitorPosts.map(p => {
-              const title = deduplicateTitle(p.aiTitle);
+              const title = deduplicateTitle(p.aiTitle || "");
               // Hide summary if it's identical to title or very short
               const showSummary = p.aiSummary &&
                 p.aiSummary.trim().toLowerCase() !== title.trim().toLowerCase() &&
