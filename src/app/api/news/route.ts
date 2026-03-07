@@ -4,9 +4,9 @@ import { GoogleGenAI } from '@google/genai';
 import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+export const maxDuration = 60; // Vercel Pro allows 300s; Hobby allows 60s
 
-// Initialize AI
+// Optional AI init
 let ai: GoogleGenAI | null = null;
 if (process.env.GEMINI_API_KEY) {
     ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -24,233 +24,196 @@ async function freeTranslate(text: string, targetLang: string) {
 }
 
 export async function GET(request: Request) {
-    const { searchParams } = new URL(request.url);
-    const lang = searchParams.get('lang') || 'en';
-    const limit = parseInt(searchParams.get('limit') || '40');
-    const offset = parseInt(searchParams.get('offset') || '0');
-    const q = searchParams.get('q') || '';
-    const type = searchParams.get('type'); // 'signal' (no media) or 'article' (has media)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseKey) {
+        return NextResponse.json(
+            { error: 'Supabase missing', posts: [] },
+            { status: 503 }
+        );
+    }
 
-    // 1. SYNC ATOMICALLY (EN + AR)
-    if (offset === 0 && !q) {
-        try {
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 8000);
-            const response = await fetch('https://t.me/s/alertvice', {
-                headers: { 'User-Agent': 'Mozilla/5.0' },
-                cache: 'no-store',
-                signal: controller.signal
-            });
-            clearTimeout(timeout);
+    try {
+        const { searchParams } = new URL(request.url);
+        const lang = searchParams.get('lang') || 'en';
+        const limit = parseInt(searchParams.get('limit') || '40');
+        const offset = parseInt(searchParams.get('offset') || '0');
+        const q = searchParams.get('q') || '';
+        const type = searchParams.get('type'); // 'signal' (no media) or 'article' (has media)
+        const targetLanguage = lang === 'ar' ? 'Arabic' : 'English';
 
-            if (response.ok) {
-                const html = await response.text();
-                const $ = cheerio.load(html);
-                let scraped: any[] = [];
-
-                $('.tgme_widget_message').each((_, el) => {
-                    let id = $(el).attr('data-post');
-                    if (id && !id.includes('/')) id = `alertvice/${id}`;
-
-                    const textEl = $(el).find('.tgme_widget_message_text');
-                    const textHtml = textEl.html() || '';
-                    const plainText = textEl.text().trim() || '';
-
-                    let imgs: string[] = [];
-                    let vids: string[] = [];
-
-                    $(el).find('video').each((_, v) => {
-                        const src = $(v).attr('src');
-                        if (src) vids.push(src);
-                    });
-
-                    $(el).find('.tgme_widget_message_photo_wrap, .tgme_widget_message_video_thumb').each((_, p) => {
-                        const style = $(p).attr('style') || '';
-                        const match = style.match(/background-image:url\(['"]?(.*?)['"]?\)/);
-                        if (match && match[1]) imgs.push(match[1]);
-                    });
-
-                    const date = $(el).find('.tgme_widget_message_date time').attr('datetime');
-                    const vws = $(el).find('.tgme_widget_message_views').text();
-
-                    if (id && (textHtml || imgs.length > 0 || vids.length > 0)) {
-                        scraped.push({
-                            id, textHtml, plainText,
-                            imageUrl: imgs.length > 0 ? JSON.stringify(imgs) : null,
-                            videoUrl: vids.length > 0 ? JSON.stringify(vids) : null,
-                            hasVideo: vids.length > 0 || $(el).find('.tgme_widget_message_video_player').length > 0,
-                            date: date || new Date().toISOString(),
-                            views: vws || '0'
-                        });
-                    }
+        // SYNC LOGIC (Only on start/refresh)
+        if (offset === 0 && !q) {
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 8000);
+                const response = await fetch('https://t.me/s/alertvice', {
+                    headers: { 'User-Agent': 'Mozilla/5.0' },
+                    cache: 'no-store',
+                    signal: controller.signal
                 });
+                clearTimeout(timeout);
 
-                // Deduping & Album Packaging
-                const groupedMap = new Map();
-                for (const p of scraped) {
-                    // Use date + first 20 chars as a heuristic for albums (Telegram posts albums with same text)
-                    const key = `${p.date}_${p.plainText.substring(0, 20)}`;
-                    if (groupedMap.has(key)) {
-                        const existing = groupedMap.get(key);
-                        const parse = (v: any) => v ? JSON.parse(v) : [];
-                        const mI = [...new Set([...parse(existing.imageUrl), ...parse(p.imageUrl)])].slice(0, 10);
-                        const mV = [...new Set([...parse(existing.videoUrl), ...parse(p.videoUrl)])].slice(0, 5);
-                        existing.imageUrl = mI.length > 0 ? JSON.stringify(mI) : null;
-                        existing.videoUrl = mV.length > 0 ? JSON.stringify(mV) : null;
-                        if (p.hasVideo) existing.hasVideo = true;
-                    } else {
-                        groupedMap.set(key, p);
+                if (response.ok) {
+                    const html = await response.text();
+                    const $ = cheerio.load(html);
+                    let scraped: any[] = [];
+
+                    $('.tgme_widget_message').each((_, el) => {
+                        let id = $(el).attr('data-post');
+                        if (id && !id.includes('/')) id = `alertvice/${id}`;
+
+                        const textEl = $(el).find('.tgme_widget_message_text');
+                        const textHtml = textEl.html() || '';
+                        const plainText = textEl.text().trim() || '';
+
+                        let imgs: string[] = [];
+                        let vids: string[] = [];
+
+                        $(el).find('video').each((_, v) => {
+                            const src = $(v).attr('src');
+                            if (src) vids.push(src);
+                        });
+
+                        $(el).find('.tgme_widget_message_photo_wrap, .tgme_widget_message_video_thumb').each((_, p) => {
+                            const style = $(p).attr('style') || '';
+                            const match = style.match(/background-image:url\(['"]?(.*?)['"]?\)/);
+                            if (match && match[1]) imgs.push(match[1]);
+                        });
+
+                        const date = $(el).find('.tgme_widget_message_date time').attr('datetime');
+                        const vws = $(el).find('.tgme_widget_message_views').text();
+
+                        if (id && (textHtml || imgs.length > 0 || vids.length > 0)) {
+                            scraped.push({
+                                id, textHtml, plainText,
+                                imageUrl: imgs.length > 0 ? JSON.stringify(imgs) : null,
+                                videoUrl: vids.length > 0 ? JSON.stringify(vids) : null,
+                                hasVideo: vids.length > 0 || $(el).find('.tgme_widget_message_video_player').length > 0,
+                                date: date || new Date().toISOString(),
+                                views: vws || '0'
+                            });
+                        }
+                    });
+
+                    // ADVANCED GROUPING (Albums & Multi-post updates)
+                    const grouped: any[] = [];
+                    let last: any = null;
+
+                    for (const post of scraped) {
+                        if (last && last.date === post.date && (last.plainText === post.plainText || !post.plainText || !last.plainText)) {
+                            const parse = (v: any) => v ? JSON.parse(v) : [];
+                            // Merging with 5/5 LIMIT as requested
+                            const mergedImgs = [...new Set([...parse(last.imageUrl), ...parse(post.imageUrl)])].slice(0, 5);
+                            const mergedVids = [...new Set([...parse(last.videoUrl), ...parse(post.videoUrl)])].slice(0, 5);
+
+                            last.imageUrl = mergedImgs.length > 0 ? JSON.stringify(mergedImgs) : null;
+                            last.videoUrl = mergedVids.length > 0 ? JSON.stringify(mergedVids) : null;
+                            last.hasVideo = last.hasVideo || post.hasVideo;
+                            if (!last.plainText) {
+                                last.plainText = post.plainText;
+                                last.textHtml = post.textHtml;
+                            }
+                        } else {
+                            grouped.push(post);
+                            last = post;
+                        }
                     }
-                }
 
-                const toUpsert = Array.from(groupedMap.values()).reverse();
-                if (toUpsert.length > 0) {
-                    // Check existence by id
-                    const idsJson = toUpsert.map(p => p.id);
-                    const { data: exist } = await supabase.from('global_posts').select('id').in('id', idsJson);
-                    const existSet = new Set(exist?.map(p => p.id));
+                    const toUpsert = grouped.reverse();
+                    if (toUpsert.length > 0) {
+                        const { data: exist } = await supabase.from('posts').select('telegram_id, title').eq('language', lang).in('telegram_id', toUpsert.map(p => p.id));
+                        const existMap = new Map(exist?.map(p => [p.telegram_id, p.title]));
 
-                    // Sync the 15 most recent unsynced posts
-                    let news = toUpsert.filter(p => !existSet.has(p.id)).slice(0, 15);
+                        let news = toUpsert.filter(p => !existMap.has(p.id) || (lang === 'en' && /[\u0600-\u06FF]/.test(existMap.get(p.id) || '')));
+                        news = news.slice(0, 15); // Smaller batch for performance
 
-                    if (news.length > 0) {
-                        try {
-                            let dbData;
+                        if (news.length > 0) {
                             if (ai) {
-                                const batch = news.map((p, i) => `[${i}] ${p.plainText.substring(0, 1000) || "Visual Intelligence Report"}`);
-                                const res = await ai.models.generateContent({
-                                    model: 'gemini-2.0-flash',
-                                    contents: [{
-                                        role: 'user', parts: [{
-                                            text: `Task: Analyze and translate these 15 news snippets into English AND Arabic. 
-                                    For EACH snippet, give:
-                                    1. en_title (Catchy, capitalised, max 10 words)
-                                    2. en_summary (Professional, max 30 words)
-                                    3. ar_title (Clear Arabic headline)
-                                    4. ar_summary (Professional Arabic summary)
-                                    5. tag (ONE OF: politics, tech, market, world, security)
-                                    
-                                    Output ONLY RAW JSON in this form: { "items": { "0": { "en_title": "...", ... }, "1": { ... } } }
-                                    
-                                    Snippets:
-                                    ${batch.join('\n')}`
-                                        }]
-                                    }]
-                                });
-
-                                const aiRaw = res.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-                                const cleanJson = JSON.parse(aiRaw.replace(/```json|```/gi, '').trim() || '{}');
-
-                                dbData = news.map((p, idx) => {
-                                    const item = cleanJson.items?.[idx.toString()] || {};
-                                    return {
-                                        id: p.id,
-                                        title_en: item.en_title || (p.plainText ? p.plainText.substring(0, 60) + "..." : "Signal Intercepted"),
-                                        summary_en: item.en_summary || p.plainText.substring(0, 200),
-                                        tag_en: item.tag || "world",
-                                        content_en: p.textHtml,
-                                        title_ar: item.ar_title || "تنبيه استخباراتي",
-                                        summary_ar: item.ar_summary || "تحديث إخباري جديد.",
-                                        tag_ar: item.tag || "world",
-                                        content_ar: p.textHtml,
-                                        image_url: p.imageUrl,
-                                        has_video: p.hasVideo,
-                                        video_url: p.videoUrl,
-                                        date: p.date,
-                                        views: p.views
-                                    };
-                                });
-                            } else {
-                                // NO AI FALLBACK - SMART EXTRACTION
-                                dbData = news.map(p => {
-                                    const lines = p.plainText.split('\n').filter((l: string) => l.trim().length > 0);
-                                    let title = lines[0] || "Intelligence Report";
-                                    if (title.length > 80) title = title.substring(0, 77) + "...";
-
-                                    let summary = lines.slice(1).join(' ').substring(0, 200);
-                                    if (!summary && p.plainText.length > title.length) {
-                                        summary = p.plainText.substring(title.length, title.length + 200).trim();
-                                    }
-
-                                    return {
-                                        id: p.id,
-                                        title_en: title,
-                                        summary_en: summary || "Automated intelligence capture.",
-                                        tag_en: "world",
-                                        content_en: p.textHtml,
-                                        title_ar: title, // Use same title as fallback if no AI
-                                        summary_ar: summary || "التقاط استخباراتي آلي.",
-                                        tag_ar: "world",
-                                        content_ar: p.textHtml,
-                                        image_url: p.imageUrl,
-                                        has_video: p.hasVideo,
-                                        video_url: p.videoUrl,
-                                        date: p.date,
-                                        views: p.views
-                                    };
-                                });
+                                const prompts = news.map((p, i) => `[${i}] ${p.plainText.substring(0, 600) || "Media Intel"}`);
+                                try {
+                                    const res = await ai.models.generateContent({
+                                        model: 'gemini-2.0-flash',
+                                        contents: [{ role: 'user', parts: [{ text: `Task: Translate the following news snippets into ${targetLanguage}. Output ONLY JSON. Form: { "items": { "0": { "title": "...", "summary": "...", "tag": "politics|tech|market|world" } } } \n\nBatch: ${prompts.join('\n')}` }] }]
+                                    });
+                                    const aiText = res.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                                    const json = JSON.parse(aiText.replace(/```json|```/gi, '').trim() || '{}');
+                                    news.forEach((p, idx) => {
+                                        const item = json.items?.[idx.toString()];
+                                        if (item) {
+                                            p.aiTitle = item.title;
+                                            p.aiSummary = item.summary;
+                                            p.aiTag = item.tag;
+                                        }
+                                    });
+                                } catch (e) { console.error("AI Error", e); }
                             }
 
-                            if (dbData && dbData.length > 0) {
-                                await supabase.from('global_posts').upsert(dbData, { onConflict: 'id' });
+                            for (const p of news) {
+                                if (!p.aiTitle) {
+                                    p.aiTitle = await freeTranslate(p.plainText?.substring(0, 60) || "Intel Update", lang);
+                                    p.aiSummary = await freeTranslate(p.plainText?.substring(0, 200) || "Check detailed feed.", lang);
+                                    p.aiTag = "world";
+                                }
                             }
-                        } catch (e) {
-                            console.error("Critical Sync Catch:", e);
-                            const fallbackData = news.map(p => ({
-                                id: p.id,
-                                title_en: "Intelligence Alert",
-                                title_ar: "تنبيه استخباراتي",
-                                date: p.date,
+
+                            const dbData = news.map(p => ({
+                                telegram_id: p.id,
+                                title: p.aiTitle,
+                                summary: p.aiSummary,
+                                tag: p.aiTag,
+                                content_html: p.textHtml,
                                 image_url: p.imageUrl,
-                                content_en: p.textHtml,
-                                content_ar: p.textHtml,
-                                views: p.views
+                                has_video: p.hasVideo,
+                                video_url: p.videoUrl,
+                                post_date: p.date,
+                                views: p.views,
+                                language: lang
                             }));
-                            await supabase.from('global_posts').upsert(fallbackData, { onConflict: 'id' });
+                            await supabase.from('posts').upsert(dbData, { onConflict: 'telegram_id, language' });
                         }
                     }
                 }
-            }
-        } catch (e) { console.error("Sync partial fail", e); }
+            } catch (e) { console.error("Sync partial fail", e); }
+        }
+
+        // DATABASE FETCH WITH OPTIMIZED COMMANDS
+        let query = supabase.from('posts').select('*').eq('language', lang);
+
+        if (q) query = query.or(`title.ilike.%${q}%,summary.ilike.%${q}%`);
+
+        // Type filters ALWAYS apply (even during search) to keep feeds clean
+        if (type === 'signal') {
+            // Signal monitor: text-only posts (no images AND no videos)
+            query = query.is('image_url', null).is('video_url', null);
+        } else if (type === 'article') {
+            // Main feed: only posts WITH media (image or video)
+            query = query.or('image_url.not.is.null,video_url.not.is.null');
+        }
+
+        const { data: posts, error: err } = await query
+            .order('post_date', { ascending: false })
+            .range(offset, offset + limit - 1);
+
+        if (err) throw err;
+
+        const formatted = (posts || []).map(p => ({
+            id: p.telegram_id,
+            textHtml: p.content_html,
+            imageUrl: p.image_url,
+            hasVideo: p.has_video,
+            videoUrl: p.video_url,
+            date: p.post_date,
+            views: p.views,
+            aiTitle: p.title,
+            aiSummary: p.summary,
+            aiTag: p.tag
+        }));
+
+        return NextResponse.json({ posts: formatted, hasMore: formatted.length === limit });
+    } catch (error: any) {
+        console.error('API Final Error:', error);
+        return NextResponse.json({ error: 'Server error', posts: [] }, { status: 500 });
     }
-
-    // 2. FETCH FROM THE NEW UNIFIED TABLE
-    let query = supabase.from('global_posts').select('*');
-
-    if (q) {
-        query = query.or(`title_en.ilike.%${q}%,title_ar.ilike.%${q}%,summary_en.ilike.%${q}%,summary_ar.ilike.%${q}%`);
-    }
-
-    if (type === 'article') {
-        // Main feed should show EVERYTHING to avoid empty sections.
-        // We don't filter by image_url here anymore.
-    } else if (type === 'signal') {
-        // Signals are specific text-only alerts for the sidebar
-        query = query.is('image_url', null).is('video_url', null);
-    }
-
-    const { data: posts, error: err } = await query
-        .order('date', { ascending: false })
-        .range(offset, offset + limit - 1);
-
-    if (err) {
-        console.error("Supabase query error:", err);
-        return NextResponse.json({ posts: [], hasMore: false, error: err.message });
-    }
-
-    const formatted = (posts || []).map(p => ({
-        id: p.id,
-        textHtml: lang === 'ar' ? p.content_ar : p.content_en,
-        imageUrl: p.image_url,
-        hasVideo: p.has_video,
-        videoUrl: p.video_url,
-        date: p.date,
-        views: p.views,
-        aiTitle: lang === 'ar' ? p.title_ar : p.title_en,
-        aiSummary: lang === 'ar' ? p.summary_ar : p.summary_en,
-        aiTag: lang === 'ar' ? p.tag_ar : p.tag_en
-    }));
-
-    return NextResponse.json({ posts: formatted, hasMore: formatted.length === limit });
 }
 

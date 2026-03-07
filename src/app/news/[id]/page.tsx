@@ -4,10 +4,9 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { MediaDisplay, parseMedia, deduplicateTitle } from "../../components/MediaDisplay";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface NewsPost {
-    id: string;
+    id: string; // e.g., "alertvice/123"
     textHtml: string;
     plainText: string;
     imageUrl: string | null;
@@ -31,6 +30,7 @@ export default function ArticlePage() {
     const [error, setError] = useState("");
     const [lang, setLang] = useState("en");
     const [mounted, setMounted] = useState(false);
+
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     useEffect(() => {
@@ -40,31 +40,82 @@ export default function ArticlePage() {
         setMounted(true);
     }, [id]);
 
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            fetchData(lang, true);
+        }, 5000);
+
+        return () => clearInterval(intervalId);
+    }, [id, lang]);
+
     const fetchData = async (currentLang: string, isRefresh = false) => {
         if (!id) return;
-        if (isRefresh) setIsRefreshing(true);
-        else setLoading(true);
+
+        if (isRefresh) {
+            setIsRefreshing(true);
+        } else {
+            setLoading(true);
+        }
+
         setError("");
 
         try {
+            // Fetch individual post and sidebar feeds concurrently
             const [postRes, feedRes] = await Promise.all([
                 fetch(`/api/news/${id}?lang=${currentLang}&t=${Date.now()}`),
-                fetch(`/api/news?lang=${currentLang}&limit=10&t=${Date.now()}`)
+                fetch(`/api/news?lang=${currentLang}&t=${Date.now()}`)
             ]);
 
             if (!postRes.ok) throw new Error("Article not found or offline");
+
             const postData = await postRes.json();
             setPost(postData.post);
 
             if (feedRes.ok) {
                 const feedData = await feedRes.json();
-                setFeedPosts(feedData.posts || []);
+
+                // Comprehensive Deduplication
+                const rawPosts: NewsPost[] = feedData.posts || [];
+                const idMap = new Map();
+                const titleMap = new Map();
+                const mediaMap = new Map();
+                const dateMap = new Map();
+                const uniquePosts: NewsPost[] = [];
+
+                for (const p of rawPosts) {
+                    if (idMap.has(p.id)) continue;
+
+                    let titleKey = "";
+                    if (p.aiTitle) {
+                        titleKey = p.aiTitle.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]/gi, '');
+                        if (titleKey.length > 5 && titleMap.has(titleKey)) continue;
+                    }
+
+                    let mediaKey = "";
+                    if (p.videoUrl) mediaKey = p.videoUrl;
+                    else if (p.imageUrl) mediaKey = p.imageUrl;
+
+                    if (mediaKey && mediaMap.has(mediaKey)) continue;
+
+                    if (p.date && dateMap.has(p.date)) continue;
+
+                    idMap.set(p.id, true);
+                    if (titleKey.length > 5) titleMap.set(titleKey, true);
+                    if (mediaKey) mediaMap.set(mediaKey, true);
+                    if (p.date) dateMap.set(p.date, true);
+                    uniquePosts.push(p);
+                }
+
+                setFeedPosts(uniquePosts);
             }
         } catch (err: any) {
             setError(err.message);
         } finally {
-            setIsRefreshing(false);
-            setLoading(false);
+            if (isRefresh) {
+                setIsRefreshing(false);
+            } else {
+                setLoading(false);
+            }
         }
     };
 
@@ -77,32 +128,29 @@ export default function ArticlePage() {
 
     const formatDate = (isoString: string) => {
         const date = new Date(isoString);
-        return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+        const time = date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+        const formattedDate = date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+        return `${formattedDate} ${time}`;
     };
 
     const getPostId = (idString: string) => idString.split('/').pop() || "";
+    const numericalId = post?.id.split("/").pop() || id;
+
+    const livePosts = feedPosts.slice(0, 4);
+    const latestPosts = feedPosts.slice(4, 9);
+
     const isAr = lang === 'ar';
     const alignClass = isAr ? 'text-right' : 'text-left';
 
-    const containerVars = {
-        hidden: { opacity: 0 },
-        show: { opacity: 1, transition: { staggerChildren: 0.1 } }
-    };
-
-    const itemVars = {
-        hidden: { opacity: 0, y: 30 },
-        show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as any } }
-    };
-
-    if (!mounted) return null;
-
     return (
         <div className="min-h-screen bg-background text-foreground tracking-wide flex flex-col font-cairo" dir={isAr ? "rtl" : "ltr"}>
-            <header className="w-full glass border-b border-white/5 z-50 shadow-2xl shrink-0 sticky top-0 h-[64px]">
+
+            {/* Header */}
+            <header className="w-full bg-surface border-b border-border z-50 shadow-[0_4px_20px_rgba(0,0,0,0.5)] shrink-0 sticky top-0 h-[64px]">
                 <div className="w-full px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4 h-full">
                     <div className="flex items-center gap-3">
                         <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse shadow-[0_0_10px_var(--primary)]"></div>
-                        <Link href="/" className="text-xl sm:text-2xl font-black tracking-tighter text-white uppercase hover:text-primary transition-all duration-300">
+                        <Link href="/" className="text-xl sm:text-2xl font-black tracking-tighter text-white uppercase drop-shadow-[0_0_8px_var(--primary)] hover:text-primary transition-all duration-300">
                             ALERTVICE
                         </Link>
                     </div>
@@ -113,97 +161,245 @@ export default function ArticlePage() {
                             {isAr ? 'الرئيسية' : 'Home'}
                         </Link>
 
-                        <div className="hidden sm:flex items-center bg-black/40 border border-white/5 p-1 rounded-full relative shadow-lg">
-                            <div className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-primary rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${lang === 'ar' ? (isAr ? 'translate-x-0' : 'translate-x-full') : (isAr ? 'translate-x-full' : 'translate-x-0')}`}></div>
-                            <button onClick={() => toggleLang('en')} className={`relative z-10 px-4 py-1.5 text-[10px] font-black tracking-widest ${lang === 'en' ? 'text-white' : 'text-text-muted'}`}>EN</button>
-                            <button onClick={() => toggleLang('ar')} className={`relative z-10 px-4 py-1.5 text-[10px] font-black tracking-widest ${lang === 'ar' ? 'text-white' : 'text-text-muted'}`}>AR</button>
+                        <div className="flex items-center bg-background border border-white/5 p-1 rounded-full relative group/lang shadow-lg ml-auto sm:ml-0">
+                            {/* Sliding Background */}
+                            <div className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-primary rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)] ${isAr ? (lang === 'ar' ? 'translate-x-0' : 'translate-x-full') : (lang === 'ar' ? 'translate-x-full' : 'translate-x-0')}`}></div>
+
+                            <button
+                                onClick={() => toggleLang('en')}
+                                className={`relative z-10 px-3 py-1 flex items-center gap-2 transition-colors duration-500 ${!isAr ? 'text-white' : 'text-text-muted hover:text-white'}`}
+                            >
+                                <svg className={`w-3 h-3 transition-transform duration-500 ${!isAr ? 'scale-110' : 'opacity-40 group-hover/lang:opacity-100'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span className="text-[9px] font-black tracking-widest uppercase">EN</span>
+                            </button>
+
+                            <button
+                                onClick={() => toggleLang('ar')}
+                                className={`relative z-10 px-3 py-1 flex items-center gap-2 transition-colors duration-500 ${isAr ? 'text-white' : 'text-text-muted hover:text-white'}`}
+                            >
+                                <span className="text-[9px] font-black tracking-widest uppercase">AR</span>
+                                <svg className={`w-3 h-3 transition-transform duration-500 ${isAr ? 'scale-110' : 'opacity-40 group-hover/lang:opacity-100'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </button>
                         </div>
+
+                        <button
+                            onClick={() => fetchData(lang, true)}
+                            className={`p-2 rounded-full bg-background border border-border text-text-muted hover:text-primary hover:border-primary/50 transition-all ${isRefreshing ? 'animate-spin text-primary' : ''}`}
+                        >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        </button>
                     </div>
                 </div>
             </header>
 
+            {/* Main Content Area */}
             <main className="flex-grow w-full flex flex-col">
-                <AnimatePresence mode="wait">
-                    {loading ? (
-                        <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center grow text-primary gap-4">
-                            <div className="w-12 h-12 border-4 border-surface border-t-primary rounded-full animate-spin shadow-[0_0_15px_var(--primary)]"></div>
-                            <span className="font-bold uppercase tracking-widest text-sm animate-pulse">Establishing Secure Connection...</span>
-                        </motion.div>
-                    ) : post ? (
-                        <motion.div key="content" variants={containerVars} initial="hidden" animate="show" className="flex flex-col lg:flex-row lg:h-[calc(100vh-64px)] overflow-hidden">
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center text-primary gap-4 w-full h-full">
+                        <div className="w-12 h-12 border-4 border-surface border-t-primary rounded-full animate-spin shadow-[0_0_15px_var(--primary)]"></div>
+                        <span className="font-bold uppercase tracking-widest text-sm drop-shadow-[0_0_8px_var(--primary)] animate-pulse">Decrypting Source...</span>
+                    </div>
+                ) : error ? (
+                    <div className="flex-grow flex items-center justify-center p-8">
+                        <div className="border border-red-500/50 bg-red-950/20 p-8 max-w-2xl mx-auto rounded-lg shadow-[0_0_20px_rgba(239,68,68,0.2)] text-center">
+                            <h2 className="text-2xl font-black text-red-500 mb-4 tracking-wider">NETWORK ERROR</h2>
+                            <p className="text-text-muted text-sm mb-8 leading-relaxed max-w-md mx-auto">{error}</p>
+                            <Link href="/" className="px-6 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/50 font-bold uppercase tracking-widest text-xs rounded transition-all">
+                                Initialize Reconnection
+                            </Link>
+                        </div>
+                    </div>
+                ) : post ? (
+                    <div className="flex flex-col lg:flex-row lg:h-[calc(100vh-64px)] overflow-hidden">
 
-                            {/* SIDEBAR */}
-                            <div className="hidden lg:block w-[320px] shrink-0 h-full overflow-y-auto custom-scrollbar border-r border-white/5 p-6 bg-surface/10 backdrop-blur-sm">
-                                <h3 className={`font-black text-white uppercase tracking-widest text-xs mb-8 border-b border-white/5 pb-2 ${isAr ? 'text-right' : ''}`}>Intelligence Stream</h3>
-                                <div className="flex flex-col gap-6">
-                                    {feedPosts.slice(0, 5).map(p => (
-                                        <Link href={`/news/${getPostId(p.id)}`} key={p.id} className="group flex flex-col gap-3 p-3 rounded-2xl bg-surface/20 border border-white/5 hover:border-primary/40 transition-all duration-500">
-                                            <div className="aspect-video rounded-xl overflow-hidden border border-white/5">
-                                                <img src={parseMedia(p.imageUrl)[0] || "/placeholder-news.jpg"} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" alt="Intel" />
+                        {/* LEFT SIDEBAR - Live Now (Independent Scroll) */}
+                        <div className="hidden lg:block w-[300px] shrink-0 h-full overflow-y-auto custom-scrollbar border-r border-border p-6 bg-background/50 backdrop-blur-sm">
+                            <div className="flex items-center gap-2 mb-6 pb-2 border-b border-border">
+                                <span className="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,1)] animate-pulse"></span>
+                                <h3 className="font-bold text-white uppercase tracking-widest text-sm">{isAr ? 'مباشر الآن' : 'Live Now'}</h3>
+                            </div>
+                            <div className="flex flex-col gap-6">
+                                {livePosts.map(p => (
+                                    <Link href={`/news/${getPostId(p.id)}`} key={`live-${p.id}`} className="group relative flex flex-col gap-3 p-3 rounded-xl bg-surface/10 border border-border/30 hover:border-primary/40 hover:bg-surface/30 transition-all duration-300">
+                                        <div className="absolute top-0 left-0 w-1 h-0 bg-primary group-hover:h-full transition-all duration-500 rounded-l-xl"></div>
+
+                                        {p.imageUrl || p.hasVideo ? (
+                                            <div className="w-full aspect-video rounded-lg overflow-hidden relative border border-border/50 group-hover:border-primary/30 transition-all duration-500">
+                                                {p.hasVideo && (
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-10">
+                                                        <div className="bg-primary/80 rounded-full w-6 h-6 flex items-center justify-center shadow-[0_0_8px_var(--primary)]">
+                                                            <svg className="w-3 h-3 text-white translate-x-[0.5px]" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                <img src={parseMedia(p.imageUrl)[0] || ''} alt="Live" className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" />
                                             </div>
-                                            <h4 className={`text-[12px] font-bold text-text-muted group-hover:text-white transition-colors leading-relaxed line-clamp-2 ${alignClass}`}>{p.aiTitle}</h4>
-                                        </Link>
-                                    ))}
+                                        ) : null}
+
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center justify-between border-b border-border/20 pb-1.5">
+                                                <span className="text-[10px] font-black text-red-500 font-mono">
+                                                    {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                                </span>
+                                                <span className="text-[7px] font-black text-primary/40 uppercase tracking-widest">SIGNAL_RCV</span>
+                                            </div>
+                                            <h4 className={`text-[12.5px] font-bold text-text-muted/80 group-hover:text-white transition-colors leading-[1.5] line-clamp-2 ${alignClass}`}>{p.aiTitle}</h4>
+                                            <div className="flex items-center justify-between mt-1">
+                                                <span className="text-[8px] font-bold text-text-muted/30 flex items-center gap-1 uppercase">
+                                                    <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5-2.24 5-5-2.24 5-5zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" /></svg>
+                                                    {p.views}
+                                                </span>
+                                                {p.aiTag && <span className="text-[7px] font-black text-primary/30 uppercase px-1.5 py-0.5 rounded bg-primary/5 border border-primary/10">{p.aiTag}</span>}
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* CENTER COLUMN - Main Article (Independent Scroll on desktop) */}
+                        <div className="flex-1 min-w-0 lg:h-full lg:overflow-y-auto custom-scrollbar bg-background/20 p-4 sm:p-8 lg:p-12 relative">
+                            {/* Ambient background glow */}
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-64 bg-primary/5 blur-[120px] pointer-events-none rounded-full"></div>
+
+                            <article className="max-w-4xl mx-auto">
+                                {/* Eyebrow & Headline */}
+                                <div className="mb-8">
+                                    <span className={`text-primary font-bold tracking-widest uppercase text-xs mb-4 flex items-center gap-2 drop-shadow-[0_0_5px_var(--primary)] ${alignClass}`}>
+                                        <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_var(--primary)]"></span>
+                                        {isAr ? 'تقرير عاجل' : 'Live Report'}
+                                        {post.aiTag && (
+                                            <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-[10px] ml-2 font-black">{post.aiTag}</span>
+                                        )}
+                                    </span>
+                                    <h1 className={`text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] font-black text-white leading-[1.2] mb-8 tracking-tight ${alignClass}`}>
+                                        {post.aiTitle || "BREAKING NEWS ALERT"}
+                                    </h1>
+
+                                    {/* Byline & Date */}
+                                    <div className={`flex flex-col sm:flex-row sm:items-center justify-between border-y border-border/80 py-4 mb-8 bg-surface/50 px-4 rounded-sm ${isAr ? 'flex-row-reverse' : ''}`}>
+                                        <div className="text-sm font-bold text-text-muted uppercase tracking-widest flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded border border-primary/30 bg-surface-hover flex items-center justify-center shadow-[0_0_10px_var(--glow-color)]">
+                                                <svg className="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" /></svg>
+                                            </div>
+                                            <span>{isAr ? 'بواسطة ' : 'By '}<span className="text-white">Alertvice Global Desk</span></span>
+                                        </div>
+                                        <div className="flex items-center gap-6 mt-4 sm:mt-0">
+                                            <time className="text-xs text-text-muted/60 font-bold tracking-widest uppercase">
+                                                {formatDate(post.date)}
+                                            </time>
+                                            <span className="flex items-center gap-1.5 text-xs text-text-muted/60 font-black uppercase">
+                                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5-2.24 5-5-2.24 5-5zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" /></svg>
+                                                {post.views} Views
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* ARTICLE AREA */}
-                            <div className="flex-1 lg:h-full lg:overflow-y-auto custom-scrollbar p-6 sm:p-12 lg:p-20 relative">
-                                <article className="max-w-4xl mx-auto flex flex-col gap-12">
-                                    <motion.div variants={itemVars} className="flex flex-col gap-6">
-                                        <div className={`flex items-center gap-3 ${isAr ? 'flex-row-reverse' : ''}`}>
-                                            <span className="bg-primary/20 text-primary px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest">Official Drop / {getPostId(post.id)}</span>
-                                            <time className="text-[10px] text-text-muted/40 font-black tracking-widest uppercase">{formatDate(post.date)}</time>
-                                        </div>
-                                        <h1 className={`text-4xl sm:text-5xl lg:text-7xl font-black text-white leading-[1.1] tracking-tighter ${alignClass}`}>
-                                            {post.aiTitle}
-                                        </h1>
-                                        <div className={`flex items-center gap-4 text-xs font-bold text-text-muted opacity-60 ${isAr ? 'flex-row-reverse' : ''}`}>
-                                            <div className="flex items-center gap-2">
-                                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" /></svg>
-                                                <span>{post.views} INTERCEPTIONS</span>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-
-                                    <motion.div variants={itemVars} className="w-full rounded-[2.5rem] overflow-hidden border border-white/5 shadow-3xl">
-                                        <MediaDisplay images={parseMedia(post.imageUrl)} videos={parseMedia(post.videoUrl)} hasVideo={post.hasVideo} isAr={isAr} />
-                                    </motion.div>
-
-                                    <motion.div
-                                        variants={itemVars}
-                                        className={`reading-text text-xl lg:text-2xl text-foreground/90 space-y-10 prose-editor ${alignClass}`}
-                                        dangerouslySetInnerHTML={{ __html: post.textHtml }}
+                                {/* Media Display */}
+                                <div className="mb-10 w-full relative group">
+                                    <MediaDisplay
+                                        images={parseMedia(post.imageUrl)}
+                                        videos={parseMedia(post.videoUrl)}
+                                        hasVideo={post.hasVideo}
+                                        isAr={isAr}
                                     />
+                                    {post.hasVideo && parseMedia(post.videoUrl).length === 0 && (
+                                        <div className={`absolute top-4 ${isAr ? 'right-4' : 'left-4'} bg-black/50 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1.5 uppercase tracking-widest z-10 flex items-center gap-2 rounded border border-white/10 shadow-[0_0_10px_rgba(0,0,0,0.5)]`}>
+                                            <div className="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,1)] animate-pulse"></div>
+                                            {isAr ? 'بث مباشر' : 'LIVE FEED'}
+                                        </div>
+                                    )}
+                                </div>
 
-                                    <motion.div variants={itemVars} className="mt-12 py-12 border-t border-white/5 flex flex-col gap-8">
-                                        <div className={`flex items-center gap-4 ${isAr ? 'flex-row-reverse' : ''}`}>
-                                            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shadow-2xl">
-                                                <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-white font-black text-sm uppercase tracking-widest">Verified Intelligence</span>
-                                                <span className="text-[10px] text-text-muted uppercase tracking-widest">This source has been validated by Alertvice Net</span>
+                                {/* Article Text */}
+                                <div
+                                    className={`prose-editor text-[1.15rem] sm:text-[1.35rem] leading-[2.1] text-foreground/90 space-y-8 [&_a]:text-primary [&_a]:border-b [&_a]:border-primary/30 [&_a:hover]:border-primary [&_a:hover]:text-primary-hover [&_b]:font-black [&_strong]:font-black [&_strong]:text-white [&_i]:text-text-muted whitespace-pre-wrap word-break tracking-wide ${alignClass}`}
+                                    dangerouslySetInnerHTML={{ __html: post.textHtml || (isAr ? "<i>لا توجد بيانات إضافية.</i>" : "<i>No additional data received in this transmission.</i>") }}
+                                />
+
+                                {/* Read More / End */}
+                                <div className={`mt-16 border-t border-border pt-8 flex flex-col sm:flex-row items-center justify-between gap-6 pb-20 ${isAr ? 'flex-row-reverse' : ''}`}>
+                                    <div className={`flex items-center gap-3 ${isAr ? 'flex-row-reverse' : ''}`}>
+                                        <div className="w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_var(--primary)]"></div>
+                                        <h4 className="font-bold text-white uppercase tracking-widest text-sm">{isAr ? 'نهاية التقرير' : 'End of Report'}</h4>
+                                    </div>
+                                    <a href={`https://t.me/alertvice/${numericalId}`} target="_blank" rel="noopener noreferrer" className={`px-6 py-2.5 bg-surface hover:bg-surface-hover border border-border text-text-muted hover:text-white font-bold uppercase text-[11px] tracking-widest transition-colors rounded-sm shadow-sm flex items-center gap-3 hover:shadow-[0_0_15px_var(--glow-color)] hover:border-primary/50 ${isAr ? 'flex-row-reverse' : ''}`}>
+                                        {isAr ? 'تحقق من المصدر' : 'Verify Source'}
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isAr ? "M14 5l7 7m0 0l-7 7m7-7H3" : "M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"}></path></svg>
+                                    </a>
+                                </div>
+                            </article>
+                        </div>
+
+                        {/* RIGHT SIDEBAR - Latest News (Stack below on mobile) */}
+                        <div className="w-full lg:w-[320px] shrink-0 lg:h-full lg:overflow-y-auto custom-scrollbar border-t lg:border-t-0 lg:border-l border-border p-6 sm:p-8 bg-background/40 backdrop-blur-sm">
+                            <div className="flex items-center justify-between mb-6 pb-3 border-b border-border/80">
+                                <h3 className={`font-bold text-white uppercase tracking-widest text-sm flex items-center gap-2 ${isAr ? 'flex-row-reverse ml-auto' : ''}`}>
+                                    <span className="w-2 h-2 bg-primary rounded-sm shadow-[0_0_8px_var(--primary)]"></span>
+                                    {isAr ? 'أحدث الأخبار' : 'Latest News'}
+                                </h3>
+                            </div>
+
+                            <div className="flex flex-col gap-6">
+                                {latestPosts.map((p) => (
+                                    <Link key={`latest-${p.id}`} href={`/news/${getPostId(p.id)}`} className={`group flex gap-4 ${isAr ? 'flex-row-reverse' : ''}`}>
+                                        <div className="w-20 h-14 bg-surface rounded-lg overflow-hidden shrink-0 border border-border/50 group-hover:border-primary/40 transition-all duration-500 relative">
+                                            {p.hasVideo && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-10 transition-all group-hover:bg-black/10">
+                                                    <div className="bg-primary/90 rounded-full w-5 h-5 flex items-center justify-center shadow-[0_0_5px_var(--primary)] text-white">
+                                                        <svg className={`w-3 h-3 ${!isAr && 'translate-x-[0.5px]'}`} fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <img src={parseMedia(p.imageUrl)[0] || "/placeholder-news.jpg"} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700 opacity-60 group-hover:opacity-100" alt="thumb" />
+                                        </div>
+                                        <div className="flex flex-col gap-1 min-w-0">
+                                            <h4 className={`text-[12px] font-bold text-text-muted group-hover:text-white transition-colors leading-snug line-clamp-2 ${alignClass}`}>{p.aiTitle}</h4>
+                                            <div className="flex items-center justify-between mt-0.5">
+                                                <span className="text-[9px] font-black text-primary/40 uppercase tracking-widest">{new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                <span className="text-[8px] font-bold text-text-muted/20 flex items-center gap-1">
+                                                    <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5-2.24 5-5-2.24 5-5zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" /></svg>
+                                                    {p.views}
+                                                </span>
                                             </div>
                                         </div>
-                                        <a href={`https://t.me/alertvice/${getPostId(post.id)}`} target="_blank" className="bg-white/5 hover:bg-white/10 border border-white/5 px-8 py-4 rounded-2xl text-white font-black text-xs uppercase tracking-[0.3em] transition-all text-center">
-                                            VIEW ENCRYPTED SOURCE ON TELEGRAM
-                                        </a>
-                                    </motion.div>
-                                </article>
+                                    </Link>
+                                ))}
                             </div>
-                        </motion.div>
-                    ) : null}
-                </AnimatePresence>
+                        </div>
+
+                    </div>
+                ) : null}
             </main>
 
-            <footer className="w-full glass border-t border-white/5 py-12 shrink-0">
-                <div className="container mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div className="flex flex-col items-center md:items-start">
-                        <span className="text-xl font-black text-white tracking-widest">ALERTVICE</span>
-                        <span className="text-[10px] text-text-muted uppercase tracking-[0.3em]">Institutional Grade Feeds</span>
+            {/* Formal Footer (Full Width) */}
+            <footer className="w-full bg-surface border-t border-border py-16 shrink-0 relative z-50">
+                <div className="w-full px-6 flex flex-col lg:flex-row justify-between items-center gap-10">
+                    <div className="flex flex-col items-center lg:items-start gap-2">
+                        <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-primary rounded-full shadow-[0_0_10px_var(--primary)]"></div>
+                            <span className="text-white font-black tracking-[0.2em] uppercase text-base sm:text-lg">Alertvice Intel</span>
+                        </div>
+                        <p className="text-[9px] text-text-muted/40 uppercase tracking-[0.2em] font-bold">
+                            {isAr ? "خدمة الأخبار العالمية الاستخباراتية" : "Global Intel Service"}
+                        </p>
                     </div>
-                    <div className="text-[10px] text-white/20 font-mono italic">END OF TRANSMISSION</div>
+
+                    <div className="flex flex-wrap justify-center gap-6 sm:gap-10 font-bold uppercase tracking-[0.15em] text-[9px] sm:text-[10px]">
+                        <Link href="/" className="text-text-muted hover:text-white transition-all">{isAr ? "الرئيسية" : "News"}</Link>
+                        <Link href="/about" className="text-text-muted hover:text-white transition-all">{isAr ? "عن الشركة" : "About"}</Link>
+                        <Link href="/terms" className="text-text-muted hover:text-white transition-all">{isAr ? "الشروط" : "Terms"}</Link>
+                        <a href="https://t.me/alertvice" className="text-primary font-black">{isAr ? "تيليجرام" : "Telegram"}</a>
+                    </div>
+
+                    <div className="flex flex-col items-center lg:items-end gap-2 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-text-muted/20">
+                        <span>&copy; {mounted ? new Date().getFullYear() : "2026"} Alertvice</span>
+                        <div className="flex items-center gap-2">
+                            <span className="w-1 h-1 rounded-full bg-green-500/20"></span>
+                            <span>Encrypted</span>
+                        </div>
+                    </div>
                 </div>
             </footer>
         </div>

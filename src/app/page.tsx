@@ -79,7 +79,7 @@ export default function Home() {
     } catch (e) { console.error("Signal fetch failed", e); }
   };
 
-  // 2. MAIN FEED FETCH (Articles)
+  // 2. MAIN FEED FETCH (Articles - always filters for posts WITH media)
   const fetchArticles = async (isRefresh = false, currentLang = lang, reset = false, q = searchQuery) => {
     if (isRefresh) setRefreshing(true);
     else if (!reset) setLoadingMore(true);
@@ -89,8 +89,8 @@ export default function Home() {
     const currentOffset = (reset || isRefresh) ? 0 : offset;
 
     try {
-      const typeParam = q ? "" : "&type=article";
-      const res = await fetch(`/api/news?lang=${currentLang}&offset=${currentOffset}&limit=12${typeParam}&q=${encodeURIComponent(q)}&t=${Date.now()}`);
+      // Always use type=article to ensure only media posts appear in the main feed
+      const res = await fetch(`/api/news?lang=${currentLang}&offset=${currentOffset}&limit=12&type=article&q=${encodeURIComponent(q)}&t=${Date.now()}`);
       if (!res.ok) throw new Error("Connection unstable");
       const data = await res.json();
       const fetched = data.posts || [];
@@ -241,10 +241,10 @@ export default function Home() {
           </div>
           <div className="relative flex-1 overflow-hidden px-8">
             <div className={`${isAr ? 'animate-marquee-rtl' : 'animate-marquee'} flex items-center gap-24`}>
-              {Array.from(new Set(signals.map(s => deduplicateTitle(s.aiTitle)))).map((title, idx) => (
-                <div key={`ticker-${idx}`} className="text-[11px] font-bold text-white/90 uppercase whitespace-nowrap px-4 border-l border-white/10 first:border-0 lowercase first-letter:uppercase">
-                  {title}
-                </div>
+              {[...signals, ...signals].map((p, idx) => (
+                <Link key={`ticker-${idx}`} href={`/news/${getPostId(p.id)}`} className="text-[11px] font-bold text-white/90 hover:text-primary transition-all uppercase whitespace-nowrap">
+                  {deduplicateTitle(p.aiTitle)}
+                </Link>
               ))}
             </div>
           </div>
@@ -260,16 +260,27 @@ export default function Home() {
               <h3 className="font-black text-white uppercase tracking-widest text-[11px]">{isAr ? 'راصد الإشارات' : 'Signal Monitor'}</h3>
             </div>
           </div>
-          <motion.div variants={containerVars} initial="hidden" animate="show" className="p-4 flex flex-col gap-4">
+          <motion.div variants={containerVars} initial="hidden" animate="show" className="p-4 flex flex-col gap-2">
+            {monitorPosts.length === 0 && (
+              <div className="flex flex-col items-center gap-3 py-8 opacity-40">
+                <div className="w-8 h-8 border border-primary/30 rounded-full flex items-center justify-center animate-pulse">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">{isAr ? 'جارٍ المسح...' : 'Scanning...'}</span>
+              </div>
+            )}
             {monitorPosts.map(p => (
               <motion.div key={p.id} variants={itemVars}>
-                <Link href={`/news/${getPostId(p.id)}`} className="group block p-4 rounded-2xl bg-surface/10 border border-white/5 hover:border-primary/20 transition-all relative overflow-hidden">
-                  <div className={`absolute top-0 ${isAr ? 'right-0' : 'left-0'} w-1 h-full bg-primary/20 scale-y-0 group-hover:scale-y-100 transition-transform origin-top`}></div>
-                  <div className={`flex justify-between items-center mb-2 ${isAr ? 'flex-row-reverse' : ''}`}>
-                    <span className="text-[10px] font-black text-primary font-mono">{new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    <span className="text-[9px] text-text-muted/40 uppercase">#{getPostId(p.id)}</span>
+                <Link href={`/news/${getPostId(p.id)}`} className="group block p-3 rounded-xl bg-surface/10 border border-white/5 hover:border-primary/20 hover:bg-surface/20 transition-all relative overflow-hidden">
+                  <div className={`absolute top-0 ${isAr ? 'right-0' : 'left-0'} w-0.5 h-full bg-primary/0 group-hover:bg-primary/40 transition-colors`}></div>
+                  <div className={`flex justify-between items-center mb-1.5 ${isAr ? 'flex-row-reverse' : ''}`}>
+                    <span className="text-[9px] font-black text-primary font-mono">{new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span className="text-[9px] text-text-muted/30 uppercase font-mono">#{getPostId(p.id)}</span>
                   </div>
-                  <h4 className={`text-[13px] font-bold text-white/90 group-hover:text-white transition-colors leading-relaxed ${alignClass}`}>{deduplicateTitle(p.aiTitle)}</h4>
+                  <h4 className={`text-[12px] font-bold text-white/80 group-hover:text-white transition-colors leading-snug ${alignClass} line-clamp-2`}>{deduplicateTitle(p.aiTitle)}</h4>
+                  {p.aiSummary && (
+                    <p className={`text-[10px] text-text-muted/50 mt-1 leading-relaxed line-clamp-2 ${alignClass}`}>{p.aiSummary}</p>
+                  )}
                 </Link>
               </motion.div>
             ))}
