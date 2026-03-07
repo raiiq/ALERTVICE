@@ -475,76 +475,78 @@ export default function Home() {
         </div>
       </div>
 
-      <main className="flex-grow w-full flex flex-col lg:flex-row">
+      <main className="flex-grow w-full flex flex-col lg:flex-row px-4 lg:px-12 gap-12 mt-12 mb-12 max-w-[1800px] mx-auto">
         {/* LEFT SIDEBAR (SIGNAL MONITOR) */}
-        <div className="hidden lg:flex w-[340px] shrink-0 border-r border-white/5 flex-col sticky top-[120px] h-[calc(100vh-120px)] overflow-y-auto scrollbar-none">
-          <div className="px-8 py-6 border-b border-white/5 bg-surface/30 backdrop-blur-md sticky top-0 z-20">
-            <div className={`flex items-center gap-3 ${isAr ? 'flex-row-reverse' : ''}`}>
-              <div className="relative">
-                <span className="absolute inset-0 bg-red-500/40 rounded-full animate-ping"></span>
-                <span className="relative block w-2.5 h-2.5 bg-red-600 rounded-full"></span>
+        <div className="hidden lg:flex w-[380px] shrink-0 sidebar-container flex-col sticky top-[140px] h-[calc(100vh-200px)] overflow-hidden rounded-[2rem] border border-white/5 bg-[#0a0a0b]/40 backdrop-blur-3xl transition-all duration-700">
+          <div className="px-8 py-8 border-b border-white/[0.03] bg-white/[0.01] backdrop-blur-md sticky top-0 z-20">
+            <div className={`flex items-center gap-4 ${isAr ? 'flex-row-reverse' : ''}`}>
+              <div className="relative flex items-center justify-center">
+                <span className="absolute w-4 h-4 bg-red-500/20 rounded-full animate-ping"></span>
+                <span className="relative block w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]"></span>
               </div>
-              <h3 className="font-black text-white uppercase tracking-[0.2em] text-[11px]">{isAr ? 'راصد الإشارات' : 'Signal Monitor'}</h3>
+              <h3 className="font-black text-white uppercase tracking-[0.3em] text-[12px]">{isAr ? 'راصد الإشارات' : 'Signal Monitor'}</h3>
             </div>
           </div>
 
-          <motion.div variants={containerVars} initial="hidden" animate="show" className="sidebar-monitor">
+          <motion.div variants={containerVars} initial="hidden" animate="show" className="sidebar-monitor flex-1 overflow-y-auto scrollbar-none">
             {monitorPosts.length === 0 && (
-              <div className="flex flex-col items-center gap-4 py-20 opacity-30">
-                <div className="w-10 h-10 border border-primary/20 rounded-full flex items-center justify-center animate-spin-slow">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+              <div className="flex flex-col items-center gap-4 py-24 opacity-20">
+                <div className="w-12 h-12 border border-primary/20 rounded-full flex items-center justify-center animate-spin-slow">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-[0.4em] text-primary">{isAr ? 'جارٍ المسح...' : 'Scanning Deep Net...'}</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">{isAr ? 'جارٍ المسح...' : 'SCANNING...'}</span>
               </div>
             )}
 
-            {monitorPosts.map(p => {
-              const rawTitle = p.aiTitle || "";
-              const rawSummary = p.aiSummary || "";
+            <div className="flex flex-col gap-6 p-10">
+              {monitorPosts.map(p => {
+                const rawTitle = p.aiTitle || "";
+                const rawSummary = p.aiSummary || "";
 
-              const title = deduplicateTitle(rawTitle) || "";
-              let summary = deduplicateTitle(rawSummary) || "";
+                const title = deduplicateTitle(rawTitle) || "";
+                let summary = deduplicateTitle(rawSummary) || "";
 
-              // HYGIENE: Word-based overlap check
-              const getWords = (s: string) => s.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]/g, " ").split(/\s+/).filter(w => w.length > 3);
-              const titleWords = getWords(title);
-              const summaryWords = getWords(summary);
+                // HYGIENE: Word-based overlap check
+                const getWords = (s: string) => s.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]/g, " ").split(/\s+/).filter(w => w.length > 3);
+                const titleWords = getWords(title);
+                const summaryWords = getWords(summary);
 
-              const overlapCount = summaryWords.filter(w => titleWords.includes(w)).length;
-              const isSignificantOverlap = overlapCount > (summaryWords.length * 0.4) || summaryWords.length < 5;
+                const overlapCount = summaryWords.filter(w => titleWords.includes(w)).length;
+                const isSignificantOverlap = overlapCount > (summaryWords.length * 0.4) || summaryWords.length < 5;
 
-              if (isSignificantOverlap) summary = "";
+                if (isSignificantOverlap) summary = "";
 
-              const showSummary = summary.length > 20 && summary.toLowerCase() !== title.toLowerCase();
+                const showSummary = summary.length > 20 && summary.toLowerCase() !== title.toLowerCase();
 
-              return (
-                <motion.div key={p.id} variants={itemVars}>
-                  <Link href={`/news/${getPostId(p.id)}`} className="liquid-sidebar-card group">
-                    <div className={`flex justify-between items-center mb-3 ${isAr ? 'flex-row-reverse' : ''}`}>
-                      <div className={`flex items-center gap-2 ${isAr ? 'flex-row-reverse' : ''}`}>
-                        <div className="w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_rgba(56,189,248,0.5)]"></div>
-                        <span className="text-[10px] font-bold text-primary/70 font-mono tracking-widest uppercase">
-                          {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-                        </span>
+                return (
+                  <motion.div key={p.id} variants={itemVars}>
+                    <Link href={`/news/${getPostId(p.id)}`} className="liquid-sidebar-card group">
+                      <div className={`flex justify-between items-center mb-4 ${isAr ? 'flex-row-reverse' : ''}`}>
+                        <div className={`flex items-center gap-3 ${isAr ? 'flex-row-reverse' : ''}`}>
+                          <div className="w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_rgba(56,189,248,0.8)]"></div>
+                          <span className="text-[9px] font-bold text-primary/60 font-mono tracking-widest uppercase">
+                            {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                          </span>
+                        </div>
+                        <span className="text-[8px] font-bold text-white/5 font-mono tracking-[0.2em] uppercase">ID-{getPostId(p.id).slice(-4)}</span>
                       </div>
-                      <span className="text-[8px] font-bold text-white/10 font-mono tracking-[0.2em] uppercase">ID-{getPostId(p.id).slice(-4)}</span>
-                    </div>
 
-                    <h4 className={`text-[13px] font-bold text-white/90 group-hover:text-primary transition-colors leading-relaxed ${alignClass} line-clamp-3`}>
-                      {title}
-                    </h4>
+                      <h4 className={`text-[13px] font-bold text-white/80 group-hover:text-primary transition-colors leading-relaxed ${alignClass} line-clamp-3`}>
+                        {title}
+                      </h4>
 
-                    {showSummary && (
-                      <div className={`mt-3 pt-3 border-t border-white/[0.04] ${alignClass}`}>
-                        <p className="text-[10px] text-white/40 leading-relaxed line-clamp-2 group-hover:text-white/60 transition-colors italic">
-                          {summary}
-                        </p>
-                      </div>
-                    )}
-                  </Link>
-                </motion.div>
-              );
-            })}
+                      {showSummary && (
+                        <div className={`mt-4 pt-4 border-t border-white/[0.02] ${alignClass}`}>
+                          <p className="text-[10px] text-white/30 leading-relaxed line-clamp-2 group-hover:text-white/50 transition-colors italic font-light">
+                            {summary}
+                          </p>
+                        </div>
+                      )}
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </div>
           </motion.div>
         </div>
 

@@ -669,8 +669,20 @@ body {
 .sidebar-monitor {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px;
+  padding: 0;
+}
+
+.sidebar-container {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 20px 50px rgba(0, 0, 0, 0.5);
+  transition: box-shadow 0.4s ease;
+}
+
+.sidebar-container:hover {
+  box-shadow:
+    0 0 0 1px rgba(56, 189, 248, 0.15),
+    0 24px 60px rgba(0, 0, 0, 0.7);
 }
 
 .liquid-sidebar-card {
