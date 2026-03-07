@@ -720,14 +720,15 @@ body {
 
 .liquid-sidebar-card .glow-accent {
   position: absolute;
-  top: -30px;
-  inset-inline-end: -30px;
-  width: 100px;
-  height: 100px;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, transparent 75%);
+  top: -40px;
+  right: -40px;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 70%);
   pointer-events: none;
-  filter: blur(10px);
-  transition: opacity 0.4s;
+  filter: blur(20px);
+  z-index: 0;
+  transition: opacity 0.5s ease;
 }
 
 .liquid-sidebar-card:hover .glow-accent {
