@@ -487,7 +487,7 @@ export default function Home() {
                 </div>
                 <h3 className="font-black text-white uppercase tracking-[0.3em] text-[12px]">{isAr ? 'راصد الإشارات' : 'Signal Monitor'}</h3>
               </div>
-              <Link href="/monitor" className="text-[9px] font-black text-primary border border-primary/20 bg-primary/5 px-3 py-1.5 rounded-md hover:bg-primary/20 transition-all uppercase tracking-widest">
+              <Link href="/live" className="text-[9px] font-black text-primary border border-primary/20 bg-primary/5 px-3 py-1.5 rounded-md hover:bg-primary/20 transition-all uppercase tracking-widest">
                 {isAr ? 'توسيع' : 'EXPAND'}
               </Link>
             </div>
