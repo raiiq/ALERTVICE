@@ -66,7 +66,7 @@ function GlobeMap({
     const globeRef = useRef<HTMLDivElement>(null);
     const globeInstance = useRef<any>(null);
 
-    const points = useMemo(() => {
+    const ringData = useMemo(() => {
         return IRAQ_CITIES.map(city => {
             const events = signals.filter(s => s.location?.name === city.name);
             return {
@@ -74,8 +74,8 @@ function GlobeMap({
                 lng: city.lng,
                 city: city.name,
                 count: events.length,
-                color: events.length > 0 ? "#f97316" : "rgba(255,255,255,0.2)",
-                radius: events.length > 0 ? 0.5 + events.length * 0.1 : 0.2,
+                color: events.length > 0 ? "#f97316" : "rgba(255,255,255,0.1)",
+                size: events.length > 0 ? 0.8 : 0.2
             };
         });
     }, [signals]);
@@ -89,36 +89,45 @@ function GlobeMap({
             const Globe = (mod.default || mod) as any;
             globe = Globe({ rendererConfig: { antialias: true, alpha: true } })(globeRef.current!);
 
-            // Satellite imagery layer + night lights blend
+            // High-Res Satellite night lights + refined sky
             globe
-                .globeImageUrl("https://unpkg.com/three-globe/example/img/earth-night.jpg")
+                .globeImageUrl("//unpkg.com/three-globe/example/img/earth-night.jpg") // Standard night lights
+                .bumpImageUrl("//unpkg.com/three-globe/example/img/earth-topology.png")
                 .backgroundImageUrl("//unpkg.com/three-globe/example/img/night-sky.png")
                 .showAtmosphere(true)
-                .atmosphereColor("rgba(56,189,248,0.12)")
-                .atmosphereAltitude(0.08)
-                // Points
-                .pointsData(points)
+                .atmosphereColor("#38bdf8")
+                .atmosphereAltitude(0.12)
+                // Rings for pulsing tactical effect
+                .ringsData(ringData)
+                .ringColor((d: any) => d.color)
+                .ringMaxRadius((d: any) => d.size)
+                .ringPropagationSpeed(3)
+                .ringRepeatPeriod(2000)
+                // Points for the core dot
+                .pointsData(ringData)
                 .pointLat("lat")
                 .pointLng("lng")
-                .pointColor("color")
-                .pointAltitude(0.01)
-                .pointRadius("radius")
+                .pointColor((d: any) => d.count > 0 ? "#f97316" : "rgba(255,255,255,0.2)")
+                .pointAltitude(0.005)
+                .pointRadius(0.05) // Tiny dots
                 .pointLabel((d: any) => `
-          <div style="background:rgba(10,10,14,0.95);border:1px solid rgba(56,189,248,0.4);padding:8px 12px;border-radius:8px;color:white;font-size:11px;font-weight:bold;letter-spacing:0.05em;">
+          <div style="background:rgba(10,10,14,0.95);border:1px solid rgba(56,189,248,0.4);padding:8px 12px;border-radius:8px;color:white;font-size:11px;font-weight:bold;letter-spacing:0.05em;box-shadow: 0 0 20px rgba(0,0,0,0.5);">
             ${d.city}<br/><span style="color:#38bdf8;font-size:9px">${d.count} signals</span>
           </div>
         `)
                 .onPointClick((d: any) => { onFlyTo(d.lat, d.lng); });
 
             // Start view centered on Iraq
-            globe.pointOfView({ lat: 33.3, lng: 44.4, altitude: 1.5 }, 0);
+            globe.pointOfView({ lat: 33.3, lng: 44.4, altitude: 1.8 }, 0);
 
             globeInstance.current = globe;
 
             // Auto-rotate slowly
             globe.controls().autoRotate = true;
-            globe.controls().autoRotateSpeed = 0.3;
+            globe.controls().autoRotateSpeed = 0.4;
             globe.controls().enableZoom = true;
+            globe.controls().minAltitude = 0.1;
+            globe.controls().maxAltitude = 10;
         });
 
         return () => {
@@ -126,16 +135,17 @@ function GlobeMap({
         };
     }, []);
 
-    // Update points when signals change
+    // Update markers when signals change
     useEffect(() => {
         if (!globeInstance.current) return;
-        globeInstance.current.pointsData(points);
-    }, [points]);
+        globeInstance.current.ringsData(ringData);
+        globeInstance.current.pointsData(ringData);
+    }, [ringData]);
 
     // Fly to city on event click
     useEffect(() => {
         if (!globeInstance.current || targetLat == null || targetLng == null) return;
-        globeInstance.current.pointOfView({ lat: targetLat, lng: targetLng, altitude: 0.5 }, 1500);
+        globeInstance.current.pointOfView({ lat: targetLat, lng: targetLng, altitude: 0.8 }, 1500);
         // Stop auto-rotate when user selects an event
         globeInstance.current.controls().autoRotate = false;
     }, [targetLat, targetLng]);
