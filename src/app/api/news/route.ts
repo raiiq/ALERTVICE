@@ -105,10 +105,10 @@ export async function GET(request: Request) {
 
                 const toUpsert = Array.from(groupedMap.values()).reverse();
                 if (toUpsert.length > 0) {
-                    // Check existence by telegram_id
+                    // Check existence by id
                     const idsJson = toUpsert.map(p => p.id);
-                    const { data: exist } = await supabase.from('global_posts').select('telegram_id').in('telegram_id', idsJson);
-                    const existSet = new Set(exist?.map(p => p.telegram_id));
+                    const { data: exist } = await supabase.from('global_posts').select('id').in('id', idsJson);
+                    const existSet = new Set(exist?.map(p => p.id));
 
                     // Sync the 15 most recent unsynced posts
                     let news = toUpsert.filter(p => !existSet.has(p.id)).slice(0, 15);
@@ -142,38 +142,37 @@ export async function GET(request: Request) {
                             const dbData = news.map((p, idx) => {
                                 const item = cleanJson.items?.[idx.toString()] || {};
                                 return {
-                                    telegram_id: p.id,
+                                    id: p.id,
                                     title_en: item.en_title || "Signal Intercepted",
                                     summary_en: item.en_summary || "Automated intelligence capture from source.",
                                     tag_en: item.tag || "world",
-                                    content_html_en: p.textHtml,
+                                    content_en: p.textHtml,
                                     title_ar: item.ar_title || "تم اعتراض إشارة",
                                     summary_ar: item.ar_summary || "التقاط استخباراتي آلي من المصدر.",
                                     tag_ar: item.tag || "world",
-                                    content_html_ar: p.textHtml,
+                                    content_ar: p.textHtml,
                                     image_url: p.imageUrl,
                                     has_video: p.hasVideo,
                                     video_url: p.videoUrl,
-                                    post_date: p.date,
+                                    date: p.date,
                                     views: p.views
                                 };
                             });
 
-                            await supabase.from('global_posts').upsert(dbData, { onConflict: 'telegram_id' });
+                            await supabase.from('global_posts').upsert(dbData, { onConflict: 'id' });
                         } catch (e) {
                             console.error("AI Sync Error:", e);
-                            // Fallback sync without AI if AI fails
                             const fallbackData = news.map(p => ({
-                                telegram_id: p.id,
+                                id: p.id,
                                 title_en: "Intelligence Alert",
                                 title_ar: "تنبيه استخباراتي",
-                                post_date: p.date,
+                                date: p.date,
                                 image_url: p.imageUrl,
-                                content_html_en: p.textHtml,
-                                content_html_ar: p.textHtml,
+                                content_en: p.textHtml,
+                                content_ar: p.textHtml,
                                 views: p.views
                             }));
-                            await supabase.from('global_posts').upsert(fallbackData, { onConflict: 'telegram_id' });
+                            await supabase.from('global_posts').upsert(fallbackData, { onConflict: 'id' });
                         }
                     }
                 }
@@ -191,27 +190,25 @@ export async function GET(request: Request) {
     if (type === 'article') {
         query = query.or('image_url.not.is.null,video_url.not.is.null');
     } else if (type === 'signal') {
-        // Signals are typically text-only updates, or we just want the absolute latest.
-        // If we want signals to be specifically text-only:
         query = query.is('image_url', null).is('video_url', null);
     }
 
     const { data: posts, error: err } = await query
-        .order('post_date', { ascending: false })
+        .order('date', { ascending: false })
         .range(offset, offset + limit - 1);
 
     if (err) {
         console.error("Supabase query error:", err);
-        return NextResponse.json({ posts: [], hasMore: false });
+        return NextResponse.json({ posts: [], hasMore: false, error: err.message });
     }
 
     const formatted = (posts || []).map(p => ({
-        id: p.telegram_id,
-        textHtml: lang === 'ar' ? p.content_html_ar : p.content_html_en,
+        id: p.id,
+        textHtml: lang === 'ar' ? p.content_ar : p.content_en,
         imageUrl: p.image_url,
         hasVideo: p.has_video,
         videoUrl: p.video_url,
-        date: p.post_date,
+        date: p.date,
         views: p.views,
         aiTitle: lang === 'ar' ? p.title_ar : p.title_en,
         aiSummary: lang === 'ar' ? p.summary_ar : p.summary_en,

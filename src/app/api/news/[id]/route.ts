@@ -25,21 +25,21 @@ export async function GET(
         const { data: dbPost } = await supabase
             .from('global_posts')
             .select('*')
-            .eq('telegram_id', id.includes('/') ? id : `alertvice/${id}`)
+            .eq('id', id.includes('/') ? id : `alertvice/${id}`)
             .single();
 
         if (dbPost) {
             return NextResponse.json({
                 post: {
-                    id: dbPost.telegram_id,
-                    textHtml: lang === 'ar' ? dbPost.content_html_ar : dbPost.content_html_en,
+                    id: dbPost.id,
+                    textHtml: lang === 'ar' ? dbPost.content_ar : dbPost.content_en,
                     imageUrl: dbPost.image_url,
                     hasVideo: dbPost.has_video,
                     videoUrl: dbPost.video_url,
                     aiTitle: lang === 'ar' ? dbPost.title_ar : dbPost.title_en,
                     aiTag: lang === 'ar' ? dbPost.tag_ar : dbPost.tag_en,
                     aiSummary: lang === 'ar' ? dbPost.summary_ar : dbPost.summary_en,
-                    date: dbPost.post_date,
+                    date: dbPost.date,
                     views: dbPost.views
                 }
             });
@@ -77,18 +77,18 @@ export async function GET(
                     const item = JSON.parse(aiText.replace(/```json|```/gi, '').trim() || '{}');
 
                     const dbData = {
-                        telegram_id: `alertvice/${id}`,
+                        id: `alertvice/${id}`,
                         title_en: item.en_title || "Alert",
                         summary_en: item.en_summary || "",
                         tag_en: item.tag || "world",
-                        content_html_en: textHtml,
+                        content_en: textHtml,
                         title_ar: item.ar_title || "تنبيه",
                         summary_ar: item.ar_summary || "",
                         tag_ar: item.tag || "world",
-                        content_html_ar: textHtml,
+                        content_ar: textHtml,
                         image_url: imageUrl ? JSON.stringify([imageUrl]) : null,
                         has_video: $(el).find('video').length > 0,
-                        post_date: $(el).find('.tgme_widget_message_date time').attr('datetime') || new Date().toISOString(),
+                        date: $(el).find('.tgme_widget_message_date time').attr('datetime') || new Date().toISOString(),
                         views: $(el).find('.tgme_widget_message_views').text() || '0'
                     };
 
@@ -96,12 +96,12 @@ export async function GET(
 
                     return NextResponse.json({
                         post: {
-                            id: dbData.telegram_id,
-                            textHtml: lang === 'ar' ? dbData.content_html_ar : dbData.content_html_en,
+                            id: dbData.id,
+                            textHtml: lang === 'ar' ? dbData.content_ar : dbData.content_en,
                             imageUrl: dbData.image_url,
                             hasVideo: dbData.has_video,
                             aiTitle: lang === 'ar' ? dbData.title_ar : dbData.title_en,
-                            date: dbData.post_date,
+                            date: dbData.date,
                             views: dbData.views
                         }
                     });
