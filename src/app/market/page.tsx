@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import MarketChart from "../components/MarketChart";
+import Navbar from "../components/Navbar";
 
 interface MarketData {
     symbol: string;
@@ -183,6 +184,7 @@ export default function MarketDashboard() {
 
     return (
         <div className={`min-h-screen bg-background text-foreground tracking-wide flex flex-col font-cairo`} dir={isAr ? "rtl" : "ltr"}>
+            <Navbar lang={lang} setLang={setLang} activeCategory="market" />
             <main className="flex-grow w-full px-6 lg:px-12 py-12 max-w-[1800px] mx-auto mt-20">
 
                 {/* Header Section */}

@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
 import { deduplicateTitle } from "../components/MediaDisplay";
+import Navbar from "../components/Navbar";
 
 interface NewsPost {
     id: string;
@@ -350,14 +351,17 @@ export default function MonitorPage() {
     const [targetLat, setTargetLat] = useState<number | null>(null);
     const [targetLng, setTargetLng] = useState<number | null>(null);
     const [isClient, setIsClient] = useState(false);
+    const [lang, setLang] = useState("en");
     const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
         setIsClient(true);
         const stored = typeof window !== "undefined" ? localStorage.getItem("newsLang") || "en" : "en";
-        const fetchSignals = async () => {
+        setLang(stored);
+
+        const fetchSignals = async (currentLang = stored) => {
             try {
-                const res = await fetch(`/api/news?lang=${stored}&limit=100&type=signal&t=${Date.now()}`);
+                const res = await fetch(`/api/news?lang=${currentLang}&limit=100&type=signal&t=${Date.now()}`);
                 if (res.ok) {
                     const data = await res.json();
                     const posts = (data.posts || []) as any[];
@@ -373,10 +377,10 @@ export default function MonitorPage() {
                 }
             } catch (e) { console.error(e); }
         };
-        fetchSignals();
-        const t = setInterval(fetchSignals, 30000);
+        fetchSignals(stored);
+        const t = setInterval(() => fetchSignals(lang), 30000);
         return () => clearInterval(t);
-    }, []);
+    }, [lang]);
 
     // Implement Time-Range Filtering logic
     useEffect(() => {
@@ -410,37 +414,21 @@ export default function MonitorPage() {
             className="fixed inset-0 text-white flex flex-col overflow-hidden"
             style={{ background: "#050508", fontFamily: "'Inter', system-ui, sans-serif" }}
         >
-            {/* ── TOP HEADER ── */}
-            <header className="h-12 border-b border-white/[0.08] bg-[#09090c] flex items-center gap-4 px-4 shrink-0 z-[900] shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
-                {/* Logo */}
-                <Link href="/" className="flex items-center gap-3 mr-4 hover:opacity-80 transition-opacity shrink-0 group">
-                    <div className="w-6 h-6 rounded bg-[#0088ff] flex items-center justify-center shadow-[0_0_15px_rgba(0,136,255,0.4)] group-hover:scale-110 transition-transform">
-                        <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
-                    </div>
-                    <div className="flex flex-col leading-none">
-                        <span className="font-black text-[14px] tracking-tight text-white uppercase italic">Alert Radar</span>
-                        <span className="text-[8px] font-bold text-[#0088ff] tracking-[0.3em] uppercase opacity-80">Situational Awareness</span>
-                    </div>
-                </Link>
+            {/* ── MAIN GLOBAL NAVBAR ── */}
+            <Navbar lang={lang} setLang={setLang} activeCategory="live" />
 
+            {/* ── RADAR-SPECIFIC BAR ── */}
+            <header className="h-10 border-b border-white/[0.08] bg-[#09090c]/80 backdrop-blur-md flex items-center gap-4 px-4 shrink-0 z-[800] shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
                 {/* Search */}
                 <div className="relative group">
                     <svg className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#0088ff]/40 pointer-events-none group-focus-within:text-[#0088ff] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     <input
                         type="text"
-                        placeholder="Scanning transmissions..."
+                        placeholder="Scanning radar..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="bg-[#12121a] text-white/70 placeholder:text-[#0088ff]/20 text-[11px] py-1.5 pl-9 pr-4 rounded-md w-56 outline-none border border-white/5 focus:border-[#0088ff]/40 focus:bg-[#161622] transition-all"
+                        className="bg-white/5 text-white/70 placeholder:text-[#0088ff]/20 text-[10px] py-1 pl-9 pr-4 rounded-md w-48 outline-none border border-white/5 focus:border-[#0088ff]/40 transition-all font-black uppercase tracking-widest"
                     />
-                    {searchQuery && (
-                        <button
-                            onClick={() => setSearchQuery("")}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/50 transition-colors"
-                        >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
-                    )}
                 </div>
 
                 {/* Ticker */}
