@@ -286,7 +286,13 @@ export default function Home() {
                 {['world', 'politics', 'market'].map(cat => (
                   <button
                     key={cat}
-                    onClick={() => { setActiveCategory(cat); setOffset(0); fetchArticles(false, lang, true); }}
+                    onClick={() => {
+                      if (cat === 'market') {
+                        window.location.href = '/market';
+                        return;
+                      }
+                      setActiveCategory(cat); setOffset(0); fetchArticles(false, lang, true);
+                    }}
                     className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase transition-all duration-200 ${activeCategory === cat
                       ? 'bg-primary/15 text-primary border border-primary/30'
                       : 'text-white/30 hover:text-white/70 border border-transparent hover:border-white/10'
@@ -391,7 +397,13 @@ export default function Home() {
                     {[{ key: 'all', en: 'All', ar: 'الكل' }, { key: 'world', en: 'World', ar: 'عالمي' }, { key: 'politics', en: 'Politics', ar: 'سياسة' }, { key: 'market', en: 'Market', ar: 'سوق' }].map(cat => (
                       <button
                         key={cat.key}
-                        onClick={() => { setActiveCategory(cat.key); setOffset(0); fetchArticles(false, lang, true); closeMenu(); }}
+                        onClick={() => {
+                          if (cat.key === 'market') {
+                            window.location.href = '/market';
+                            return;
+                          }
+                          setActiveCategory(cat.key); setOffset(0); fetchArticles(false, lang, true); closeMenu();
+                        }}
                         className={`px-4 py-2 rounded-full text-[11px] font-black tracking-wider uppercase transition-all ${activeCategory === cat.key
                           ? 'bg-primary text-black shadow-[0_0_16px_rgba(56,189,248,0.4)]'
                           : 'bg-white/[0.04] text-white/40 border border-white/10 hover:text-white/80 hover:border-white/20'
