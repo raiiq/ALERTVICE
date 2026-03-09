@@ -258,7 +258,7 @@ export default function Home() {
       />
 
       {/* ===== LIQUID GLASS SIGNAL FLASH TICKER ===== */}
-      <div className="hidden lg:flex ticker-wrapper">
+      <div className="flex ticker-wrapper">
         <div className="liquid-glass-ticker">
           <div className={`ticker-badge ${isAr ? 'border-l border-r-0' : ''}`}>
             <div className="ticker-badge-dot"></div>
@@ -276,9 +276,9 @@ export default function Home() {
         </div>
       </div>
 
-      <main className="flex-grow w-full flex flex-col lg:flex-row px-4 lg:px-12 gap-12 mt-12 mb-12 max-w-[1800px] mx-auto">
-        {/* LEFT SIDEBAR (SIGNAL MONITOR) */}
-        <div className="hidden lg:flex w-[380px] shrink-0 sidebar-container flex-col sticky top-[140px] h-[calc(100vh-200px)] overflow-hidden rounded-[2rem] border border-white/5 bg-[#0a0a0b]/40 backdrop-blur-3xl transition-all duration-700">
+      <main className="flex-grow w-full flex flex-col lg:flex-row px-4 lg:px-10 gap-8 lg:gap-12 mt-8 lg:mt-12 mb-12 max-w-[1800px] mx-auto">
+        {/* LEFT SIDEBAR (SIGNAL MONITOR) - Responsive behavior */}
+        <div className="flex w-full lg:w-[380px] shrink-0 sidebar-container flex-col lg:sticky lg:top-[140px] h-[500px] lg:h-[calc(100vh-200px)] overflow-hidden rounded-[2rem] border border-white/5 bg-[#0a0a0b]/40 backdrop-blur-3xl transition-all duration-700">
           <div className="px-8 py-8 border-b border-white/[0.03] bg-white/[0.01] backdrop-blur-md sticky top-0 z-20">
             <div className={`flex items-center justify-between ${isAr ? 'flex-row-reverse' : ''}`}>
               <div className={`flex items-center gap-4 ${isAr ? 'flex-row-reverse' : ''}`}>
@@ -383,9 +383,9 @@ export default function Home() {
                       <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent opacity-40"></div>
                     </div>
                   ) : null}
-                  <div className={`p-8 lg:p-12 flex flex-col justify-center gap-8 ${(!heroPost.imageUrl && !heroPost.videoUrl) ? 'w-full' : 'lg:w-[50%]'}`}>
+                  <div className={`p-6 sm:p-8 lg:p-12 flex flex-col justify-center gap-6 sm:gap-8 ${(!heroPost.imageUrl && !heroPost.videoUrl) ? 'w-full' : 'lg:w-[50%]'}`}>
                     <div className="flex flex-col gap-4">
-                      <h2 className={`text-4xl lg:text-5xl font-black text-white leading-tight group-hover:text-primary transition-colors ${alignClass}`}>{deduplicateTitle(heroPost.aiTitle)}</h2>
+                      <h2 className={`text-2xl sm:text-4xl lg:text-5xl font-black text-white leading-tight group-hover:text-primary transition-colors ${alignClass}`}>{deduplicateTitle(heroPost.aiTitle)}</h2>
                       <div className={`flex items-center gap-6 text-[10px] font-black uppercase tracking-widest text-text-muted/40 ${isAr ? 'flex-row-reverse' : ''}`}>
                         <span>{formatDate(heroPost.date)}</span>
                         <span>{heroPost.views} VIEWS</span>

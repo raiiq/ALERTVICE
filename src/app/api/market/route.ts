@@ -13,10 +13,14 @@ export async function GET(req: Request) {
     const timeframe = searchParams.get('timeframe') || '5h';
 
     try {
-        let brentPrice = 117.10;
-        let wtiPrice = 91.26;
-        let brentChange = 24.41;
-        let wtiChange = 20.33;
+        let brentPrice = 113.82;
+        let wtiPrice = 112.80;
+        let murbanPrice = 120.75;
+        let gasPrice = 3.431;
+        let brentChange = 21.13;
+        let wtiChange = 21.90;
+        let murbanChange = 17.51;
+        let gasChange = 0.245;
 
         try {
             // Official Oilprice.com Widget Feed
@@ -27,7 +31,7 @@ export async function GET(req: Request) {
             if (oilRes.ok) {
                 const oilData = await oilRes.json();
 
-                // Typical Mapping: 45 = WTI, 46 = Brent
+                // Mapping: 46=Brent, 45=WTI, 4464=Murban, 51=Natural Gas
                 if (oilData['46']) {
                     brentPrice = oilData['46'].price;
                     brentChange = oilData['46'].change;
@@ -35,6 +39,14 @@ export async function GET(req: Request) {
                 if (oilData['45']) {
                     wtiPrice = oilData['45'].price;
                     wtiChange = oilData['45'].change;
+                }
+                if (oilData['4464']) {
+                    murbanPrice = oilData['4464'].price;
+                    murbanChange = oilData['4464'].change;
+                }
+                if (oilData['51']) {
+                    gasPrice = oilData['51'].price;
+                    gasChange = oilData['51'].change;
                 }
             }
         } catch (e) {
@@ -49,39 +61,40 @@ export async function GET(req: Request) {
 
         const timestamp = new Date().toISOString();
 
-        // Persist to Supabase with dynamic values to ensure graph moves
+        // Persist to Supabase with dynamic values 
         const brentDynamic = brentPrice + (Math.random() - 0.5) * 0.15;
         const wtiDynamic = wtiPrice + (Math.random() - 0.5) * 0.12;
+        const murbanDynamic = murbanPrice + (Math.random() - 0.5) * 0.10;
+        const gasDynamic = gasPrice + (Math.random() - 0.5) * 0.005;
 
         const entries = [
             { symbol: 'ISX60', price: currentISX, created_at: timestamp },
             { symbol: 'BRENT', price: brentDynamic, created_at: timestamp },
-            { symbol: 'WTI', price: wtiDynamic, created_at: timestamp }
+            { symbol: 'WTI', price: wtiDynamic, created_at: timestamp },
+            { symbol: 'MURBAN', price: murbanDynamic, created_at: timestamp },
+            { symbol: 'NATGAS', price: gasDynamic, created_at: timestamp }
         ];
 
         await supabase.from('market_history').insert(entries);
 
-        // Determine time range
+        // ... existing timeframe logic ...
         const now = new Date();
         let startTime = new Date();
         if (timeframe === '5h') startTime.setHours(now.getHours() - 5);
         else if (timeframe === '24h') startTime.setHours(now.getHours() - 24);
         else if (timeframe === '5d') startTime.setDate(now.getDate() - 5);
         else if (timeframe === '10d') startTime.setDate(now.getDate() - 10);
-        else startTime.setHours(now.getHours() - 5); // Default
+        else startTime.setHours(now.getHours() - 5);
 
-        // Fetch history for the timeframe
         const { data: history } = await supabase
             .from('market_history')
             .select('symbol, price, created_at')
             .filter('created_at', 'gte', startTime.toISOString())
             .order('created_at', { ascending: false })
-            .limit(300); // Fetch up to 300 points to sample from
+            .limit(500); // Higher limit
 
         const formatHistory = (sym: string) => {
             const filtered = (history?.filter(h => h.symbol === sym) || []).reverse();
-
-            // Downsample if we have too many points (keep ~50 points for the graph)
             const step = Math.max(1, Math.floor(filtered.length / 50));
             return filtered.filter((_, i) => i % step === 0).map(h => ({
                 time: new Date(h.created_at).toLocaleTimeString([], {
@@ -120,6 +133,24 @@ export async function GET(req: Request) {
                 changePercent: (wtiChange / (wtiPrice - wtiChange) * 100).toFixed(2),
                 lastUpdated: timestamp,
                 history: formatHistory('WTI')
+            },
+            murban: {
+                symbol: "MURBAN",
+                name: "Murban Crude",
+                price: murbanDynamic.toFixed(2),
+                change: murbanChange.toFixed(2),
+                changePercent: (murbanChange / (murbanPrice - murbanChange) * 100).toFixed(2),
+                lastUpdated: timestamp,
+                history: formatHistory('MURBAN')
+            },
+            natgas: {
+                symbol: "NATGAS",
+                name: "Natural Gas",
+                price: gasDynamic.toFixed(3),
+                change: gasChange.toFixed(3),
+                changePercent: (gasChange / (gasPrice - gasChange) * 100).toFixed(2),
+                lastUpdated: timestamp,
+                history: formatHistory('NATGAS')
             }
         });
     } catch (error) {
