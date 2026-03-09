@@ -113,11 +113,6 @@ export default function MarketDashboard() {
                             Analyze chart
                         </button>
                     </div>
-
-                    <div className="flex gap-2">
-                        <button className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-black uppercase transition-all shadow-[0_0_15px_rgba(16,185,129,0.2)]">Buy</button>
-                        <button className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-[11px] font-black uppercase transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)]">Sell</button>
-                    </div>
                 </div>
 
                 {/* Timeframe Selector */}
