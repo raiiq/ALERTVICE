@@ -17,16 +17,24 @@ export async function GET(req: Request) {
         let wtiPrice = 112.80;
         let murbanPrice = 120.75;
         let gasPrice = 3.431;
+        let goldPrice = 2920.00;
+        let silverPrice = 32.50;
         let brentChange = 21.13;
         let wtiChange = 21.90;
         let murbanChange = 17.51;
         let gasChange = 0.245;
+        let goldChange = 0;
+        let silverChange = 0;
 
         try {
-            // Official Oilprice.com Widget Feed
-            const oilRes = await fetch('https://s3.amazonaws.com/oilprice.com/widgets/oilprices/all/last.json', {
-                next: { revalidate: 5 }
-            });
+            // Fetch oil prices and precious metals in parallel
+            const [oilRes, goldRes, silverRes] = await Promise.all([
+                fetch('https://s3.amazonaws.com/oilprice.com/widgets/oilprices/all/last.json', {
+                    next: { revalidate: 5 }
+                }),
+                fetch('https://api.gold-api.com/price/XAU', { next: { revalidate: 5 } }).catch(() => null),
+                fetch('https://api.gold-api.com/price/XAG', { next: { revalidate: 5 } }).catch(() => null)
+            ]);
 
             if (oilRes.ok) {
                 const oilData = await oilRes.json();
@@ -49,8 +57,35 @@ export async function GET(req: Request) {
                     gasChange = oilData['51'].change;
                 }
             }
+
+            // Parse gold price
+            if (goldRes && goldRes.ok) {
+                const goldData = await goldRes.json();
+                if (goldData.price) goldPrice = goldData.price;
+            }
+
+            // Parse silver price
+            if (silverRes && silverRes.ok) {
+                const silverData = await silverRes.json();
+                if (silverData.price) silverPrice = silverData.price;
+            }
+
+            // Compute gold/silver change from last recorded Supabase entry
+            const { data: prevMetals } = await supabase
+                .from('market_history')
+                .select('symbol, price')
+                .in('symbol', ['GOLD', 'SILVER'])
+                .order('created_at', { ascending: false })
+                .limit(2);
+
+            if (prevMetals) {
+                const prevGold = prevMetals.find(m => m.symbol === 'GOLD');
+                const prevSilver = prevMetals.find(m => m.symbol === 'SILVER');
+                if (prevGold) goldChange = goldPrice - prevGold.price;
+                if (prevSilver) silverChange = silverPrice - prevSilver.price;
+            }
         } catch (e) {
-            console.warn("Direct Oilprice.com fetch failed", e);
+            console.warn("Market data fetch failed", e);
         }
 
         // Simulating ISX 60 (No public API available)
@@ -66,13 +101,17 @@ export async function GET(req: Request) {
         const wtiDynamic = wtiPrice + (Math.random() - 0.5) * 0.12;
         const murbanDynamic = murbanPrice + (Math.random() - 0.5) * 0.10;
         const gasDynamic = gasPrice + (Math.random() - 0.5) * 0.005;
+        const goldDynamic = goldPrice + (Math.random() - 0.5) * 1.5;
+        const silverDynamic = silverPrice + (Math.random() - 0.5) * 0.08;
 
         const entries = [
             { symbol: 'ISX60', price: currentISX, created_at: timestamp },
             { symbol: 'BRENT', price: brentDynamic, created_at: timestamp },
             { symbol: 'WTI', price: wtiDynamic, created_at: timestamp },
             { symbol: 'MURBAN', price: murbanDynamic, created_at: timestamp },
-            { symbol: 'NATGAS', price: gasDynamic, created_at: timestamp }
+            { symbol: 'NATGAS', price: gasDynamic, created_at: timestamp },
+            { symbol: 'GOLD', price: goldDynamic, created_at: timestamp },
+            { symbol: 'SILVER', price: silverDynamic, created_at: timestamp }
         ];
 
         await supabase.from('market_history').insert(entries);
@@ -151,6 +190,24 @@ export async function GET(req: Request) {
                 changePercent: (gasChange / (gasPrice - gasChange) * 100).toFixed(2),
                 lastUpdated: timestamp,
                 history: formatHistory('NATGAS')
+            },
+            gold: {
+                symbol: "GOLD",
+                name: "Gold",
+                price: goldDynamic.toFixed(2),
+                change: goldChange.toFixed(2),
+                changePercent: goldPrice > 0 ? (goldChange / goldPrice * 100).toFixed(2) : '0.00',
+                lastUpdated: timestamp,
+                history: formatHistory('GOLD')
+            },
+            silver: {
+                symbol: "SILVER",
+                name: "Silver",
+                price: silverDynamic.toFixed(2),
+                change: silverChange.toFixed(2),
+                changePercent: silverPrice > 0 ? (silverChange / silverPrice * 100).toFixed(2) : '0.00',
+                lastUpdated: timestamp,
+                history: formatHistory('SILVER')
             }
         });
     } catch (error) {

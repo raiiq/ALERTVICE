@@ -22,6 +22,8 @@ interface DashboardData {
     wti: MarketData;
     murban: MarketData;
     natgas: MarketData;
+    gold: MarketData;
+    silver: MarketData;
 }
 
 export default function MarketDashboard() {
@@ -65,6 +67,7 @@ export default function MarketDashboard() {
             subtitle: "Strategic Economic Monitoring",
             isx: "Iraq Stock Exchange",
             oil: "Energy Benchmarks",
+            metals: "Precious Metals",
             price: "Live Value",
             change: "24h Delta",
             status: "Operational",
@@ -76,6 +79,7 @@ export default function MarketDashboard() {
             subtitle: "المراقبة الاقتصادية الاستراتيجية",
             isx: "بورصة العراق",
             oil: "مؤشرات الطاقة",
+            metals: "المعادن الثمينة",
             price: "القيمة الحالية",
             change: "التغير ٢٤ ساعة",
             status: "قيد التشغيل",
@@ -104,7 +108,9 @@ export default function MarketDashboard() {
                             {isAr && item.symbol === 'ISX60' ? "مؤشر العراق 60" :
                                 (isAr && item.symbol === 'MURBAN' ? "خام مربان" :
                                     (isAr && item.symbol === 'NATGAS' ? "الغاز الطبيعي" :
-                                        item.name))}
+                                        (isAr && item.symbol === 'GOLD' ? "الذهب" :
+                                            (isAr && item.symbol === 'SILVER' ? "الفضة" :
+                                                item.name))))}
                             <motion.span
                                 animate={{ opacity: [1, 0.5, 1] }}
                                 transition={{ duration: 2, repeat: Infinity }}
@@ -143,7 +149,7 @@ export default function MarketDashboard() {
                         >
                             {item.price}
                         </motion.span>
-                        <span className="text-[10px] sm:text-[11px] font-black text-white/30 uppercase tracking-widest">USD</span>
+                        <span className="text-[10px] sm:text-[11px] font-black text-white/30 uppercase tracking-widest">{item.symbol === 'GOLD' || item.symbol === 'SILVER' ? 'USD/oz' : 'USD'}</span>
                     </div>
                     <div className={`flex items-baseline gap-1.5 sm:gap-2 font-mono ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
                         <span className="text-sm sm:text-base font-bold">{isPositive ? '+' : ''}{item.change}</span>
@@ -225,6 +231,8 @@ export default function MarketDashboard() {
                 ) : data && (
                     <>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                            <MarketCard item={data.gold} color="#FFD700" />
+                            <MarketCard item={data.silver} color="#C0C0C0" />
                             <MarketCard item={data.natgas} color="#00ff88" />
                             <MarketCard item={data.murban} color="#10b981" />
                             <MarketCard item={data.brent} color="#fbbf24" />
@@ -253,7 +261,7 @@ export default function MarketDashboard() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {[data.natgas, data.murban, data.brent, data.wti, data.isx60].map((item, idx) => {
+                                {[data.gold, data.silver, data.natgas, data.murban, data.brent, data.wti, data.isx60].map((item, idx) => {
                                     const isPos = parseFloat(item.change) >= 0;
                                     return (
                                         <div
@@ -280,9 +288,11 @@ export default function MarketDashboard() {
                                                         {isAr && item.symbol === 'ISX60' ? "مؤشر العراق 60" :
                                                             (isAr && item.symbol === 'MURBAN' ? "خام مربان" :
                                                                 (isAr && item.symbol === 'NATGAS' ? "الغاز الطبيعي" :
-                                                                    item.name))}
+                                                                    (isAr && item.symbol === 'GOLD' ? "الذهب" :
+                                                                        (isAr && item.symbol === 'SILVER' ? "الفضة" :
+                                                                            item.name))))}
                                                     </span>
-                                                    <span className="text-[10px] font-bold text-white/20 font-mono">TYPE: FUTURES_MARKET</span>
+                                                    <span className="text-[10px] font-bold text-white/20 font-mono">TYPE: {item.symbol === 'GOLD' || item.symbol === 'SILVER' ? 'PRECIOUS_METAL' : 'FUTURES_MARKET'}</span>
                                                 </div>
                                                 <div className="flex flex-col items-end">
                                                     <span className="text-lg font-black text-white font-mono leading-none">
@@ -332,7 +342,7 @@ export default function MarketDashboard() {
                 <div className="mt-20 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 opacity-30">
                     <div className={`flex items-center gap-4 ${isAr ? 'flex-row-reverse' : ''}`}>
                         <div className="w-2 h-2 border border-white/20 rounded-full" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Source: Official Oilprice.com Data link</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Source: Oilprice.com & Gold-API.com Data Link</span>
                     </div>
                     <div className="text-[10px] font-mono tracking-widest uppercase">
                         Secure Database Uplink // {new Date().toLocaleDateString()} // {new Date().toLocaleTimeString()}
