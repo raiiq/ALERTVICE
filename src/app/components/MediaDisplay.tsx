@@ -39,7 +39,15 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
                     <video src={item.url} controls className={`w-full h-full object-contain mx-auto`} />
                 ) : (
                     <div className="relative w-full h-full">
-                        <img src={item.url} alt="Intel" className={`w-full h-full object-contain mx-auto`} />
+                        <img
+                            src={item.url}
+                            alt="Intel"
+                            className={`w-full h-full object-contain mx-auto`}
+                            onError={(e) => {
+                                e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='17 8 12 3 7 8'/%3E%3Cline x1='12' y1='3' x2='12' y2='15'/%3E%3C/svg%3E";
+                                e.currentTarget.className = "w-1/3 h-1/3 object-contain mx-auto opacity-20 filter grayscale";
+                            }}
+                        />
                         {(hasVideo || item.type === 'video') && (
                             <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover/media:bg-black/10 transition-colors pointer-events-none">
                                 <div className="w-12 h-12 bg-primary/90 rounded-full flex items-center justify-center shadow-[0_0_20px_var(--primary)] text-white translate-y-0 group-hover/media:-translate-y-1 transition-transform">
@@ -76,6 +84,10 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
                                     src={item.url}
                                     alt="Intelligence Asset"
                                     className="w-full h-full object-cover group-hover/mitem:scale-105 transition-transform duration-1000"
+                                    onError={(e) => {
+                                        e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='17 8 12 3 7 8'/%3E%3Cline x1='12' y1='3' x2='12' y2='15'/%3E%3C/svg%3E";
+                                        e.currentTarget.className = "w-1/3 h-1/3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 object-contain opacity-20 filter grayscale";
+                                    }}
                                 />
                             )}
                             {idx === gridLimit - 1 && allMedia.length > gridLimit && (

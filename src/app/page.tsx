@@ -377,13 +377,13 @@ export default function Home() {
             {heroPost && (
               <motion.article variants={itemVars} className="group overflow-hidden rounded-[2.5rem] bg-surface/10 border border-white/5 hover:border-primary/20 transition-all duration-700 shadow-3xl">
                 <Link href={`/news/${getPostId(heroPost.id)}`} className={`flex flex-col lg:flex-row ${isAr ? 'lg:flex-row-reverse' : ''}`}>
-                  {heroPost.imageUrl || heroPost.videoUrl ? (
+                  {(parseMedia(heroPost.imageUrl).length > 0 || parseMedia(heroPost.videoUrl).length > 0 || heroPost.hasVideo) ? (
                     <div className="w-full lg:w-[50%] aspect-video lg:aspect-auto overflow-hidden bg-black shrink-0 relative">
                       <MediaDisplay images={parseMedia(heroPost.imageUrl)} videos={parseMedia(heroPost.videoUrl)} hasVideo={heroPost.hasVideo} isAr={isAr} aspect="h-full" singleMode={true} />
                       <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent opacity-40"></div>
                     </div>
                   ) : null}
-                  <div className={`p-6 sm:p-8 lg:p-12 flex flex-col justify-center gap-6 sm:gap-8 ${(!heroPost.imageUrl && !heroPost.videoUrl) ? 'w-full' : 'lg:w-[50%]'}`}>
+                  <div className={`p-6 sm:p-8 lg:p-12 flex flex-col justify-center gap-6 sm:gap-8 ${!(parseMedia(heroPost.imageUrl).length > 0 || parseMedia(heroPost.videoUrl).length > 0 || heroPost.hasVideo) ? 'w-full' : 'lg:w-[50%]'}`}>
                     <div className="flex flex-col gap-4">
                       <h2 className={`text-2xl sm:text-4xl lg:text-5xl font-black text-white leading-tight group-hover:text-primary transition-colors ${alignClass}`}>{deduplicateTitle(heroPost.aiTitle)}</h2>
                       <div className={`flex items-center gap-6 text-[10px] font-black uppercase tracking-widest text-text-muted/40 ${isAr ? 'flex-row-reverse' : ''}`}>
@@ -406,7 +406,7 @@ export default function Home() {
               {secondaryPosts.map(p => (
                 <motion.article key={p.id} variants={itemVars} className="group flex flex-col gap-4">
                   <Link href={`/news/${getPostId(p.id)}`} className="flex flex-col gap-4">
-                    {p.imageUrl || p.videoUrl ? (
+                    {(parseMedia(p.imageUrl).length > 0 || parseMedia(p.videoUrl).length > 0 || p.hasVideo) ? (
                       <div className="aspect-video rounded-3xl overflow-hidden border border-white/5 group-hover:border-primary/30 transition-all">
                         <MediaDisplay images={parseMedia(p.imageUrl)} videos={parseMedia(p.videoUrl)} hasVideo={p.hasVideo} isAr={isAr} aspect="aspect-video" singleMode={true} />
                       </div>
@@ -423,12 +423,12 @@ export default function Home() {
               {feedPosts.map(p => (
                 <motion.article key={p.id} variants={itemVars} className="group">
                   <Link href={`/news/${getPostId(p.id)}`} className={`flex flex-col md:flex-row gap-8 ${isAr ? 'md:flex-row-reverse' : ''}`}>
-                    {p.imageUrl || p.videoUrl ? (
+                    {(parseMedia(p.imageUrl).length > 0 || parseMedia(p.videoUrl).length > 0 || p.hasVideo) ? (
                       <div className="w-full md:w-[300px] shrink-0 rounded-2xl overflow-hidden border border-white/5">
                         <MediaDisplay images={parseMedia(p.imageUrl)} videos={parseMedia(p.videoUrl)} hasVideo={p.hasVideo} isAr={isAr} aspect="aspect-video" singleMode={true} />
                       </div>
                     ) : null}
-                    <div className={`flex flex-col gap-3 justify-center ${(!p.imageUrl && !p.videoUrl) ? 'w-full' : ''}`}>
+                    <div className={`flex flex-col gap-3 justify-center ${!(parseMedia(p.imageUrl).length > 0 || parseMedia(p.videoUrl).length > 0 || p.hasVideo) ? 'w-full' : ''}`}>
                       <h4 className={`text-2xl font-bold text-white group-hover:text-primary transition-colors ${alignClass}`}>{deduplicateTitle(p.aiTitle)}</h4>
                       <p className={`reading-text opacity-70 line-clamp-2 ${alignClass}`}>{p.aiSummary}</p>
                       <div className="text-[10px] text-text-muted/40 font-black uppercase tracking-widest">{formatDate(p.date)}</div>

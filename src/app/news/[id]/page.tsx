@@ -223,7 +223,7 @@ export default function ArticlePage() {
                                     <Link href={`/news/${getPostId(p.id)}`} key={`live-${p.id}`} className="group relative flex flex-col gap-3 p-3 rounded-xl bg-surface/10 border border-border/30 hover:border-primary/40 hover:bg-surface/30 transition-all duration-300">
                                         <div className="absolute top-0 left-0 w-1 h-0 bg-primary group-hover:h-full transition-all duration-500 rounded-l-xl"></div>
 
-                                        {p.imageUrl || p.hasVideo ? (
+                                        {(parseMedia(p.imageUrl).length > 0 || p.hasVideo) ? (
                                             <div className="w-full aspect-video rounded-lg overflow-hidden relative border border-border/50 group-hover:border-primary/30 transition-all duration-500">
                                                 {p.hasVideo && (
                                                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-10">
@@ -232,7 +232,15 @@ export default function ArticlePage() {
                                                         </div>
                                                     </div>
                                                 )}
-                                                <img src={parseMedia(p.imageUrl)[0] || ''} alt="Live" className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" />
+                                                <img 
+                                                    src={parseMedia(p.imageUrl)[0] || ''} 
+                                                    alt="Live" 
+                                                    className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 24 24' fill='none' stroke='%23ef4444' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='17 8 12 3 7 8'/%3E%3Cline x1='12' y1='3' x2='12' y2='15'/%3E%3C/svg%3E";
+                                                        e.currentTarget.className = "w-1/3 h-1/3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 object-contain opacity-20 filter grayscale";
+                                                    }}
+                                                />
                                             </div>
                                         ) : null}
 
@@ -352,7 +360,15 @@ export default function ArticlePage() {
                                                     </div>
                                                 </div>
                                             )}
-                                            <img src={parseMedia(p.imageUrl)[0] || "/placeholder-news.jpg"} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700 opacity-60 group-hover:opacity-100" alt="thumb" />
+                                            <img 
+                                                src={parseMedia(p.imageUrl)[0] || ''} 
+                                                className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700 opacity-60 group-hover:opacity-100" 
+                                                alt="thumb"
+                                                onError={(e) => {
+                                                    e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='17 8 12 3 7 8'/%3E%3Cline x1='12' y1='3' x2='12' y2='15'/%3E%3C/svg%3E";
+                                                    e.currentTarget.className = "w-1/2 h-1/2 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 object-contain opacity-20 filter grayscale";
+                                                }}
+                                            />
                                         </div>
                                         <div className="flex flex-col gap-1 min-w-0">
                                             <h4 className={`text-[12px] font-bold text-text-muted group-hover:text-white transition-colors leading-snug line-clamp-2 ${alignClass}`}>{p.aiTitle}</h4>
