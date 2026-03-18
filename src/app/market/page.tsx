@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import MarketChart from "../components/MarketChart";
-import Navbar from "../components/Navbar";
+import { useLanguage } from "../context/LanguageContext";
 
 interface MarketData {
     symbol: string;
@@ -28,7 +28,7 @@ interface DashboardData {
 
 export default function MarketDashboard() {
     const [data, setData] = useState<DashboardData | null>(null);
-    const [lang, setLang] = useState("en");
+    const { lang, isAr, toggleLang } = useLanguage();
     const [mounted, setMounted] = useState(false);
     const [loading, setLoading] = useState(true);
     const [timeframe, setTimeframe] = useState('5h');
@@ -48,9 +48,7 @@ export default function MarketDashboard() {
 
     useEffect(() => {
         setMounted(true);
-        const stored = localStorage.getItem("newsLang") || "en";
-        setLang(stored);
-    }, []); // Run once on mount to set initial mounted state and language
+    }, []); // Run once on mount to set initial mounted state
 
     useEffect(() => {
         fetchData(timeframe);
@@ -58,9 +56,8 @@ export default function MarketDashboard() {
         return () => clearInterval(interval);
     }, [lang, timeframe]); // Refetch and reset interval if language changes
 
-    if (!mounted) return null;
 
-    const isAr = lang === 'ar';
+    if (!mounted) return null;
     const t = {
         en: {
             title: "Market Intelligence",
@@ -195,7 +192,7 @@ export default function MarketDashboard() {
 
     return (
         <div className={`min-h-screen bg-surfaceackground text-foreground tracking-wide flex flex-col`} dir={isAr ? "rtl" : "ltr"}>
-            <Navbar lang={lang} setLang={setLang} activeCategory="market" />
+            {/* ── MAIN GLOBAL NAVBAR IS NOW IN ROOT LAYOUT ── */}
             <main className="flex-grow w-full px-6 lg:px-12 py-12 max-w-[1600px] mx-auto mt-20">
 
                 {/* Header Section */}

@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
 import { deduplicateTitle } from "../components/MediaDisplay";
-import Navbar from "../components/Navbar";
+import { useLanguage } from "../context/LanguageContext";
 
 interface NewsPost {
     id: string;
@@ -351,15 +351,13 @@ export default function MonitorPage() {
     const [targetLat, setTargetLat] = useState<number | null>(null);
     const [targetLng, setTargetLng] = useState<number | null>(null);
     const [isClient, setIsClient] = useState(false);
-    const [lang, setLang] = useState("en");
+    const { lang, isAr } = useLanguage();
     const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
         setIsClient(true);
-        const stored = typeof window !== "undefined" ? localStorage.getItem("newsLang") || "en" : "en";
-        setLang(stored);
 
-        const fetchSignals = async (currentLang = stored) => {
+        const fetchSignals = async (currentLang = lang) => {
             try {
                 const res = await fetch(`/api/news?lang=${currentLang}&limit=100&type=signal&t=${Date.now()}`);
                 if (res.ok) {
@@ -377,7 +375,7 @@ export default function MonitorPage() {
                 }
             } catch (e) { console.error(e); }
         };
-        fetchSignals(stored);
+        fetchSignals(lang);
         const t = setInterval(() => fetchSignals(lang), 30000);
         return () => clearInterval(t);
     }, [lang]);
@@ -414,8 +412,7 @@ export default function MonitorPage() {
             className="fixed inset-0 text-foreground flex flex-col overflow-hidden"
             style={{ background: "#050508", fontFamily: "var(--font-condensed, 'Franklin Gothic Medium', Arial, sans-serif)" }}
         >
-            {/* ── MAIN GLOBAL NAVBAR ── */}
-            <Navbar lang={lang} setLang={setLang} activeCategory="live" />
+            {/* ── MAIN GLOBAL NAVBAR IS NOW IN ROOT LAYOUT ── */}
 
             {/* ── RADAR-SPECIFIC BAR ── */}
             <header className="h-10 border-b border-white/[0.08] bg-[#09090c]/80 backdrop-blur-md flex items-center gap-4 px-4 shrink-0 z-[800] shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
