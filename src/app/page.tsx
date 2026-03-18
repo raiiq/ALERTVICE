@@ -292,8 +292,8 @@ export default function Home() {
   const feedPosts = filteredPosts.length > 5 ? filteredPosts.slice(5) : [];
   const sidebarPosts = articles.slice(0, 15);
 
-  if (!mounted) return (
-    <div className="loading-screen">
+  if (!mounted || (loading && articles.length === 0)) return (
+    <div className={`loading-screen${loadingFading ? ' fading' : ''}`}>
       <div className="loading-radar">
         <div className="loading-radar-ring" />
         <div className="loading-radar-ring" />
@@ -302,15 +302,15 @@ export default function Home() {
         <div className="loading-radar-ping" />
         <div className="loading-radar-core" />
       </div>
-      <div className="loading-title font-inter" data-text="ALERTVICE">ALERTVICE</div>
-      <div className="loading-subtitle font-inter">Global Intelligence Network</div>
+      <div className="loading-title" data-text="ALERTVICE">ALERTVICE</div>
+      <div className="loading-subtitle">Global Intelligence Network</div>
       <div className="loading-dots"><span /><span /><span /></div>
       <div className="loading-status">Initializing feed...</div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground tracking-wide flex flex-col font-cairo" dir={isAr ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-background text-foreground tracking-wide flex flex-col" dir={isAr ? "rtl" : "ltr"}>
       {/* LOADING SCREEN OVERLAY */}
       {!loadingGone && (
         <div className={`loading-screen${loadingFading ? ' fade-out' : ''}`}>
@@ -356,6 +356,7 @@ export default function Home() {
         )}
       </AnimatePresence>
 
+
       {/* ===== REUSABLE NAVBAR ===== */}
       <Navbar
         lang={lang}
@@ -369,15 +370,16 @@ export default function Home() {
         onRefresh={() => { fetchArticles(true, lang, true); fetchSignals(lang); }}
       />
 
-      <div className="ticker-wrapper">
+      {/* FULL WIDTH TICKERS AT TOP */}
+      <div className="ticker-wrapper border-b border-white/5 mb-0 relative z-[100] sticky top-0 lg:top-16 lg:pl-[400px]">
         <div className="intelligence-ticker">
           <div className="ticker-badge">
             <div className="ticker-badge-dot mr-3"></div>
-            <span className="text-primary-foreground font-black text-[10px] tracking-[0.2em] uppercase font-inter">{isAr ? 'رادار' : 'RADAR FLASH'}</span>
+            <span className="text-primary-foreground font-black text-[13px] tracking-[0.15em] uppercase">{isAr ? 'رادار' : 'RADAR FLASH'}</span>
           </div>
           <div className="ticker-content relative overflow-hidden flex-1 h-full flex items-center">
             <div className={`${isAr ? 'animate-marquee-rtl' : 'animate-marquee'} flex items-center gap-32`}>
-              {[...signals, ...signals].map((p, idx) => (
+              {signals && [...signals, ...signals].map((p, idx) => (
                 <Link key={`ticker-${idx}`} href={`/news/${getPostId(p.id)}`} className="text-[10px] font-bold text-foreground/80 hover:text-primary transition-all uppercase whitespace-nowrap tracking-wider">
                   <span className="flex items-center gap-4">
                     <span className="font-black text-primary border-b border-primary/20">{deduplicateTitle(p.aiTitle)}</span>
@@ -410,114 +412,11 @@ export default function Home() {
         )}
       </div>
 
-      <main className="flex-grow w-full flex flex-col lg:flex-row mx-auto">
-        {/* LEFT SIDEBAR (SIGNAL MONITOR) - Responsive behavior */}
-        <aside 
-          className="w-full lg:w-[400px] shrink-0 intelligence-sidebar order-last lg:order-first"
-          style={{ 
-            top: urgentSignals.length > 0 ? '156px' : '112px', 
-            height: `calc(100vh - ${urgentSignals.length > 0 ? '156px' : '112px'})` 
-          }}
-        >
-          <div className="px-8 py-8 border-b border-white/[0.03] bg-foreground/[0.01] backdrop-blur-md sticky top-0 z-20">
-            <div className={`flex items-center justify-between ${isAr ? 'flex-row-reverse' : ''}`}>
-              <div className={`flex items-center gap-4 ${isAr ? 'flex-row-reverse' : ''}`}>
-                <div className="relative flex items-center justify-center">
-                  <span className="absolute w-4 h-4 bg-red-500/20 rounded-none animate-ping"></span>
-                  <span className="relative block w-2 h-2 bg-red-500 rounded-none shadow-[0_0_10px_rgba(239,68,68,0.5)]"></span>
-                </div>
-                <h3 className="font-black text-foreground uppercase tracking-[0.3em] text-[12px] font-inter">{isAr ? 'رادار التنبيه' : 'ALERT RADAR'}</h3>
-              </div>
-              <Link href="/live" className="text-[10px] font-black text-primary border border-primary/20 bg-primary/5 px-4 py-2 rounded-none hover:bg-primary/20 transition-all uppercase tracking-widest shadow-[0_0_20px_rgba(56,189,248,0.15)] font-inter">
-                {isAr ? 'فتح راصد الكرة الأرضية' : 'OPEN 3D RADAR MONITOR'}
-              </Link>
-            </div>
-          </div>
+      {/* Add top padding on desktop to clear the fixed navbar */}
+      <main className="flex-grow w-full flex flex-col lg:flex-row mx-auto relative z-10 pt-0 lg:pt-16">
 
-          <motion.div variants={containerVars} initial="hidden" animate="show" className="intelligence-sidebar flex-1 overflow-y-auto scrollbar-none">
-            {monitorPosts.length === 0 && (
-              <div className="flex flex-col items-center gap-4 py-24 opacity-20">
-                <div className="w-12 h-12 border border-primary/20 rounded-none flex items-center justify-center animate-spin-slow">
-                  <div className="w-2 h-2 bg-primary rounded-none"></div>
-                </div>
-                <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">{isAr ? 'جارٍ المسح...' : 'SCANNING...'}</span>
-              </div>
-            )}
-
-            <div className="flex flex-col gap-6 p-10">
-              {monitorPosts.map(p => {
-                const rawTitle = p.aiTitle || "";
-                const rawSummary = p.aiSummary || "";
-
-                const title = deduplicateTitle(rawTitle) || "";
-                let summary = deduplicateTitle(rawSummary) || "";
-
-                // HYGIENE: Word-based overlap check
-                const getWords = (s: string) => s.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]/g, " ").split(/\s+/).filter(w => w.length > 3);
-                const titleWords = getWords(title);
-                const summaryWords = getWords(summary);
-
-                const overlapCount = summaryWords.filter(w => titleWords.includes(w)).length;
-                const isSignificantOverlap = overlapCount > (summaryWords.length * 0.4) || summaryWords.length < 5;
-
-                if (isSignificantOverlap) summary = "";
-
-                const showSummary = summary.length > 20 && summary.toLowerCase() !== title.toLowerCase();
-
-                return (
-                  <motion.div key={p.id} variants={itemVars}>
-                    <div className="relative group">
-                      {isAdmin && (
-                        <div className="absolute top-2 right-2 flex gap-1 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingPost(p); setIsEditModalOpen(true); }} className="p-1.5 bg-blue-500/80 backdrop-blur-md rounded-none text-foreground hover:bg-blue-400 shadow-xl">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                          </button>
-                          <button onClick={(e) => handleDeletePost(e, p.dbId)} className="p-1.5 bg-red-500/80 backdrop-blur-md rounded-none text-foreground hover:bg-red-400 shadow-xl">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                          </button>
-                        </div>
-                      )}
-                      <Link href={`/news/${getPostId(p.id)}`} className="liquid-sidebar-card group radar-signal-framework">
-                        <div className="animate-ingest" />
-                      <div className={`flex justify-between items-center mb-4 ${isAr ? 'flex-row-reverse' : ''}`}>
-                        <div className={`flex items-center gap-3 ${isAr ? 'flex-row-reverse' : ''}`}>
-                          <div className="w-1 h-1 bg-primary rounded-none shadow-[0_0_8px_rgba(56,189,248,0.8)]"></div>
-                          <span className="text-[9px] font-bold text-primary/60 font-mono tracking-widest uppercase">
-                            {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-foreground flex items-center justify-center rounded-none animate-alarm shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]">
-                            <svg className="w-3.5 h-3.5 text-background" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
-                            </svg>
-                          </div>
-                          <span className="text-[8px] font-bold text-foreground/10 font-mono tracking-[0.2em] uppercase">ID-{getPostId(p.id).slice(-4)}</span>
-                        </div>
-                      </div>
-
-                      <h4 className={`text-[13px] font-bold text-foreground/80 group-hover:text-primary transition-colors leading-relaxed ${alignClass} line-clamp-3`}>
-                        {title}
-                      </h4>
-
-                      {showSummary && (
-                        <div className={`mt-4 pt-4 border-t border-white/[0.02] ${alignClass}`}>
-                          <p className="text-[10px] text-foreground/30 leading-relaxed line-clamp-2 group-hover:text-foreground/50 transition-colors italic font-light">
-                            {summary}
-                          </p>
-                        </div>
-                      )}
-                    </Link>
-                  </div>
-                </motion.div>
-              );
-            })}
-            </div>
-          </motion.div>
-        </aside>
-
-        {/* FEED */}
-        <div className="flex-1 px-8 lg:px-16 py-12 lg:pl-[400px]">
+        {/* FEED SECTION - OFFSET ON DESKTOP ONLY */}
+        <div className="flex-1 px-4 sm:px-6 lg:px-16 py-6 lg:py-12 lg:pl-[400px] w-full max-w-screen-2xl mx-auto flex flex-col gap-8 lg:gap-12">
           <motion.div variants={containerVars} initial="hidden" animate="show" className="flex flex-col gap-16">
             {!loading && articles.length === 0 && (
               <div className="flex flex-col items-center justify-center py-32 text-center gap-6">
@@ -666,7 +565,7 @@ export default function Home() {
         </div>
       </main>
 
-      <footer className="w-full bg-surface/80 backdrop-blur-md border-t border-border-color py-12 mt-auto">
+      <footer className="w-full bg-surface/80 backdrop-blur-md border-t border-border-color py-10 mt-auto lg:pl-[400px] pb-24 lg:pb-10 mb-0">
         <div className="container mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex flex-col items-center md:items-start">
             <span className="text-xl font-black text-foreground tracking-widest">ALERTVICE</span>
@@ -744,6 +643,66 @@ export default function Home() {
               </motion.div>
           )}
       </AnimatePresence>
+
+      {/* FULL HEIGHT LEFT SIDEBAR (SIGNAL MONITOR) — DESKTOP ONLY */}
+      <aside className="hidden lg:flex fixed top-0 left-0 bottom-0 w-[400px] h-screen bg-background border-r border-white/10 intelligence-sidebar z-[500] flex-col" style={{ top: 0, height: '100vh' }}>
+        <div className={`w-full px-4 sm:px-8 min-h-[64px] lg:h-16 border-b border-white/10 bg-background/95 backdrop-blur-3xl flex items-center justify-between z-[60] shrink-0 relative ${isAr ? 'text-right' : 'text-left'}`}>
+          {/* Subtle scanline moving across the header */}
+          <div className="sidebar-header-scan" />
+          <div className={`flex items-center gap-3 sm:gap-4 ${isAr ? 'flex-row-reverse' : ''}`}>
+            {/* Sonar-ring live dot */}
+            <div className="sonar-dot">
+              <div className="ring" />
+              <div className="ring" />
+              <div className="ring" />
+              <div className="core" />
+            </div>
+            <h3 className="font-black text-foreground uppercase tracking-[0.3em] text-[11px] sm:text-[13px]">{isAr ? 'رادار التنبيه' : 'SIGNAL MONITOR'}</h3>
+          </div>
+          <Link href="/live" className="text-[10px] font-black text-primary border border-primary/20 bg-primary/5 px-4 py-2 rounded-none hover:bg-primary/20 transition-all uppercase tracking-widest shadow-[0_0_20px_rgba(56,189,248,0.15)]">
+            {isAr ? 'عرض مباشر' : '3D TRACKING'}
+          </Link>
+        </div>
+
+        <motion.div variants={containerVars} initial="hidden" animate="show" className="flex-1 overflow-y-auto scrollbar-hide px-4 sm:px-0 transition-all">
+          {monitorPosts.length === 0 && (
+            <div className="flex flex-col items-center gap-4 py-24 opacity-20">
+              <div className="w-12 h-12 border border-primary/20 rounded-none flex items-center justify-center animate-spin-slow">
+                <div className="w-2 h-2 bg-primary rounded-none"></div>
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">{isAr ? 'جارٍ المسح...' : 'SCANNING...'}</span>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-6 px-0 sm:px-8 py-2 relative z-10 mt-2">
+            {monitorPosts.map((p, idx) => {
+               const title = deduplicateTitle(p.aiTitle) || "";
+               return (
+                <motion.div key={p.id} variants={itemVars}>
+                  <Link href={`/news/${getPostId(p.id)}`} className="liquid-sidebar-card group radar-signal-framework">
+                    {/* Horizontal scanline sweep */}
+                    <div className="animate-ingest" />
+                    {/* Vertical data-stream bar with staggered delay */}
+                    <div className="signal-stream" style={{ ['--stream-delay' as any]: `${(idx % 5) * 0.7}s` }} />
+                    <div className={`flex justify-between items-center mb-3 ${isAr ? 'flex-row-reverse' : ''}`}>
+                      <div className={`flex items-center gap-2 ${isAr ? 'flex-row-reverse' : ''}`}>
+                        <div className="w-1 h-1 bg-primary rounded-none" />
+                        <span className="text-[9px] font-bold text-primary/60 font-mono tracking-widest">
+                          {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                        </span>
+                      </div>
+                      <span className="text-[8px] font-bold font-mono uppercase blip-flicker">ID-{getPostId(p.id).slice(-4)}</span>
+                    </div>
+                    <h4 className={`text-[12px] font-bold text-foreground/80 group-hover:text-primary transition-colors leading-relaxed ${alignClass} line-clamp-2`}>
+                      {title}
+                    </h4>
+                  </Link>
+                </motion.div>
+               );
+            })}
+          </div>
+        </motion.div>
+      </aside>
     </div >
   );
 }

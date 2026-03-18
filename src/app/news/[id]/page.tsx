@@ -207,7 +207,7 @@ export default function ArticlePage() {
     const alignClass = isAr ? 'text-right' : 'text-left';
 
     return (
-        <div className="min-h-screen bg-surfaceackground text-foreground tracking-wide flex flex-col font-cairo" dir={isAr ? "rtl" : "ltr"}>
+        <div className="min-h-screen bg-surfaceackground text-foreground tracking-wide flex flex-col" dir={isAr ? "rtl" : "ltr"}>
 
             {/* Header */}
             <header className="w-full bg-surface border-b border-border z-50 shadow-[0_4px_20px_rgba(0,0,0,0.5)] shrink-0 sticky top-0 h-[64px]">

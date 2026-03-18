@@ -194,7 +194,7 @@ export default function MarketDashboard() {
     };
 
     return (
-        <div className={`min-h-screen bg-surfaceackground text-foreground tracking-wide flex flex-col font-cairo`} dir={isAr ? "rtl" : "ltr"}>
+        <div className={`min-h-screen bg-surfaceackground text-foreground tracking-wide flex flex-col`} dir={isAr ? "rtl" : "ltr"}>
             <Navbar lang={lang} setLang={setLang} activeCategory="market" />
             <main className="flex-grow w-full px-6 lg:px-12 py-12 max-w-[1600px] mx-auto mt-20">
 

@@ -268,8 +268,8 @@ function GlobeMap({
                 <div style="background:rgba(5,5,8,0.98); border:1px solid ${d.isSelected || d.count > 0 ? '#00bbff' : '#004488'}; padding:16px; border-radius:12px; min-width:280px; box-shadow: 0 0 50px rgba(0,0,0,0.9); animation: fadeIn 0.3s ease-out; border-left: 5px solid ${d.isSelected || d.count > 0 ? '#00bbff' : '#004488'}; backdrop-filter: blur(15px);">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; border-bottom:1px solid rgba(0,136,255,0.15); padding-bottom:12px;">
                         <div style="display:flex; flex-direction:column; gap:2px;">
-                            <div style="font-weight:900; font-size:14px; color:white; text-transform:uppercase; letter-spacing:0.1em; font-family: 'Inter', sans-serif;">${d.name}</div>
-                            <div style="font-weight:700; font-size:16px; color:#00bbff; font-family: 'Cairo', sans-serif;" dir="rtl">${d.ar || ''}</div>
+                            <div style="font-weight:900; font-size:14px; color:white; text-transform:uppercase; letter-spacing:0.1em;">\${d.name}</div>
+                            <div style="font-weight:700; font-size:16px; color:#00bbff; font-family: var(--font-arabic, 'Segoe UI', Arial, sans-serif);" dir="rtl">\${d.ar || ''}</div>
                         </div>
                         <div style="text-align:right;">
                             <div style="font-size:10px; color:${d.count > 0 ? '#00bbff' : '#64748b'}; font-weight:900; letter-spacing:0.05em;">${d.count} ACTIVE SIGNALS</div>
@@ -412,7 +412,7 @@ export default function MonitorPage() {
     return (
         <div
             className="fixed inset-0 text-foreground flex flex-col overflow-hidden"
-            style={{ background: "#050508", fontFamily: "'Inter', system-ui, sans-serif" }}
+            style={{ background: "#050508", fontFamily: "var(--font-condensed, 'Franklin Gothic Medium', Arial, sans-serif)" }}
         >
             {/* ── MAIN GLOBAL NAVBAR ── */}
             <Navbar lang={lang} setLang={setLang} activeCategory="live" />

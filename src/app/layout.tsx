@@ -1,31 +1,28 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Lora, Amiri, Inter } from "next/font/google";
+import { Source_Serif_4, Libre_Franklin, IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+// English body — Source Serif 4 (matches Reuters' editorial serif body text style)
+const sourceSerif = Source_Serif_4({
+  variable: "--font-roboto",
   subsets: ["latin"],
+  weight: ["300", "400", "600", "700", "900"],
+  style: ["normal", "italic"],
 });
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// English headlines — Libre Franklin (matches Reuters' Franklin Gothic condensed headline style)
+const libreFranklin = Libre_Franklin({
+  variable: "--font-condensed",
   subsets: ["latin"],
+  weight: ["300", "400", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const lora = Lora({
-  variable: "--font-lora",
-  subsets: ["latin"],
-});
-
-const amiri = Amiri({
-  variable: "--font-amiri",
-  subsets: ["arabic", "latin"],
-  weight: ["400", "700"],
+// Arabic — IBM Plex Sans Arabic (Sky News Arabia style)
+const ibmPlexArabic = IBM_Plex_Sans_Arabic({
+  variable: "--font-arabic",
+  subsets: ["arabic"],
+  weight: ["300", "400", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -41,7 +38,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${lora.variable} ${amiri.variable} antialiased`}
+        className={`${sourceSerif.variable} ${libreFranklin.variable} ${ibmPlexArabic.variable} antialiased`}
       >
         {children}
       </body>
