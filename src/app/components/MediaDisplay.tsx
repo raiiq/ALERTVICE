@@ -1,7 +1,8 @@
 "use client";
 
-export const parseMedia = (val: string | null): string[] => {
+export const parseMedia = (val: string | null | any[]): string[] => {
     if (!val) return [];
+    if (Array.isArray(val)) return val;
     if (typeof val === 'string' && val.startsWith('[') && val.endsWith(']')) {
         try {
             return JSON.parse(val);
@@ -9,7 +10,7 @@ export const parseMedia = (val: string | null): string[] => {
             return [val];
         }
     }
-    return [val];
+    return [typeof val === 'string' ? val : String(val)];
 };
 
 export const deduplicateTitle = (title: string | null) => {

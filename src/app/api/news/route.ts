@@ -149,13 +149,17 @@ export async function GET(request: Request) {
                                 } catch (e) { console.error("AI Error", e); }
                             }
 
-                            for (const p of news) {
+                            await Promise.allSettled(news.map(async (p) => {
                                 if (!p.aiTitle) {
-                                    p.aiTitle = await freeTranslate(p.plainText?.substring(0, 60) || "Intel Update", lang);
-                                    p.aiSummary = await freeTranslate(p.plainText?.substring(0, 200) || "Check detailed feed.", lang);
+                                    const [title, summary] = await Promise.all([
+                                        freeTranslate(p.plainText?.substring(0, 60) || "Intel Update", lang),
+                                        freeTranslate(p.plainText?.substring(0, 200) || "Check detailed feed.", lang)
+                                    ]);
+                                    p.aiTitle = title;
+                                    p.aiSummary = summary;
                                     p.aiTag = "world";
                                 }
-                            }
+                            }));
 
                             const dbData = news.map(p => ({
                                 telegram_id: p.id,
@@ -170,7 +174,8 @@ export async function GET(request: Request) {
                                 views: p.views,
                                 language: lang
                             }));
-                            await supabase.from('posts').upsert(dbData, { onConflict: 'telegram_id, language' });
+                            const { error: upsertErr } = await supabase.from('posts').upsert(dbData, { onConflict: 'telegram_id, language' });
+                            if (upsertErr) console.error("Supabase upsert error:", upsertErr);
                         }
                     }
                 }
