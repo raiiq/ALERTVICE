@@ -63,10 +63,11 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
                             muted
                             loop
                             playsInline
+                            webkit-playsinline="true"
                             className={`w-full h-full ${singleMode ? 'object-cover' : 'object-contain'} mx-auto relative z-10 brightness-[0.85] group-hover/video:brightness-100 transition-all duration-700`} 
                             onClick={(e) => {
                                 const v = e.currentTarget;
-                                if (v.paused) v.play();
+                                if (v.paused) v.play().catch(() => {});
                                 else v.pause();
                             }}
                         />
@@ -145,7 +146,16 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
                             className={`relative overflow-hidden bg-surface/40 group/mitem ${isFeature ? 'col-span-2 aspect-[16/9]' : 'aspect-square'}`}
                         >
                             {item.type === 'video' ? (
-                                <video src={item.url} controls className="w-full h-full object-cover" />
+                                <video 
+                                    src={item.url} 
+                                    controls={false} 
+                                    autoPlay 
+                                    muted 
+                                    loop 
+                                    playsInline 
+                                    webkit-playsinline="true"
+                                    className="w-full h-full object-cover" 
+                                />
                             ) : (
                                 <img
                                     src={item.url}
