@@ -191,7 +191,7 @@ export default function MarketDashboard() {
     };
 
     return (
-        <div className={`min-h-screen bg-background text-foreground tracking-wide flex flex-col`} dir={isAr ? "rtl" : "ltr"}>
+        <div className={`min-h-screen text-foreground tracking-wide flex flex-col relative z-10`} dir={isAr ? "rtl" : "ltr"}>
             {/* ── MAIN GLOBAL NAVBAR IS NOW IN ROOT LAYOUT ── */}
             <main className="flex-grow w-full px-6 lg:px-12 py-12 max-w-[1600px] mx-auto mt-20">
 

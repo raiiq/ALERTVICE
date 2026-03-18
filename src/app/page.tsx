@@ -293,7 +293,7 @@ export default function Home() {
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground tracking-wide flex flex-col" dir={isAr ? "rtl" : "ltr"}>
+    <div className={`min-h-screen text-foreground tracking-wide flex flex-col relative z-10`} dir={isAr ? "rtl" : "ltr"}>
       {/* LOADING SCREEN OVERLAY */}
       {!loadingGone && (
         <div className={`loading-screen${loadingFading ? ' fade-out' : ''}`}>

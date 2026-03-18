@@ -348,20 +348,50 @@ h1, h2, h3, h4, h5, h6 {
   border-left: 3px solid #ef4444 !important;
 }
 
-/* ── 6. BACKGROUND ALARM PULSE ── */
-@keyframes alarm-bg-pulse {
-  0%, 100% { background-color: transparent; }
-  33% { background-color: rgba(239, 68, 68, 0.02); } /* Faint Red */
-  66% { background-color: rgba(56, 189, 248, 0.02); } /* Faint Blue */
-}
-
+/* ── 6. BACKGROUND POLICE SIREN BLOBS ── */
 .bg-pulse-overlay {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: -1;
-  animation: alarm-bg-pulse 10s ease-in-out infinite;
-  backdrop-filter: blur(100px);
+  z-index: 0;
+  overflow: hidden;
+  background-color: transparent;
+}
+
+.pulse-blob-1 {
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 70vw;
+  height: 70vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.4) 0%, rgba(239, 68, 68, 0.1) 60%, transparent 100%);
+  filter: blur(80px);
+  animation: blob-pulse-1 3s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.pulse-blob-2 {
+  position: absolute;
+  bottom: -20%;
+  right: -10%;
+  width: 70vw;
+  height: 70vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.4) 0%, rgba(56, 189, 248, 0.1) 60%, transparent 100%);
+  filter: blur(80px);
+  animation: blob-pulse-2 4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes blob-pulse-1 {
+  0%, 100% { opacity: 0.4; transform: scale(0.9) translate(0, 0); }
+  50% { opacity: 1; transform: scale(1.2) translate(5%, 5%); }
+}
+
+@keyframes blob-pulse-2 {
+  0%, 100% { opacity: 1; transform: scale(1.2) translate(0, 0); }
+  50% { opacity: 0.4; transform: scale(0.9) translate(-5%, -5%); }
 }
 
 /* ── 7. HOVER ZOOM UTILITY ── */

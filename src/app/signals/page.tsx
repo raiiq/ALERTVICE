@@ -57,7 +57,7 @@ export default function SignalsPage() {
 
 
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col pb-24 pt-16 lg:pt-32">
+        <div className="min-h-screen text-foreground flex flex-col pb-24 pt-16 lg:pt-32 relative z-10" dir={isAr ? "rtl" : "ltr"}>
             {/* Global Navbar and Signals are in layout.tsx */}
             
             {/* TACTICAL HEADER */}
