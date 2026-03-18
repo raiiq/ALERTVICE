@@ -536,7 +536,6 @@ export default function MonitorPage() {
                         )}
                     </div>
                 </aside>
-
                 {/* ── GLOBE / MAP ── */}
                 <main className="flex-1 relative overflow-hidden bg-[#050508]">
                     {isClient && (
@@ -550,24 +549,6 @@ export default function MonitorPage() {
 
                     {/* Vignette Overlay */}
                     <div className="absolute inset-0 pointer-events-none z-10 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(5,5,8,0.7)_100%)]" />
-
-                    {/* Top-Right Status Badge */}
-                    <div className="absolute top-5 right-5 z-30 flex flex-col gap-3 items-end pointer-events-none">
-                        <div className="bg-surfaceackground/80 backdrop-blur-2xl rounded-none border border-white/[0.08] px-4 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
-                            <div className="flex items-center gap-3">
-                                <div className="flex flex-col items-end leading-none">
-                                    <span className="text-[9px] font-black text-[#0088ff] tracking-[0.2em] uppercase">Operational Status</span>
-                                    <span className="text-[11px] font-mono text-foreground mt-1">NOMINAL</span>
-                                </div>
-                                <div className="w-2 h-8 bg-[#0088ff]/20 rounded-none overflow-hidden relative">
-                                    <div className="absolute bottom-0 w-full bg-[#0088ff] animate-pulse" style={{ height: '70%' }} />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="bg-surfaceackground/80 backdrop-blur-2xl rounded-none border border-white/[0.08] px-4 py-2 shadow-[0_5px_20px_rgba(0,0,0,0.5)] text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] flex items-center gap-2">
-                            <span className="text-[#0088ff]">MEA</span> Sector Sync Active
-                        </div>
-                    </div>
                 </main>
             </div>
 

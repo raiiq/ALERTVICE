@@ -247,38 +247,42 @@ Batch: ${prompts.join('\n')}`;
             } else if (type === 'signal') {
                 // Tier 2: Radar Flash (Text-primary intelligence)
                 finalPosts = posts.filter((p: any) => {
-                    // Logic: Ensure we have at least a title or text to show.
-                    // If the requested language content is missing, we'll allow it if any base content exists.
-                    return (p.title?.length > 0 || p.content_html?.length > 0);
+                    // Logic: Ensure we have at least a title or some text.
+                    const title = p.title || "";
+                    const content = p.content_html || "";
+                    return (title.length > 0 || content.length > 0);
                 }).slice(0, limit);
 
-                // If we have no posts for the specific language, try fetching English as fallback
+                // RELIABILITY FALLBACK: If Arabic (or other) is empty, fetch English 
                 if (finalPosts.length === 0 && lang !== 'en') {
-                    const { data: fallbackPosts } = await supabaseAdmin
+                    const { data: fallback } = await supabaseAdmin
                         .from('posts')
                         .select('*')
                         .eq('language', 'en')
                         .order('post_date', { ascending: false })
                         .limit(limit);
-                    if (fallbackPosts) finalPosts = fallbackPosts;
+                    if (fallback && fallback.length > 0) finalPosts = fallback;
                 }
             }
 
             return NextResponse.json({
-                posts: finalPosts.map((p: any) => ({
-                    id: `alertvice/${p.telegram_id}`,
-                    dbId: p.id,
-                    textHtml: p.content_html,
-                    plainText: (p.content_html || "").replace(/<[^>]*>?/gm, '').trim(),
-                    imageUrl: p.image_url,
-                    hasVideo: p.has_video,
-                    videoUrl: p.video_url,
-                    aiTitle: p.title,
-                    aiSummary: p.summary,
-                    aiTag: p.tag,
-                    date: p.post_date,
-                    views: p.views
-                })),
+                posts: finalPosts.map((p: any) => {
+                    const plainText = (p.content_html || "").replace(/<[^>]*>?/gm, '').trim();
+                    return {
+                        id: `alertvice/${p.telegram_id}`,
+                        dbId: p.id,
+                        textHtml: p.content_html,
+                        plainText: plainText,
+                        imageUrl: p.image_url,
+                        hasVideo: p.has_video,
+                        videoUrl: p.video_url,
+                        aiTitle: p.title || "INTEL_UPDATE",
+                        aiSummary: p.summary || plainText.substring(0, 100),
+                        aiTag: p.tag || "world",
+                        date: p.post_date,
+                        views: p.views
+                    };
+                }),
                 hasMore: !urgent && posts.length === limit
             });
         }
