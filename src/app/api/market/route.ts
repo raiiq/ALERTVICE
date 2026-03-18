@@ -3,10 +3,14 @@ import { createClient } from '@supabase/supabase-js';
 
 const ALPHA_VANTAGE_KEY = process.env.ALPHA_VANTAGE_API_KEY || 'demo';
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Default client for reading
+const supabase = createClient(supabaseUrl, supabaseKey);
+// Admin client for bypass RLS if key is present
+const supabaseAdmin = supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -114,7 +118,12 @@ export async function GET(req: Request) {
             { symbol: 'SILVER', price: silverDynamic, created_at: timestamp }
         ];
 
-        await supabase.from('market_history').insert(entries);
+        if (supabaseAdmin) {
+            const { error: insertErr } = await supabaseAdmin.from('market_history').insert(entries);
+            if (insertErr) console.error("Market history insert error:", insertErr);
+        } else {
+            console.warn("Missing SUPABASE_SERVICE_ROLE_KEY. Skipping market history insert.");
+        }
 
         // ... existing timeframe logic ...
         const now = new Date();

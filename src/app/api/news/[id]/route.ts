@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 import { GoogleGenAI } from '@google/genai';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // Extend Vercel serverless timeout
@@ -32,6 +32,15 @@ export async function GET(
         const { searchParams } = new URL(request.url);
         const lang = searchParams.get('lang') || 'en';
         const targetLanguage = lang === 'ar' ? 'Arabic' : 'English';
+
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+        // Default client for reading
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        // Admin client for bypass RLS if key is present
+        const supabaseAdmin = supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
 
         // Check DB First for persistence
         const { data: dbPost } = await supabase
@@ -155,20 +164,23 @@ export async function GET(
             }
         }
 
-        // Save to DB for persistence
-        await supabase.from('posts').upsert({
-            telegram_id: id,
-            title: aiTitle,
-            summary: null,
-            tag: aiTag,
-            content_html: aiFormattedHtml || textHtml,
-            image_url: imageUrl,
-            has_video: hasVideo,
-            video_url: videoUrl,
-            post_date: dateStr || new Date().toISOString(),
-            views: views || '0',
-            language: lang
-        });
+        // Save to DB for persistence if we have admin rights
+        if (supabaseAdmin) {
+            const { error: upsertErr } = await supabaseAdmin.from('posts').upsert({
+                telegram_id: id,
+                title: aiTitle,
+                summary: null,
+                tag: aiTag,
+                content_html: aiFormattedHtml || textHtml,
+                image_url: imageUrl,
+                has_video: hasVideo,
+                video_url: videoUrl,
+                post_date: dateStr || new Date().toISOString(),
+                views: views || '0',
+                language: lang
+            });
+            if (upsertErr) console.error("Supabase upsert error (single):", upsertErr);
+        }
 
         const post = {
             id: `alertvice/${id}`,
