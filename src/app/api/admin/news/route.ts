@@ -36,14 +36,13 @@ export async function DELETE(request: Request) {
     }
 
     try {
-        const { id, language } = await request.json();
+        const { id } = await request.json();
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
         const { error } = await supabase
             .from('posts')
             .delete()
-            .eq('telegram_id', id)
-            .eq('language', language);
+            .eq('id', id);
 
         if (error) throw error;
         return NextResponse.json({ success: true });
