@@ -207,29 +207,54 @@ Batch: ${prompts.join('\n')}`;
 
         // 2. Fetch from Database
         if (supabaseAdmin) {
+            const urgent = searchParams.get('urgent') === 'true';
+            
             let query = supabaseAdmin
                 .from('posts')
                 .select('*')
                 .eq('language', lang)
                 .order('post_date', { ascending: false });
 
-            if (type === 'article') {
-                query = query.or('has_video.eq.true,image_url.neq.null');
-            } else if (type === 'signal') {
-                // Return latest signals without strict constraints to ensure the feed is always "Live"
-                query = query.limit(50);
+            // If urgent, we need to scan more records since "urgent" isn't a DB column yet
+            const fetchLimit = urgent ? 100 : limit;
+            const fetchOffset = urgent ? 0 : offset;
+
+            if (!urgent) {
+                if (type === 'article') {
+                    query = query.or('has_video.eq.true,image_url.neq.null');
+                } else if (type === 'signal') {
+                    query = query.limit(50);
+                }
             }
 
             if (q) {
                 query = query.or(`title.ilike.%${q}%,summary.ilike.%${q}%`);
             }
 
-            const { data: posts, error } = await query.range(offset, offset + limit - 1);
+            const { data: posts, error } = await query.range(fetchOffset, fetchOffset + fetchLimit - 1);
 
             if (error) throw error;
 
+            let finalPosts = posts;
+            
+            // Intelligence Signaling Framework
+            if (urgent) {
+                // Tier 1: Strict Urgency (Keyword: عاجل)
+                finalPosts = posts.filter((p: any) => {
+                    const haystack = `${p.title} ${p.summary} ${p.content_html}`.toLowerCase();
+                    return haystack.includes('عاجل');
+                }).slice(0, limit);
+            } else if (type === 'signal') {
+                // Tier 2: Radar Flash (Text-based intelligence only)
+                finalPosts = posts.filter((p: any) => {
+                    const hasText = (p.title?.length > 10 || p.summary?.length > 10);
+                    const isMediaLean = !p.has_video; // Keep it lightweight, allow images but skip videos
+                    return hasText && isMediaLean;
+                }).slice(0, limit);
+            }
+
             return NextResponse.json({
-                posts: posts.map((p: any) => ({
+                posts: finalPosts.map((p: any) => ({
                     id: `alertvice/${p.telegram_id}`,
                     dbId: p.id,
                     textHtml: p.content_html,
@@ -243,7 +268,7 @@ Batch: ${prompts.join('\n')}`;
                     date: p.post_date,
                     views: p.views
                 })),
-                hasMore: posts.length === limit
+                hasMore: !urgent && posts.length === limit
             });
         }
 

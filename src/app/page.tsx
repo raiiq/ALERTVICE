@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { MediaDisplay, parseMedia, deduplicateTitle } from "./components/MediaDisplay";
 import { motion, AnimatePresence } from "framer-motion";
-import Navbar from "./components/Navbar";
+import { useLanguage } from "./context/LanguageContext";
 
 interface NewsPost {
   id: string;
@@ -30,7 +30,7 @@ export default function Home() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
-  const [lang, setLang] = useState("en");
+  const { lang, toggleLang, isAr } = useLanguage();
   const [activeCategory, setActiveCategory] = useState("all");
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
@@ -44,7 +44,6 @@ export default function Home() {
   const [editingPost, setEditingPost] = useState<NewsPost | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
-  const langRef = useRef("en");
 
   // Animation Variants
   const containerVars = {
@@ -183,14 +182,15 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const stored = localStorage.getItem("newsLang") || "en";
-    setLang(stored);
-    langRef.current = stored;
-    fetchArticles(false, stored, true);
-    fetchSignals(stored);
     checkAdmin();
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    fetchArticles(false, lang, true);
+    fetchSignals(lang, true);
+  }, [lang, mounted]);
 
   // Dismiss loading screen once data is fetched
   useEffect(() => {
@@ -204,10 +204,10 @@ export default function Home() {
   useEffect(() => {
     if (!mounted || searchQuery) return;
     const interval = setInterval(() => {
-      fetchSignals(langRef.current);
+      fetchSignals(lang);
       // Auto-refresh main feed if it's empty to catch initial sync
       if (articles.length === 0 && !loading) {
-        fetchArticles(false, langRef.current, true);
+        fetchArticles(false, lang, true);
       }
     }, 4000);
     return () => clearInterval(interval);
@@ -249,22 +249,6 @@ export default function Home() {
     return () => observer.disconnect();
   }, [loadingMore, hasMore, articles.length, loading, error]);
 
-  const toggleLang = async (newLang: string) => {
-    if (newLang === langRef.current) return;
-    setIsTranslating(true);
-    setLang(newLang);
-    langRef.current = newLang;
-    localStorage.setItem("newsLang", newLang);
-    setOffset(0);
-    
-    // Explicitly update all sectors immediately
-    await Promise.all([
-      fetchArticles(false, newLang, true),
-      fetchSignals(newLang, true)
-    ]);
-    
-    setTimeout(() => setIsTranslating(false), 600);
-  };
 
   const formatDate = (isoString: string) => {
     const date = new Date(isoString);
@@ -273,7 +257,6 @@ export default function Home() {
 
   const closeMenu = () => setIsMenuOpen(false);
   const getPostId = (idString: string) => idString.split('/').pop() || "";
-  const isAr = lang === 'ar';
   const alignClass = isAr ? 'text-right' : 'text-left';
 
   // URGENT SIGNAL FILTERING (TELEGRAM SIGNALS ONLY)
@@ -355,62 +338,6 @@ export default function Home() {
           </motion.div>
         )}
       </AnimatePresence>
-
-
-      {/* ===== REUSABLE NAVBAR ===== */}
-      <Navbar
-        lang={lang}
-        setLang={toggleLang}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        handleSearch={handleSearch}
-        activeCategory={activeCategory}
-        setActiveCategory={setActiveCategory}
-        refreshing={refreshing}
-        onRefresh={() => { fetchArticles(true, lang, true); fetchSignals(lang); }}
-      />
-
-      {/* FULL WIDTH TICKERS AT TOP */}
-      <div className="ticker-wrapper border-b border-white/5 mb-0 relative z-[100] sticky top-0 lg:top-16 lg:pl-[400px]">
-        <div className="intelligence-ticker">
-          <div className="ticker-badge">
-            <div className="ticker-badge-dot mr-3"></div>
-            <span className="text-primary-foreground font-black text-[13px] tracking-[0.15em] uppercase">{isAr ? 'رادار' : 'RADAR FLASH'}</span>
-          </div>
-          <div className="ticker-content relative overflow-hidden flex-1 h-full flex items-center">
-            <div className={`${isAr ? 'animate-marquee-rtl' : 'animate-marquee'} flex items-center gap-32`}>
-              {signals && [...signals, ...signals].map((p, idx) => (
-                <Link key={`ticker-${idx}`} href={`/news/${getPostId(p.id)}`} className="text-[10px] font-bold text-foreground/80 hover:text-primary transition-all uppercase whitespace-nowrap tracking-wider">
-                  <span className="flex items-center gap-4">
-                    <span className="font-black text-primary border-b border-primary/20">{deduplicateTitle(p.aiTitle)}</span>
-                    <span className="opacity-60">{p.aiSummary}</span>
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {urgentSignals.length > 0 && (
-          <div className="urgent-dispatch-bar" dir={isAr ? 'rtl' : 'ltr'}>
-            <div className="urgent-dispatch-label">
-              <span className="animate-pulse">{isAr ? 'عاجل' : 'URGENT'}</span>
-            </div>
-            <div className="urgent-dispatch-content relative overflow-hidden flex-1 h-full flex items-center">
-              <div className={`${isAr ? 'animate-urgent-marquee-rtl' : 'animate-urgent-marquee'} flex items-center gap-64`}>
-                {[1, 2].map((_, idx) => (
-                  <Link key={`urgent-${idx}`} href={`/news/${getPostId(urgentSignals[0].id)}`} className="text-[14px] font-bold text-white hover:underline transition-all whitespace-nowrap tracking-wider flex items-center gap-4">
-                    <span className="opacity-60 text-[10px] whitespace-nowrap">{new Date(urgentSignals[0].date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-                    <span className="flex items-center gap-4">
-                      {urgentSignals[0].plainText}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Add top padding on desktop to clear the fixed navbar */}
       <main className="flex-grow w-full flex flex-col lg:flex-row mx-auto relative z-10 pt-0 lg:pt-16">

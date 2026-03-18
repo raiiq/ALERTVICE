@@ -55,11 +55,49 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
             <div className={`w-full h-full relative overflow-hidden rounded-none border border-border bg-surface ${aspect || ''} group/media`}>
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.05)_0%,transparent_70%)]"></div>
                 {item.type === 'video' ? (
-                    <video 
-                        src={item.url} 
-                        controls 
-                        className={`w-full h-full ${singleMode ? 'object-cover' : 'object-contain'} mx-auto relative z-10`} 
-                    />
+                    <div className="relative w-full h-full group/video">
+                        <video 
+                            src={item.url} 
+                            controls={false}
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            className={`w-full h-full ${singleMode ? 'object-cover' : 'object-contain'} mx-auto relative z-10 brightness-[0.85] group-hover/video:brightness-100 transition-all duration-700`} 
+                            onClick={(e) => {
+                                const v = e.currentTarget;
+                                if (v.paused) v.play();
+                                else v.pause();
+                            }}
+                        />
+                        {/* TACTICAL OVERLAY */}
+                        <div className="absolute inset-0 z-20 pointer-events-none border-[1px] border-primary/20 m-2">
+                            {/* Corner brackets */}
+                            <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary/60"></div>
+                            <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-primary/60"></div>
+                            <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-primary/60"></div>
+                            <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-primary/60"></div>
+                            
+                            {/* Scanning line */}
+                            <div className="absolute top-0 left-0 right-0 h-[1px] bg-primary/30 animate-scanline"></div>
+                            
+                            {/* Data badges */}
+                            <div className="absolute top-4 left-4 flex flex-col gap-1">
+                                <span className="text-[6px] font-black text-primary/60 tracking-widest uppercase">REC • LIVE INTERCEPT</span>
+                                <div className="flex items-center gap-1">
+                                    <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse"></div>
+                                    <span className="text-[8px] font-black text-white/80 tracking-widest">SIGNAL_LOCK_A1</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* PLAY BUTTON OVERLAY */}
+                        <div className="absolute inset-0 flex items-center justify-center z-30 opacity-0 group-hover/video:opacity-100 transition-opacity bg-black/20 pointer-events-none">
+                            <div className="w-16 h-16 rounded-full bg-primary/20 backdrop-blur-md border border-primary/40 flex items-center justify-center">
+                                <svg className="w-8 h-8 text-primary fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            </div>
+                        </div>
+                    </div>
                 ) : (
                     <div className="relative w-full h-full flex items-center justify-center">
                         <img
