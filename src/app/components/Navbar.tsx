@@ -228,6 +228,15 @@ export default function Navbar({
                                         ))}
                                     </div>
                                 </div>
+                                <div className="mt-4 pt-4 border-t border-white/5 flex justify-center">
+                                    <Link 
+                                        href="/admin/login" 
+                                        onClick={closeMenu}
+                                        className="text-[10px] font-bold text-white/10 hover:text-primary/40 transition-colors uppercase tracking-[0.2em]"
+                                    >
+                                        Admin Portal
+                                    </Link>
+                                </div>
                             </div>
                         </motion.div>
                     </>
