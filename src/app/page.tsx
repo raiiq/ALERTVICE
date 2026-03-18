@@ -343,7 +343,7 @@ export default function Home() {
       <main className="flex-grow w-full flex flex-col lg:flex-row mx-auto relative z-10 pt-0 lg:pt-16">
 
         {/* FEED SECTION - OFFSET ON DESKTOP ONLY */}
-        <div className="flex-1 px-4 sm:px-6 lg:px-16 py-6 lg:py-12 lg:pl-[400px] w-full max-w-screen-2xl mx-auto flex flex-col gap-8 lg:gap-12">
+        <div className="flex-1 px-4 sm:px-6 lg:px-16 py-6 lg:py-12 w-full max-w-screen-2xl mx-auto flex flex-col gap-8 lg:gap-12">
           <motion.div variants={containerVars} initial="hidden" animate="show" className="flex flex-col gap-16">
             {!loading && articles.length === 0 && (
               <div className="flex flex-col items-center justify-center py-32 text-center gap-6">
@@ -492,7 +492,7 @@ export default function Home() {
         </div>
       </main>
 
-      <footer className="w-full bg-surface/80 backdrop-blur-md border-t border-border-color py-10 mt-auto lg:pl-[400px] pb-24 lg:pb-10 mb-0">
+      <footer className="w-full bg-surface/80 backdrop-blur-md border-t border-border-color py-10 mt-auto pb-24 lg:pb-10 mb-0">
         <div className="container mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex flex-col items-center md:items-start">
             <span className="text-xl font-black text-foreground tracking-widest">ALERTVICE</span>
@@ -572,7 +572,7 @@ export default function Home() {
       </AnimatePresence>
 
       {/* FULL HEIGHT LEFT SIDEBAR (SIGNAL MONITOR) — DESKTOP ONLY */}
-      <aside className="hidden lg:flex fixed top-0 left-0 bottom-0 w-[400px] h-screen bg-background border-r border-white/10 intelligence-sidebar z-[500] flex-col" style={{ top: 0, height: '100vh' }}>
+      <aside className="hidden lg:flex fixed left-0 bottom-0 w-[400px] h-screen bg-background border-r border-white/10 intelligence-sidebar z-[50] flex-col" style={{ top: '112px', height: 'calc(100vh - 112px)' }}>
         <div className={`w-full px-4 sm:px-8 min-h-[64px] lg:h-16 border-b border-white/10 bg-background/95 backdrop-blur-3xl flex items-center justify-between z-[60] shrink-0 relative ${isAr ? 'text-right' : 'text-left'}`}>
           {/* Subtle scanline moving across the header */}
           <div className="sidebar-header-scan" />

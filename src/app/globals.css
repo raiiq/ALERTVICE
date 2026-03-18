@@ -156,9 +156,9 @@ h1, h2, h3, h4, h5, h6 {
   animation: luxury-shimmer 4s infinite linear;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 1024px) {
   .ticker-badge {
-    width: 160px;
+    width: 180px;
     font-size: 13px;
     letter-spacing: 0.2em;
   }
@@ -413,9 +413,9 @@ h1, h2, h3, h4, h5, h6 {
   animation: luxury-shimmer 6s infinite linear;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 1024px) {
   .urgent-dispatch-label {
-    width: 170px;
+    width: 180px;
     font-size: 26px;
     letter-spacing: 0.06em;
   }
