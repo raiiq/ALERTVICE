@@ -127,8 +127,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .ticker-badge {
-  background: #ffffff; /* Contrast against dark surface */
-  color: #000000;
+  background: var(--foreground);
+  color: var(--background);
   width: 120px;
   flex-shrink: 0;
   height: 100%;
@@ -143,7 +143,16 @@ h1, h2, h3, h4, h5, h6 {
   position: relative;
   z-index: 2;
   overflow: hidden;
-  border-right: 1px solid rgba(0,0,0,0.1);
+  border-right: 1px solid var(--border-color);
+}
+
+.ticker-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 10px var(--primary);
+  animation: alarm-pulse 1.5s infinite;
 }
 
 /* Luxury Shimmer for Ticker Badge */
