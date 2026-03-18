@@ -74,6 +74,13 @@ export async function GET(request: Request) {
                         if (src) videos.push(src);
                     });
 
+                    // Capture Video Thumbnails as images
+                    $post.find('.tgme_widget_message_video_player, .tgme_widget_message_video_wrap').each((_: number, el: any) => {
+                        const style = $(el).attr('style') || "";
+                        const urlMatch = style.match(/background-image:url\('([^']+)'\)/);
+                        if (urlMatch && !images.includes(urlMatch[1])) images.push(urlMatch[1]);
+                    });
+
                     const hasVideo = $post.find('.tgme_widget_message_video_player').length > 0 || videos.length > 0;
 
                     if (plainText || images.length > 0 || videos.length > 0) {

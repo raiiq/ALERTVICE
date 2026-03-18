@@ -58,11 +58,13 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
                     <div className="relative w-full h-full group/video">
                         <video 
                             src={item.url} 
+                            poster={images[0]}
                             controls={false}
                             autoPlay
                             muted
                             loop
                             playsInline
+                            preload="metadata"
                             webkit-playsinline="true"
                             className={`w-full h-full ${singleMode ? 'object-cover' : 'object-contain'} mx-auto relative z-10 brightness-[0.85] group-hover/video:brightness-100 transition-all duration-700`} 
                             onClick={(e) => {
@@ -92,9 +94,9 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
                             </div>
                         </div>
 
-                        {/* PLAY BUTTON OVERLAY */}
-                        <div className="absolute inset-0 flex items-center justify-center z-30 opacity-0 group-hover/video:opacity-100 transition-opacity bg-black/20 pointer-events-none">
-                            <div className="w-16 h-16 rounded-full bg-primary/20 backdrop-blur-md border border-primary/40 flex items-center justify-center">
+                        {/* PLAY BUTTON OVERLAY - Visible if paused or on hover */}
+                        <div className="absolute inset-0 flex items-center justify-center z-30 opacity-0 group-hover/video:opacity-100 sm:group-hover/video:opacity-100 transition-opacity bg-black/20 pointer-events-none">
+                            <div className="w-16 h-16 rounded-full bg-primary/20 backdrop-blur-md border border-primary/40 flex items-center justify-center shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)]">
                                 <svg className="w-8 h-8 text-primary fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                             </div>
                         </div>
