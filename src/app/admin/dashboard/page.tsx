@@ -14,9 +14,12 @@ const CATEGORIES = [
 export default function AdminDashboard() {
     const [posts, setPosts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'all' | 'articles' | 'signals'>('all');
+    const [activeTab, setActiveTab] = useState<'all' | 'articles' | 'signals' | 'sql'>('all');
     const [editingPost, setEditingPost] = useState<any>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [sqlQuery, setSqlQuery] = useState('');
+    const [sqlResult, setSqlResult] = useState<any>(null);
+    const [isExecutingSql, setIsExecutingSql] = useState(false);
     const [newPost, setNewPost] = useState({
         title: '',
         summary: '',
@@ -105,6 +108,29 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleExecuteSql = async () => {
+        if (!sqlQuery.trim()) return;
+        setIsExecutingSql(true);
+        setSqlResult(null);
+        try {
+            const res = await fetch('/api/admin/sql', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: sqlQuery }),
+            });
+            const data = await res.json();
+            setSqlResult(data);
+            // Refresh posts if the query was not just a SELECT
+            if (!sqlQuery.trim().toLowerCase().startsWith('select')) {
+                fetchPosts();
+            }
+        } catch (err: any) {
+            setSqlResult({ error: err.message });
+        } finally {
+            setIsExecutingSql(false);
+        }
+    };
+
     const filteredPosts = posts.filter(post => {
         const hasMedia = (post.image_url && post.image_url.length > 0) || (post.video_url && post.video_url.length > 0) || post.has_video;
         if (activeTab === 'articles') return hasMedia;
@@ -160,6 +186,12 @@ export default function AdminDashboard() {
                     >
                         TEXT SIGNALS
                     </button>
+                    <button 
+                        onClick={() => setActiveTab('sql')}
+                        className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'sql' ? 'bg-amber-600/10 text-amber-400 border border-amber-500/20' : 'text-gray-500 hover:text-white'}`}
+                    >
+                        SQL CONSOLE
+                    </button>
                 </nav>
 
                 <div className="mt-auto space-y-4">
@@ -182,10 +214,12 @@ export default function AdminDashboard() {
             <main className="flex-1 p-4 md:p-8 lg:p-12 max-w-7xl mx-auto w-full">
                 <header className="flex justify-between items-end mb-8">
                     <div>
-                        <h1 className="text-4xl font-black tracking-tighter uppercase whitespace-nowrap">
-                            {activeTab === 'all' ? 'CENTRAL FEED' : activeTab === 'articles' ? 'MEDIA INTEL' : 'SIGNAL STREAM'}
+                        <h1 className="text-4xl font-black tracking-tighter uppercase whitespace-nowrap text-white">
+                            {activeTab === 'all' ? 'CENTRAL FEED' : activeTab === 'articles' ? 'MEDIA INTEL' : activeTab === 'signals' ? 'SIGNAL STREAM' : 'SQL POWER CONSOLE'}
                         </h1>
-                        <p className="text-blue-500 text-[10px] font-bold tracking-[0.4em] uppercase mt-2">REAL-TIME DATASET CONTROL</p>
+                        <p className="text-blue-500 text-[10px] font-bold tracking-[0.4em] uppercase mt-2">
+                             {activeTab === 'sql' ? 'DIRECT DATABASE OVERRIDE' : 'REAL-TIME DATASET CONTROL'}
+                        </p>
                     </div>
                     <div className="lg:hidden">
                         <button onClick={() => setIsCreateModalOpen(true)} className="bg-blue-600 p-3 rounded-full shadow-xl">
@@ -194,6 +228,7 @@ export default function AdminDashboard() {
                     </div>
                 </header>
 
+                {activeTab !== 'sql' ? (
                 <div className="bg-[#0a0c11] border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl backdrop-blur-xl">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
@@ -208,10 +243,10 @@ export default function AdminDashboard() {
                             </thead>
                             <tbody className="divide-y divide-white/[0.03]">
                                 {filteredPosts.map((post) => (
-                                    <tr key={`${post.telegram_id}-${post.language}`} className="hover:bg-white/[0.01] transition-colors group">
+                                    <tr key={`${post.id}-${post.language}`} className="hover:bg-white/[0.01] transition-colors group">
                                         <td className="px-8 py-6">
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] font-mono text-gray-600">ID: {post.telegram_id.substring(0, 10)}...</span>
+                                                <span className="text-[10px] font-mono text-gray-600">ID: {post.telegram_id?.substring(0, 10) || 'MANUAL'}...</span>
                                                 <span className="text-[9px] text-blue-500/50 font-bold">{new Date(post.post_date).toLocaleDateString()}</span>
                                             </div>
                                         </td>
@@ -253,6 +288,50 @@ export default function AdminDashboard() {
                         </table>
                     </div>
                 </div>
+                ) : (
+                    <div className="space-y-6">
+                        <div className="bg-[#0d1117] border border-white/5 rounded-3xl p-6 shadow-2xl">
+                             <label className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] mb-4 block">COMMAND BUFFER</label>
+                             <textarea 
+                                value={sqlQuery}
+                                onChange={(e) => setSqlQuery(e.target.value)}
+                                className="w-full bg-black/50 border border-amber-500/20 rounded-xl p-6 font-mono text-sm text-amber-200 min-h-[200px] outline-none focus:border-amber-500/50 transition-all"
+                                placeholder="SELECT * FROM posts LIMIT 10;"
+                             />
+                             <div className="flex justify-between items-center mt-6">
+                                <div className="flex gap-4">
+                                    <button onClick={() => setSqlQuery("SELECT * FROM posts ORDER BY post_date DESC LIMIT 50;")} className="text-[9px] font-black text-gray-500 hover:text-white border border-white/10 px-3 py-1.5 rounded-lg transition-all">RECENT POSTS</button>
+                                    <button onClick={() => setSqlQuery("SELECT tag, count(*) FROM posts GROUP BY tag;")} className="text-[9px] font-black text-gray-500 hover:text-white border border-white/10 px-3 py-1.5 rounded-lg transition-all">STATS BY TAG</button>
+                                    <button onClick={() => setSqlQuery("DELETE FROM posts WHERE title IS NULL OR title = '';")} className="text-[9px] font-black text-red-500/50 hover:text-red-500 border border-red-500/10 px-3 py-1.5 rounded-lg transition-all">CLEAN EMPTY</button>
+                                </div>
+                                <button 
+                                    onClick={handleExecuteSql}
+                                    disabled={isExecutingSql}
+                                    className="bg-amber-600 hover:bg-amber-500 text-white font-black px-12 py-3 rounded-xl shadow-lg shadow-amber-600/20 transition-all disabled:opacity-50"
+                                >
+                                    {isExecutingSql ? 'EXECUTING...' : 'RUN QUERY'}
+                                </button>
+                             </div>
+                        </div>
+
+                        {sqlResult && (
+                            <div className="bg-[#0a0c11] border border-white/5 rounded-3xl p-8 overflow-hidden">
+                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4 block">EXECUTION RESULT</label>
+                                {sqlResult.error ? (
+                                    <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-2xl text-red-400 font-mono text-xs">
+                                        Error: {sqlResult.error}
+                                    </div>
+                                ) : (
+                                    <div className="overflow-x-auto max-h-[600px]">
+                                        <pre className="text-amber-100/70 font-mono text-[11px] leading-relaxed">
+                                            {JSON.stringify(sqlResult.result, null, 2)}
+                                        </pre>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
             </main>
 
             {/* Modals */}
