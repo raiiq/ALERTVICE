@@ -59,19 +59,14 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
                         <video 
                             src={item.url} 
                             poster={images[0]}
-                            controls={false}
-                            autoPlay
-                            muted
-                            loop
+                            controls={true}
+                            autoPlay={false}
+                            muted={true}
+                            loop={false}
                             playsInline
                             preload="metadata"
                             webkit-playsinline="true"
                             className={`w-full h-full ${singleMode ? 'object-cover' : 'object-contain'} mx-auto relative z-10 brightness-[0.85] group-hover/video:brightness-100 transition-all duration-700`} 
-                            onClick={(e) => {
-                                const v = e.currentTarget;
-                                if (v.paused) v.play().catch(() => {});
-                                else v.pause();
-                            }}
                         />
                         {/* TACTICAL OVERLAY */}
                         <div className="absolute inset-0 z-20 pointer-events-none border-[1px] border-primary/20 m-2">

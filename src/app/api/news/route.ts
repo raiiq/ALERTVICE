@@ -61,16 +61,23 @@ export async function GET(request: Request) {
                     const textHtml = $post.find('.tgme_widget_message_text').html() || "";
                     const plainText = $post.find('.tgme_widget_message_text').text().trim();
                     
+                    const absUrl = (u: string | undefined) => {
+                        if (!u) return "";
+                        if (u.startsWith('//')) return `https:${u}`;
+                        if (u.startsWith('/')) return `https://t.me${u}`;
+                        return u;
+                    };
+
                     const images: string[] = [];
                     $post.find('.tgme_widget_message_photo_wrap').each((_: number, imgEl: any) => {
-                        const style = $(imgEl).attr('style') || "";
+                        const style = $(el).attr('style') || "";
                         const urlMatch = style.match(/background-image:url\('([^']+)'\)/);
-                        if (urlMatch) images.push(urlMatch[1]);
+                        if (urlMatch) images.push(absUrl(urlMatch[1]));
                     });
 
                     const videos: string[] = [];
                     $post.find('video').each((_: number, vidEl: any) => {
-                        const src = $(vidEl).attr('src');
+                        const src = absUrl($(vidEl).attr('src'));
                         if (src) videos.push(src);
                     });
 
@@ -78,7 +85,10 @@ export async function GET(request: Request) {
                     $post.find('.tgme_widget_message_video_player, .tgme_widget_message_video_wrap').each((_: number, el: any) => {
                         const style = $(el).attr('style') || "";
                         const urlMatch = style.match(/background-image:url\('([^']+)'\)/);
-                        if (urlMatch && !images.includes(urlMatch[1])) images.push(urlMatch[1]);
+                        if (urlMatch) {
+                            const u = absUrl(urlMatch[1]);
+                            if (u && !images.includes(u)) images.push(u);
+                        }
                     });
 
                     const hasVideo = $post.find('.tgme_widget_message_video_player').length > 0 || videos.length > 0;
