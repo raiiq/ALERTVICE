@@ -209,11 +209,21 @@ export default function Home() {
       // Auto-refresh main feed if it's empty to catch initial sync
       if (articles.length === 0 && !loading) {
         fetchArticles(false, lang, true);
+      } else if (!loading && !loadingMore && !refreshing) {
+        // Silent Auto-Refresh loop
+        fetch(`/api/news?lang=${lang}&offset=0&limit=12&type=article&t=${Date.now()}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.posts && data.posts.length > 0) {
+              setArticles(prev => getUniquePosts(prev, data.posts));
+            }
+          })
+          .catch(() => {});
       }
-    }, 1000); // 1s refresh rate
+    }, 20000); // 20s radar and feed continuous pulse
 
     return () => clearInterval(interval);
-  }, [mounted, lang, searchQuery, articles.length, loading]);
+  }, [mounted, lang, searchQuery, articles.length, loading, loadingMore, refreshing]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

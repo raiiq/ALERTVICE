@@ -253,9 +253,7 @@ Batch: ${prompts.join('\n')}`;
             const fetchOffset = urgent ? 0 : offset;
 
             if (!urgent) {
-                if (type === 'article') {
-                    query = query.or('has_video.eq.true,image_url.neq.null');
-                } else if (type === 'signal') {
+                if (type === 'signal') {
                     query = query.limit(50);
                 }
             }
@@ -273,33 +271,32 @@ Batch: ${prompts.join('\n')}`;
             // Intelligence Signaling Framework
             if (urgent) {
                 // Tier 1: Strict Urgency (Keywords: عاجل, urgent, breaking, alert, broadcast, critical)
-                finalPosts = posts.filter((p: any) => {
+                const checkUrgent = (p: any) => {
                     const haystack = `${p.title} ${p.summary} ${p.content_html}`.toLowerCase();
-                    return haystack.includes('عاجل') || 
-                           haystack.includes('urgent') || 
-                           haystack.includes('breaking') || 
-                           haystack.includes('alert') ||
-                           haystack.includes('broadcast') ||
-                           haystack.includes('critical');
-                }).slice(0, limit);
+                    return haystack.includes('عاجل') || haystack.includes('urgent') || haystack.includes('breaking') || 
+                           haystack.includes('alert') || haystack.includes('broadcast') || haystack.includes('critical');
+                };
+                finalPosts = posts.filter(checkUrgent).slice(0, limit);
+
+                if (finalPosts.length === 0 && lang !== 'en') {
+                    const { data: fallback } = await supabaseAdmin.from('posts').select('*').eq('language', 'en').order('post_date', { ascending: false }).limit(fetchLimit);
+                    if (fallback) finalPosts = fallback.filter(checkUrgent).slice(0, limit);
+                }
             } else if (type === 'signal') {
-                // Tier 2: Radar Flash (Text-primary intelligence)
-                finalPosts = posts.filter((p: any) => {
-                    // Logic: Ensure we have at least a title or some text.
+                // Tier 2: Radar Flash (Strictly Text-primary intelligence WITHOUT MEDIA)
+                const checkSignal = (p: any) => {
                     const title = p.title || "";
                     const content = p.content_html || "";
-                    return (title.length > 0 || content.length > 0);
-                }).slice(0, limit);
+                    const hasImage = p.image_url && p.image_url !== '[]' && p.image_url !== 'null';
+                    const hasVideo = p.has_video === true || (p.video_url && p.video_url !== '[]' && p.video_url !== 'null');
+                    return (title.length > 0 || content.length > 0) && !hasImage && !hasVideo;
+                };
+                finalPosts = posts.filter(checkSignal).slice(0, limit);
 
                 // RELIABILITY FALLBACK: If Arabic (or other) is empty, fetch English 
                 if (finalPosts.length === 0 && lang !== 'en') {
-                    const { data: fallback } = await supabaseAdmin
-                        .from('posts')
-                        .select('*')
-                        .eq('language', 'en')
-                        .order('post_date', { ascending: false })
-                        .limit(limit);
-                    if (fallback && fallback.length > 0) finalPosts = fallback;
+                    const { data: fallback } = await supabaseAdmin.from('posts').select('*').eq('language', 'en').order('post_date', { ascending: false }).limit(fetchLimit);
+                    if (fallback) finalPosts = fallback.filter(checkSignal).slice(0, limit);
                 }
             }
 
