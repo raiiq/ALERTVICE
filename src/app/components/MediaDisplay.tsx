@@ -70,7 +70,8 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
                             controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen', 'settings'],
                             settings: ['quality', 'speed'],
                             playsinline: true,
-                            autoplay: false
+                            autoplay: true,
+                            muted: true
                           }}
                         />
                         {/* TACTICAL OVERLAY */}
