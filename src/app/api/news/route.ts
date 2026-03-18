@@ -27,15 +27,17 @@ export async function GET(request: Request) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !supabaseKey || !supabaseServiceKey) {
+    if (!supabaseUrl || !supabaseKey) {
         return NextResponse.json(
-            { error: 'Supabase missing configuration (Requires anon and service role key)', posts: [] },
+            { error: 'Supabase missing configuration (Requires anon key)', posts: [] },
             { status: 503 }
         );
     }
     
-    // Use Service Role to bypass RLS for UPSERTs and DB fetches inside Server API Route
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Default to anon client for reading
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Use Service Role to bypass RLS for UPSERTs inside Server API Route, if available
+    const supabaseAdmin = supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
 
     try {
         const { searchParams } = new URL(request.url);
@@ -178,8 +180,12 @@ export async function GET(request: Request) {
                                 views: p.views,
                                 language: lang
                             }));
-                            const { error: upsertErr } = await supabase.from('posts').upsert(dbData, { onConflict: 'telegram_id, language' });
-                            if (upsertErr) console.error("Supabase upsert error:", upsertErr);
+                            if (supabaseAdmin) {
+                                const { error: upsertErr } = await supabaseAdmin.from('posts').upsert(dbData, { onConflict: 'telegram_id, language' });
+                                if (upsertErr) console.error("Supabase upsert error:", upsertErr);
+                            } else {
+                                console.warn("Missing SUPABASE_SERVICE_ROLE_KEY. Skipping UPSERT because of RLS.");
+                            }
                         }
                     }
                 }
