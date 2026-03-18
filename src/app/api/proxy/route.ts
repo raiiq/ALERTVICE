@@ -10,24 +10,40 @@ export async function GET(request: Request) {
     }
 
     try {
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Referer': 'https://t.me/'
-            }
+        const fetchHeaders: HeadersInit = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Referer': 'https://t.me/'
+        };
+
+        // Forward Range header to support iOS/Android native video seekings
+        const range = request.headers.get('range');
+        if (range) {
+            fetchHeaders['Range'] = range;
+        }
+
+        const response = await fetch(url, { headers: fetchHeaders });
+
+        if (!response.ok && response.status !== 206) {
+            throw new Error("Failed to fetch asset");
+        }
+
+        const responseHeaders = new Headers();
+        
+        // Bridge critical media streaming headers
+        const headersToKeep = ['content-type', 'content-length', 'content-range', 'accept-ranges', 'last-modified'];
+        headersToKeep.forEach(h => {
+            const val = response.headers.get(h);
+            if (val) responseHeaders.set(h, val);
         });
 
-        if (!response.ok) throw new Error("Failed to fetch asset");
+        // Ensure cross-origin policies are met
+        responseHeaders.set('Access-Control-Allow-Origin', '*');
+        responseHeaders.set('Cache-Control', 'public, max-age=86400, s-maxage=86400');
 
-        const buffer = await response.arrayBuffer();
-        const contentType = response.headers.get('content-type') || 'application/octet-stream';
-
-        return new NextResponse(buffer, {
-            headers: {
-                'Content-Type': contentType,
-                'Cache-Control': 'public, max-age=86400, s-maxage=86400',
-                'Access-Control-Allow-Origin': '*'
-            }
+        // Stream the ReadableStream back directly
+        return new NextResponse(response.body, {
+            status: response.status === 206 ? 206 : 200,
+            headers: responseHeaders
         });
     } catch (error: any) {
         return new NextResponse("Asset Retrieval Failed", { status: 500 });
