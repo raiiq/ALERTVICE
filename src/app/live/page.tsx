@@ -432,7 +432,7 @@ export default function MonitorPage() {
                 <div className="flex-1 overflow-hidden h-full flex items-center mx-6">
                     <div className="whitespace-nowrap overflow-hidden h-full flex items-center">
                         <div className="inline-flex gap-10 items-center animate-marquee text-[10px] font-bold text-[#0088ff]/50 tracking-widest uppercase">
-                            {filteredSignals.slice(0, 15).map((s, i) => (
+                            {[...filteredSignals.slice(0, 20), ...filteredSignals.slice(0, 20), ...filteredSignals.slice(0, 20)].map((s, i) => (
                                 <span key={i} className="flex items-center gap-3 shrink-0">
                                     <span className="w-1.5 h-1.5 bg-[#0088ff] rounded-none shadow-[0_0_8px_#0088ff] animate-pulse" />
                                     {deduplicateTitle(s.aiTitle)}

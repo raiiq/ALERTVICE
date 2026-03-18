@@ -127,7 +127,16 @@ export default function Navbar({
                             <span className="text-[8px] font-black tracking-[0.1em] uppercase">{isAr ? 'الوضع' : 'THEME'}</span>
                         </button>
 
-                        {/* 3. WORLD (CENTER) */}
+                        {/* 3. SIGNALS (RADAR) */}
+                        <button 
+                            onClick={() => handleCategoryClick('live')}
+                            className={`flex flex-col items-center gap-1 flex-1 transition-all ${pathname === '/live' ? 'text-primary' : 'text-foreground/30'}`}
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                            <span className="text-[8px] font-black tracking-[0.1em] uppercase">{isAr ? 'رادار' : 'SIGNALS'}</span>
+                        </button>
+
+                        {/* 4. WORLD (CENTER) */}
                         <button 
                             onClick={() => handleCategoryClick('world')}
                             className={`flex flex-col items-center gap-1 flex-1 transition-all ${((pathname === '/' && activeCategory === 'world') || pathname === '/') ? 'text-primary' : 'text-foreground/30'}`}
@@ -138,7 +147,7 @@ export default function Navbar({
                             <span className="text-[8px] font-black tracking-[0.1em] uppercase">{isAr ? 'عالمي' : 'WORLD'}</span>
                         </button>
 
-                        {/* 4. LANGUAGE */}
+                        {/* 5. LANGUAGE */}
                         <button 
                             onClick={toggleLang}
                             className="flex flex-col items-center gap-1 flex-1 text-foreground/30 hover:text-primary transition-all"
@@ -149,7 +158,7 @@ export default function Navbar({
                             <span className="text-[8px] font-black tracking-[0.1em] uppercase">{isAr ? 'اللغة' : 'LANG'}</span>
                         </button>
 
-                        {/* 5. MARKET */}
+                        {/* 6. MARKET */}
                         <button 
                             onClick={() => handleCategoryClick('market')}
                             className={`flex flex-col items-center gap-1 flex-1 transition-all ${activeCategory === 'market' ? 'text-primary' : 'text-foreground/30'}`}

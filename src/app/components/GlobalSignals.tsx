@@ -60,7 +60,7 @@ export default function GlobalSignals() {
                 <div className="ticker-content relative overflow-hidden flex-1 h-full flex items-center">
                     <div className={`${isAr ? 'animate-marquee-rtl' : 'animate-marquee'} flex items-center gap-32`}>
                         {signals.length > 0 ? (
-                            [...signals, ...signals].map((p, idx) => (
+                            [...signals, ...signals, ...signals, ...signals].map((p, idx) => (
                                 <Link key={`ticker-${idx}`} href={`/news/${getPostId(p.id)}`} className="text-[10px] font-bold text-foreground/80 hover:text-primary transition-all uppercase whitespace-nowrap tracking-wider">
                                     <span className="flex items-center gap-4">
                                         <span className="font-black text-primary border-b border-primary/20">{deduplicateTitle(p.aiTitle)}</span>
