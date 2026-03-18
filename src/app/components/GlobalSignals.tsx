@@ -50,7 +50,7 @@ export default function GlobalSignals() {
     const deduplicateTitle = (title: string | null) => title?.replace(/^(ALERT|URGENT|BREAKING):\s*/i, '') || '';
 
     return (
-        <div className="ticker-wrapper border-b border-white/5 mb-0 relative z-[100] sticky top-0 lg:top-16">
+        <div className={`ticker-wrapper border-b border-white/5 mb-0 relative z-[100] sticky top-0 lg:top-16 ${pathname === '/' ? 'lg:ml-[400px] lg:w-[calc(100%-400px)]' : 'lg:ml-0 lg:w-full'}`}>
             {/* 1. INTELLIGENCE TICKER (RADAR FLASH) */}
             <div className="intelligence-ticker">
                 <div className="ticker-badge">

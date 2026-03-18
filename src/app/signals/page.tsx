@@ -57,11 +57,11 @@ export default function SignalsPage() {
 
 
     return (
-        <div className="min-h-screen bg-[#050508] text-foreground flex flex-col pb-24 pt-16 lg:pt-32">
+        <div className="min-h-screen bg-background text-foreground flex flex-col pb-24 pt-16 lg:pt-32">
             {/* Global Navbar and Signals are in layout.tsx */}
             
             {/* TACTICAL HEADER */}
-            <header className="pt-20 px-6 pb-4 border-b border-white/10 bg-[#09090c]/80 backdrop-blur-md sticky top-0 z-50">
+            <header className="pt-20 px-6 pb-4 border-b border-white/10 bg-surface/80 backdrop-blur-md sticky top-0 z-50">
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col">
                         <h1 className="text-xl font-black tracking-[0.2em] text-primary uppercase">RADAR SIGNALS</h1>
@@ -88,7 +88,7 @@ export default function SignalsPage() {
                             return (
                                 <div 
                                     key={post.id}
-                                    className="group relative bg-[#09090c] border border-white/5 p-5 transition-all active:scale-[0.98] border-l-4 border-l-primary/30 hover:border-l-primary"
+                                    className="group relative bg-surface border border-white/5 p-5 transition-all active:scale-[0.98] border-l-4 border-l-primary/30 hover:border-l-primary"
                                     onClick={() => router.push(`/?post=${post.id.split('/').pop()}`)}
                                 >
                                     {/* Scanline overlay */}

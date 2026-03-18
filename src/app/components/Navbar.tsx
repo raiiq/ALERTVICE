@@ -215,7 +215,7 @@ export default function Navbar({
                 initial={{ y: -100, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="hidden lg:flex fixed top-0 left-0 right-0 z-[200]"
+                className={`hidden lg:flex fixed top-0 right-0 z-[200] ${pathname === '/' ? 'left-[400px]' : 'left-0'}`}
             >
                 <div className="w-full h-16 bg-background/80 backdrop-blur-3xl border-b border-white/5 flex items-center px-8 relative overflow-hidden group/nav">
                     {/* Top Edge Glow Line */}

@@ -90,7 +90,7 @@ export default function MarketDashboard() {
 
         return (
             <motion.div
-                className="relative group p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] bg-[#0a0a0b]/60 backdrop-blur-3xl border border-border-color/50 hover:border-primary/20 transition-all duration-500 overflow-hidden"
+                className="relative group p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] bg-surface/60 backdrop-blur-3xl border border-border-color/50 hover:border-primary/20 transition-all duration-500 overflow-hidden"
             >
                 {/* Header Row: Title & Action Buttons */}
                 <div className="flex justify-between items-start mb-4 sm:mb-6">
@@ -191,7 +191,7 @@ export default function MarketDashboard() {
     };
 
     return (
-        <div className={`min-h-screen bg-surfaceackground text-foreground tracking-wide flex flex-col`} dir={isAr ? "rtl" : "ltr"}>
+        <div className={`min-h-screen bg-background text-foreground tracking-wide flex flex-col`} dir={isAr ? "rtl" : "ltr"}>
             {/* ── MAIN GLOBAL NAVBAR IS NOW IN ROOT LAYOUT ── */}
             <main className="flex-grow w-full px-6 lg:px-12 py-12 max-w-[1600px] mx-auto mt-20">
 
@@ -263,7 +263,7 @@ export default function MarketDashboard() {
                                     return (
                                         <div
                                             key={item.symbol}
-                                            className="relative group p-6 rounded-[1.5rem] bg-[#0a0a0b]/40 backdrop-blur-3xl border border-border-color/50 hover:border-primary/20 transition-all duration-300"
+                                            className="relative group p-6 rounded-[1.5rem] bg-surface/40 backdrop-blur-3xl border border-border-color/50 hover:border-primary/20 transition-all duration-300"
                                         >
                                             {/* Status Header */}
                                             <div className="flex justify-between items-center mb-4">

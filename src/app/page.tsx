@@ -340,7 +340,7 @@ export default function Home() {
       </AnimatePresence>
 
       {/* Add top padding on desktop to clear the fixed navbar */}
-      <main className="flex-grow w-full flex flex-col lg:flex-row mx-auto relative z-10 pt-0 lg:pt-16">
+      <main className="flex-grow w-full flex flex-col lg:flex-row mx-auto relative z-10 pt-0 lg:pt-16 lg:pl-[400px]">
 
         {/* FEED SECTION - OFFSET ON DESKTOP ONLY */}
         <div className="flex-1 px-4 sm:px-6 lg:px-16 py-6 lg:py-12 w-full max-w-screen-2xl mx-auto flex flex-col gap-8 lg:gap-12">
@@ -572,7 +572,7 @@ export default function Home() {
       </AnimatePresence>
 
       {/* FULL HEIGHT LEFT SIDEBAR (SIGNAL MONITOR) — DESKTOP ONLY */}
-      <aside className="hidden lg:flex fixed left-0 bottom-0 w-[400px] h-screen bg-background border-r border-white/10 intelligence-sidebar z-[50] flex-col" style={{ top: '112px', height: 'calc(100vh - 112px)' }}>
+      <aside className="hidden lg:flex fixed left-0 top-0 w-[400px] h-screen bg-background border-r border-white/10 intelligence-sidebar z-[1002] flex-col">
         <div className={`w-full px-4 sm:px-8 min-h-[64px] lg:h-16 border-b border-white/10 bg-background/95 backdrop-blur-3xl flex items-center justify-between z-[60] shrink-0 relative ${isAr ? 'text-right' : 'text-left'}`}>
           {/* Subtle scanline moving across the header */}
           <div className="sidebar-header-scan" />
@@ -586,9 +586,6 @@ export default function Home() {
             </div>
             <h3 className="font-black text-foreground uppercase tracking-[0.3em] text-[11px] sm:text-[13px]">{isAr ? 'رادار التنبيه' : 'SIGNAL MONITOR'}</h3>
           </div>
-          <Link href="/live" className="text-[10px] font-black text-primary border border-primary/20 bg-primary/5 px-4 py-2 rounded-none hover:bg-primary/20 transition-all uppercase tracking-widest shadow-[0_0_20px_rgba(56,189,248,0.15)]">
-            {isAr ? 'عرض مباشر' : '3D TRACKING'}
-          </Link>
         </div>
 
         <motion.div variants={containerVars} initial="hidden" animate="show" className="flex-1 overflow-y-auto scrollbar-hide px-4 sm:px-0 transition-all">
@@ -604,9 +601,12 @@ export default function Home() {
           <div className="flex flex-col gap-6 px-0 sm:px-8 py-2 relative z-10 mt-2">
             {monitorPosts.map((p, idx) => {
                const title = deduplicateTitle(p.aiTitle) || "";
+               const isUrgent = (title + (p.plainText || "")).toLowerCase().includes("urgent") || 
+                               (title + (p.plainText || "")).toLowerCase().includes("عاجل") ||
+                               (title + (p.plainText || "")).toLowerCase().includes("breaking");
                return (
                 <motion.div key={p.id} variants={itemVars}>
-                  <Link href={`/news/${getPostId(p.id)}`} className="liquid-sidebar-card group radar-signal-framework">
+                  <Link href={`/news/${getPostId(p.id)}`} className={`liquid-sidebar-card group radar-signal-framework ${isUrgent ? 'alarm-flash' : ''}`}>
                     {/* Horizontal scanline sweep */}
                     <div className="animate-ingest" />
                     {/* Vertical data-stream bar with staggered delay */}
