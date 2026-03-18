@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 import { GoogleGenAI } from '@google/genai';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // Vercel Pro allows 300s; Hobby allows 60s
@@ -26,12 +26,16 @@ async function freeTranslate(text: string, targetLang: string) {
 export async function GET(request: Request) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !supabaseKey) {
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !supabaseKey || !supabaseServiceKey) {
         return NextResponse.json(
-            { error: 'Supabase missing', posts: [] },
+            { error: 'Supabase missing configuration (Requires anon and service role key)', posts: [] },
             { status: 503 }
         );
     }
+    
+    // Use Service Role to bypass RLS for UPSERTs and DB fetches inside Server API Route
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     try {
         const { searchParams } = new URL(request.url);
