@@ -247,9 +247,21 @@ Batch: ${prompts.join('\n')}`;
             } else if (type === 'signal') {
                 // Tier 2: Radar Flash (Text-primary intelligence)
                 finalPosts = posts.filter((p: any) => {
-                    // Just ensure there is something to show in the marquee
-                    return (p.title?.length > 0 || p.plainText?.length > 0);
+                    // Logic: Ensure we have at least a title or text to show.
+                    // If the requested language content is missing, we'll allow it if any base content exists.
+                    return (p.title?.length > 0 || p.content_html?.length > 0);
                 }).slice(0, limit);
+
+                // If we have no posts for the specific language, try fetching English as fallback
+                if (finalPosts.length === 0 && lang !== 'en') {
+                    const { data: fallbackPosts } = await supabaseAdmin
+                        .from('posts')
+                        .select('*')
+                        .eq('language', 'en')
+                        .order('post_date', { ascending: false })
+                        .limit(limit);
+                    if (fallbackPosts) finalPosts = fallbackPosts;
+                }
             }
 
             return NextResponse.json({
