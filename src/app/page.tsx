@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MediaDisplay, parseMedia, deduplicateTitle } from "./components/MediaDisplay";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "./context/LanguageContext";
+import { extractFlags } from "../utils/flags";
 
 interface NewsPost {
   id: string;
@@ -209,9 +210,10 @@ export default function Home() {
       if (articles.length === 0 && !loading) {
         fetchArticles(false, lang, true);
       }
-    }, 4000);
+    }, 1000); // 1s refresh rate
+
     return () => clearInterval(interval);
-  }, [lang, mounted, searchQuery, articles.length, loading]);
+  }, [mounted, lang, searchQuery, articles.length, loading]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -275,41 +277,52 @@ export default function Home() {
   const feedPosts = filteredPosts.length > 5 ? filteredPosts.slice(5) : [];
   const sidebarPosts = articles.slice(0, 15);
 
-  if (!mounted || (loading && articles.length === 0)) return (
-    <div className={`loading-screen${loadingFading ? ' fading' : ''}`}>
-      <div className="loading-radar">
-        <div className="loading-radar-ring" />
-        <div className="loading-radar-ring" />
-        <div className="loading-radar-ring" />
-        <div className="loading-radar-sweep" />
-        <div className="loading-radar-ping" />
-        <div className="loading-radar-core" />
-      </div>
-      <div className="loading-title" data-text="ALERTVICE">ALERTVICE</div>
-      <div className="loading-subtitle">Global Intelligence Network</div>
-      <div className="loading-dots"><span /><span /><span /></div>
-      <div className="loading-status">Initializing feed...</div>
+  const militaryLoader = (
+    <div className="fixed inset-0 z-[10000] bg-black/95 flex items-center justify-center p-8 font-mono overflow-hidden">
+        <div className="flex flex-col items-center gap-6 border border-white/10 p-8 sm:p-12 relative w-full max-w-[400px]">
+            {/* Brackets */}
+            <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-primary"></div>
+            <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-primary"></div>
+            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-primary"></div>
+            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-primary"></div>
+
+            <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-red-600 animate-pulse"></div>
+                <span className="text-[12px] sm:text-[14px] font-bold text-primary tracking-[0.4em] uppercase text-center">
+                    {isAr ? 'تهيئة النظام العسكري...' : 'MIL-SPEC SYSTEM INIT'}
+                </span>
+            </div>
+            
+            <div className="w-full bg-white/5 h-2 overflow-hidden relative">
+                <motion.div 
+                    initial={{ width: "0%" }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="absolute top-0 bottom-0 left-0 bg-red-600"
+                />
+            </div>
+            
+            <div className="flex justify-between w-full text-[10px] text-white/40 tracking-[0.2em] uppercase mt-2">
+                <span>[ UPLINK SECURE ]</span>
+                <span>STANDBY...</span>
+            </div>
+        </div>
     </div>
   );
+
+  if (!mounted || (loading && articles.length === 0)) return militaryLoader;
 
   return (
     <div className={`min-h-screen text-foreground tracking-wide flex flex-col relative z-10`} dir={isAr ? "rtl" : "ltr"}>
       {/* LOADING SCREEN OVERLAY */}
       {!loadingGone && (
-        <div className={`loading-screen${loadingFading ? ' fade-out' : ''}`}>
-          <div className="loading-radar">
-            <div className="loading-radar-ring" />
-            <div className="loading-radar-ring" />
-            <div className="loading-radar-ring" />
-            <div className="loading-radar-sweep" />
-            <div className="loading-radar-ping" />
-            <div className="loading-radar-core" />
-          </div>
-          <div className="loading-title font-inter" data-text="ALERTVICE">ALERTVICE</div>
-          <div className="loading-subtitle font-inter">Global Intelligence Network</div>
-          <div className="loading-dots"><span /><span /><span /></div>
-          <div className="loading-status">{lang === 'ar' ? 'جارٍ تحميل البيانات...' : 'Acquiring intelligence feed...'}</div>
-        </div>
+        <motion.div 
+          initial={{ opacity: 1 }}
+          animate={{ opacity: loadingFading ? 0 : 1 }}
+          className="fixed inset-0 z-[10000]"
+        >
+          {militaryLoader}
+        </motion.div>
       )}
 
       {/* TACTICAL TRANSLATION LOADER */}
@@ -340,7 +353,7 @@ export default function Home() {
       </AnimatePresence>
 
       {/* Add top padding on desktop to clear the fixed navbar */}
-      <main className="flex-grow w-full flex flex-col lg:flex-row mx-auto relative z-10 pt-0 lg:pt-16 lg:pl-[400px]">
+      <main className="flex-grow w-full flex flex-col lg:flex-row mx-auto relative z-10 pt-0 lg:pt-16 lg:pl-[600px]">
 
         {/* FEED SECTION - OFFSET ON DESKTOP ONLY */}
         <div className="flex-1 px-4 sm:px-6 lg:px-16 py-6 lg:py-12 w-full max-w-screen-2xl mx-auto flex flex-col gap-8 lg:gap-12">
@@ -575,7 +588,7 @@ export default function Home() {
       </AnimatePresence>
 
       {/* FULL HEIGHT LEFT SIDEBAR (SIGNAL MONITOR) — DESKTOP ONLY */}
-      <aside className="hidden lg:flex fixed left-0 top-0 w-[400px] h-screen bg-background border-r border-white/10 intelligence-sidebar z-[1002] flex-col">
+      <aside className="hidden lg:flex fixed left-0 top-0 w-[600px] h-screen bg-background border-r border-white/10 intelligence-sidebar z-[1002] flex-col">
         <div className={`w-full px-4 sm:px-8 min-h-[64px] lg:h-16 border-b border-white/10 bg-background/95 backdrop-blur-3xl flex items-center justify-between z-[60] shrink-0 relative ${isAr ? 'text-right' : 'text-left'}`}>
           {/* Subtle scanline moving across the header */}
           <div className="sidebar-header-scan" />
@@ -587,7 +600,7 @@ export default function Home() {
               <div className="ring" />
               <div className="core" />
             </div>
-            <h3 className="font-black text-foreground uppercase tracking-[0.3em] text-[11px] sm:text-[13px]">{isAr ? 'رادار التنبيه' : 'SIGNAL MONITOR'}</h3>
+            <h3 className="font-black text-foreground uppercase tracking-[0.3em] text-[13px] sm:text-[15px]">{isAr ? 'رادار التنبيه' : 'SIGNAL MONITOR'}</h3>
           </div>
         </div>
 
@@ -607,6 +620,7 @@ export default function Home() {
                const isUrgent = (title + (p.plainText || "")).toLowerCase().includes("urgent") || 
                                (title + (p.plainText || "")).toLowerCase().includes("عاجل") ||
                                (title + (p.plainText || "")).toLowerCase().includes("breaking");
+               const flags = extractFlags((p.plainText || '') + ' ' + title);
                return (
                 <motion.div key={p.id} variants={itemVars}>
                   <Link href={`/news/${getPostId(p.id)}`} className={`liquid-sidebar-card group radar-signal-framework hover-zoom ${isUrgent ? 'alarm-flash' : ''}`}>
@@ -616,16 +630,31 @@ export default function Home() {
                     <div className="signal-stream" style={{ ['--stream-delay' as any]: `${(idx % 5) * 0.7}s` }} />
                     <div className={`flex justify-between items-center mb-3 ${isAr ? 'flex-row-reverse' : ''}`}>
                       <div className={`flex items-center gap-2 ${isAr ? 'flex-row-reverse' : ''}`}>
-                        <div className="w-1 h-1 bg-primary rounded-none" />
-                        <span className="text-[9px] font-bold text-primary/60 font-mono tracking-widest">
-                          {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                        <div className="w-1.5 h-1.5 bg-primary rounded-none" />
+                        <span className="text-[11px] font-bold text-primary/60 font-mono tracking-widest">
+                          {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                         </span>
                       </div>
-                      <span className="text-[8px] font-bold font-mono uppercase blip-flicker">ID-{getPostId(p.id).slice(-4)}</span>
+                      <span className="text-[10px] font-bold font-mono uppercase blip-flicker">ID-{getPostId(p.id).slice(-4)}</span>
                     </div>
-                    <h4 className={`text-[12px] font-bold text-foreground/80 group-hover:text-primary transition-colors leading-relaxed ${alignClass} line-clamp-2`}>
+                    <h4 className={`text-[16px] font-bold text-foreground/80 group-hover:text-primary transition-all duration-300 leading-[1.7] ${alignClass} line-clamp-4 group-hover:line-clamp-none`}>
+                      {flags.length > 0 && (
+                          <div className={`inline-flex gap-1 items-center mb-1 ${isAr ? 'ml-2' : 'mr-2'}`}>
+                              {flags.map((flag, i) => (
+                                  <div key={i} className="flex items-center justify-center w-[20px] h-[14px] rounded-[1px] overflow-hidden border border-white/20 shadow-sm shrink-0 bg-white/5">
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img src={`https://flagcdn.com/w20/${flag}.png`} alt={flag} className="w-full h-full object-cover" />
+                                  </div>
+                              ))}
+                          </div>
+                      )}
                       {title}
                     </h4>
+                    {p.aiSummary && p.aiSummary !== title && (
+                        <p className={`text-[14px] text-foreground/50 mt-2 leading-relaxed hidden group-hover:block transition-all duration-500 ${alignClass}`}>
+                            {p.aiSummary}
+                        </p>
+                    )}
                   </Link>
                 </motion.div>
                );

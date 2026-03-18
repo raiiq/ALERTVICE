@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "../context/LanguageContext";
+import { extractFlags } from "@/utils/flags";
 
 interface NewsPost {
     id: string;
@@ -42,7 +43,7 @@ export default function GlobalSignals() {
         };
 
         fetchAllSignals();
-        const interval = setInterval(fetchAllSignals, 8000); // 8s refresh
+        const interval = setInterval(fetchAllSignals, 1000); // 1s refresh
         return () => clearInterval(interval);
     }, [lang]);
 
@@ -50,7 +51,7 @@ export default function GlobalSignals() {
     const deduplicateTitle = (title: string | null) => title?.replace(/^(ALERT|URGENT|BREAKING):\s*/i, '') || '';
 
     return (
-        <div className={`ticker-wrapper border-b border-white/5 mb-0 relative z-[100] sticky top-0 lg:top-16 ${pathname === '/' ? 'lg:ml-[400px] lg:w-[calc(100%-400px)]' : 'lg:ml-0 lg:w-full'}`}>
+        <div className={`ticker-wrapper border-b border-white/5 mb-0 relative z-[100] sticky top-0 lg:top-16 ${pathname === '/' ? 'lg:ml-[600px] lg:w-[calc(100%-600px)]' : 'lg:ml-0 lg:w-full'}`}>
             {/* 1. INTELLIGENCE TICKER (RADAR FLASH) */}
             <div className="intelligence-ticker">
                 <div className="ticker-badge">
@@ -60,14 +61,29 @@ export default function GlobalSignals() {
                 <div className="ticker-content relative overflow-hidden flex-1 h-full flex items-center">
                     <div className={`${isAr ? 'animate-marquee-rtl' : 'animate-marquee'} flex items-center gap-32`}>
                         {signals.length > 0 ? (
-                            [...signals, ...signals, ...signals, ...signals].map((p, idx) => (
+                            [...signals, ...signals, ...signals, ...signals].map((p, idx) => {
+                                const flags = extractFlags((p.plainText || '') + ' ' + (p.aiTitle || ''));
+                                return (
                                 <Link key={`ticker-${idx}`} href={`/news/${getPostId(p.id)}`} className="text-[10px] font-bold text-foreground/80 hover:text-primary transition-all uppercase whitespace-nowrap tracking-wider">
                                     <span className="flex items-center gap-4">
-                                        <span className="font-black text-primary border-b border-primary/20">{deduplicateTitle(p.aiTitle)}</span>
+                                        <span className="font-black text-primary border-b border-primary/20 flex items-center gap-2">
+                                            {flags.length > 0 && (
+                                                <div className="flex gap-1 items-center">
+                                                    {flags.map((flag, i) => (
+                                                        <div key={i} className="flex items-center justify-center w-[16px] h-[11px] rounded-[1px] overflow-hidden border border-white/20 shadow-sm shrink-0 bg-white/5">
+                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                            <img src={`https://flagcdn.com/w20/${flag}.png`} alt={flag} className="w-full h-full object-cover" />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {deduplicateTitle(p.aiTitle)}
+                                        </span>
                                         <span className="opacity-60">{p.aiSummary}</span>
                                     </span>
                                 </Link>
-                            ))
+                                );
+                            })
                         ) : (
                             <span className="text-[10px] font-bold text-foreground/20 uppercase tracking-widest px-10">
                                 {isAr ? 'جارٍ مسح الترددات...' : 'SCANNING FREQUENCIES...'}
@@ -85,12 +101,25 @@ export default function GlobalSignals() {
                     </div>
                     <div className="urgent-dispatch-content relative overflow-hidden flex-1 h-full flex items-center">
                         <div className={`${isAr ? 'animate-urgent-marquee-rtl' : 'animate-urgent-marquee'} flex items-center gap-64`}>
-                            {[...urgentSignals, ...urgentSignals].map((post, idx) => (
+                            {[...urgentSignals, ...urgentSignals].map((post, idx) => {
+                                const flags = extractFlags((post.plainText || '') + ' ' + (post.aiTitle || ''));
+                                return (
                                 <Link key={`urgent-${idx}`} href={`/news/${getPostId(post.id)}`} className="text-[14px] font-bold text-white hover:underline transition-all whitespace-nowrap tracking-wider flex items-center gap-4">
-                                    <span className="opacity-60 text-[10px] whitespace-nowrap">{new Date(post.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                                    <span className="opacity-60 text-[10px] whitespace-nowrap">{new Date(post.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                                    {flags.length > 0 && (
+                                        <div className="flex gap-1 items-center">
+                                            {flags.map((flag, i) => (
+                                                <div key={i} className="flex items-center justify-center w-5 h-[14px] rounded-[2px] overflow-hidden border border-white/20 shadow-sm shrink-0 bg-white/5">
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img src={`https://flagcdn.com/w20/${flag}.png`} alt={flag} className="w-full h-full object-cover" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                     <span>{post.aiTitle || post.plainText?.slice(0, 100)}</span>
                                 </Link>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 </div>

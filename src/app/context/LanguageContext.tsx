@@ -35,8 +35,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         setTimeout(() => {
             setLangState(newLang);
             localStorage.setItem("newsLang", newLang);
-            setTimeout(() => setIsTranslating(false), 800);
-        }, 600);
+            setTimeout(() => setIsTranslating(false), 300);
+        }, 150);
     };
 
     const isAr = lang === "ar";

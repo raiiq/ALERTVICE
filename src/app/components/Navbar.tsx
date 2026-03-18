@@ -110,7 +110,12 @@ export default function Navbar({
                             className="flex flex-col items-center gap-1 flex-1 text-foreground/30 hover:text-primary transition-all"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                            <span className="text-[8px] font-black tracking-[0.1em] uppercase">{isAr ? 'بحث' : 'SEARCH'}</span>
+                            <span 
+                                className={`text-[10px] font-black uppercase ${isAr ? 'tracking-normal' : 'tracking-[0.1em]'}`}
+                                style={isAr ? { fontFamily: 'var(--font-arabic)' } : {}}
+                            >
+                                {isAr ? 'بحث' : 'SEARCH'}
+                            </span>
                         </button>
 
                         {/* 2. THEME */}
@@ -123,7 +128,12 @@ export default function Navbar({
                             ) : (
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                             )}
-                            <span className="text-[8px] font-black tracking-[0.1em] uppercase">{isAr ? 'الوضع' : 'THEME'}</span>
+                            <span 
+                                className={`text-[10px] font-black uppercase ${isAr ? 'tracking-normal' : 'tracking-[0.1em]'}`}
+                                style={isAr ? { fontFamily: 'var(--font-arabic)' } : {}}
+                            >
+                                {isAr ? 'الوضع' : 'THEME'}
+                            </span>
                         </button>
 
 
@@ -135,7 +145,12 @@ export default function Navbar({
                             <div className={`p-1 rounded-none transition-all ${((pathname === '/' && activeCategory === 'world') || pathname === '/') ? 'bg-primary/10' : ''}`}>
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                             </div>
-                            <span className="text-[8px] font-black tracking-[0.1em] uppercase">{isAr ? 'عالمي' : 'WORLD'}</span>
+                            <span 
+                                className={`text-[10px] font-black uppercase ${isAr ? 'tracking-normal' : 'tracking-[0.1em]'}`}
+                                style={isAr ? { fontFamily: 'var(--font-arabic)' } : {}}
+                            >
+                                {isAr ? 'عالمي' : 'WORLD'}
+                            </span>
                         </button>
 
                         {/* 5. LANGUAGE */}
@@ -143,10 +158,15 @@ export default function Navbar({
                             onClick={toggleLang}
                             className="flex flex-col items-center gap-1 flex-1 text-foreground/30 hover:text-primary transition-all"
                         >
-                            <div className="w-5 h-5 flex items-center justify-center font-black text-[10px] border-2 border-current rounded-none">
+                            <div className="w-5 h-5 flex items-center justify-center font-black text-[12px] border-2 border-current rounded-none">
                                 {lang.toUpperCase()}
                             </div>
-                            <span className="text-[8px] font-black tracking-[0.1em] uppercase">{isAr ? 'اللغة' : 'LANG'}</span>
+                            <span 
+                                className={`text-[10px] font-black uppercase ${isAr ? 'tracking-normal' : 'tracking-[0.1em]'}`}
+                                style={isAr ? { fontFamily: 'var(--font-arabic)' } : {}}
+                            >
+                                {isAr ? 'اللغة' : 'LANG'}
+                            </span>
                         </button>
 
                         {/* 6. MARKET */}
@@ -155,7 +175,12 @@ export default function Navbar({
                             className={`flex flex-col items-center gap-1 flex-1 transition-all ${activeCategory === 'market' ? 'text-primary' : 'text-foreground/30'}`}
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
-                            <span className="text-[8px] font-black tracking-[0.1em] uppercase">{isAr ? 'سوق' : 'MARKET'}</span>
+                            <span 
+                                className={`text-[10px] font-black uppercase ${isAr ? 'tracking-normal' : 'tracking-[0.1em]'}`}
+                                style={isAr ? { fontFamily: 'var(--font-arabic)' } : {}}
+                            >
+                                {isAr ? 'سوق' : 'MARKET'}
+                            </span>
                         </button>
                     </div>
                 </nav>
@@ -206,7 +231,7 @@ export default function Navbar({
                 initial={{ y: -100, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className={`hidden lg:flex fixed top-0 right-0 z-[200] ${pathname === '/' ? 'left-[400px]' : 'left-0'}`}
+                className={`hidden lg:flex fixed top-0 right-0 z-[200] ${pathname === '/' ? 'left-[600px]' : 'left-0'}`}
             >
                 <div className="w-full h-16 bg-background/80 backdrop-blur-3xl border-b border-white/5 flex items-center px-8 relative overflow-hidden group/nav">
                     {/* Top Edge Glow Line */}
@@ -215,27 +240,36 @@ export default function Navbar({
                     <div className="flex items-center justify-between w-full h-10 gap-6">
                         {/* 1. BRANDING */}
                         <Link href="/" className="flex items-center gap-3 group shrink-0">
-                            <div className="relative w-2.5 h-2.5">
-                                <span className="absolute inset-0 rounded-none bg-primary animate-ping opacity-20"></span>
-                                <div className="relative w-full h-full bg-primary rounded-none shadow-[0_0_15px_rgba(var(--primary-rgb),0.6)]"></div>
+                            {/* Iraq Flag Widget */}
+                            <div className="flex flex-col w-7 h-[18px] rounded-sm overflow-hidden border border-white/20 shadow-[0_0_10px_rgba(0,0,0,0.5)] shrink-0">
+                                <div className="w-full h-[33.33%] bg-[#CE1126]"></div>
+                                <div className="w-full h-[33.33%] bg-white flex items-center justify-center">
+                                    <span style={{ color: '#007A3D', fontSize: '6px', fontWeight: 900, fontFamily: 'var(--font-arabic)', lineHeight: 1 }}>الله أكبر</span>
+                                </div>
+                                <div className="w-full h-[33.33%] bg-black"></div>
                             </div>
                             <h1 className="text-sm font-black tracking-[0.3em] text-foreground group-hover:text-primary transition-all duration-500">ALERTVICE</h1>
                         </Link>
 
                         {/* 2. CATEGORY INSTRUMENTS (Equal Sized Pills) */}
-                        <div className="flex items-center gap-1.5 bg-white/5 p-1 border border-white/10 rounded-none h-11">
+                        <div className="flex items-center gap-2 bg-white/5 p-1 border border-white/10 rounded-none h-14">
                             {categories.map(cat => {
                                 const isActive = (pathname === '/' && activeCategory === cat.id) || (pathname === '/' + cat.id);
                                 return (
                                     <button
                                         key={cat.id}
                                         onClick={() => handleCategoryClick(cat.id)}
-                                        className={`h-9 px-5 text-[10px] font-black uppercase tracking-widest transition-all duration-500 relative overflow-hidden group/btn ${isActive ? 'text-primary bg-white/5' : 'text-foreground/40 hover:text-foreground'}`}
+                                        className={`h-12 px-6 text-[12px] font-black uppercase transition-all duration-500 relative overflow-hidden group/btn ${isActive ? 'text-primary bg-white/5' : 'text-foreground/40 hover:text-foreground'} ${isAr ? 'tracking-normal' : 'tracking-widest'}`}
                                     >
-                                        <span className="relative z-10">{isAr ? cat.ar : cat.en}</span>
+                                        <span 
+                                            className="relative z-10"
+                                            style={isAr ? { fontFamily: 'var(--font-arabic)', fontSize: '14px' } : {}}
+                                        >
+                                            {isAr ? cat.ar : cat.en}
+                                        </span>
                                         {/* Hover Shimmer */}
                                         <div className="absolute inset-0 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
-                                        {isActive && <motion.div layoutId="activeCat" className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]"></motion.div>}
+                                        {isActive && <motion.div layoutId="activeCat" className="absolute bottom-0 left-0 right-0 h-[3px] bg-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]"></motion.div>}
                                     </button>
                                 );
                             })}
@@ -261,11 +295,11 @@ export default function Navbar({
                         </form>
 
                         {/* 4. CONTROL TERMINAL */}
-                        <div className="flex items-center gap-1.5 h-11 bg-white/5 p-1 border border-white/10 rounded-none">
+                        <div className="flex items-center gap-1.5 h-14 bg-white/5 p-1 border border-white/10 rounded-none">
                             {/* THEME */}
                             <button
                                 onClick={toggleTheme}
-                                className="w-9 h-9 flex items-center justify-center transition-all duration-500 hover:bg-white/10 text-foreground/40 hover:text-primary"
+                                className="w-12 h-12 flex items-center justify-center transition-all duration-500 hover:bg-white/10 text-foreground/40 hover:text-primary"
                                 title="Toggle Theme"
                             >
                                 {theme === 'dark' ? (
@@ -279,16 +313,16 @@ export default function Navbar({
                             <div className="w-[1px] h-5 bg-white/10 mx-1"></div>
 
                             {/* LANGUAGE TOGGLE */}
-                            <div className="flex items-center h-9 bg-white/5 px-1 gap-1">
+                            <div className="flex items-center h-12 bg-white/5 px-2 gap-1">
                                 <button
                                     onClick={() => lang !== 'ar' && toggleLang()}
-                                    className={`px-3 h-7 text-[9px] font-black transition-all ${lang === 'ar' ? 'bg-primary text-primary-foreground' : 'text-foreground/20 hover:text-foreground'}`}
+                                    className={`px-4 h-9 text-[11px] font-black transition-all ${lang === 'ar' ? 'bg-primary text-primary-foreground' : 'text-foreground/20 hover:text-foreground'}`}
                                 >
                                     AR
                                 </button>
                                 <button
                                     onClick={() => lang !== 'en' && toggleLang()}
-                                    className={`px-3 h-7 text-[9px] font-black transition-all ${lang === 'en' ? 'bg-primary text-primary-foreground' : 'text-foreground/20 hover:text-foreground'}`}
+                                    className={`px-4 h-9 text-[11px] font-black transition-all ${lang === 'en' ? 'bg-primary text-primary-foreground' : 'text-foreground/20 hover:text-foreground'}`}
                                 >
                                     EN
                                 </button>
