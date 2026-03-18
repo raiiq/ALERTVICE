@@ -42,7 +42,7 @@ export default function GlobalSignals() {
         };
 
         fetchAllSignals();
-        const interval = setInterval(fetchAllSignals, 30000); // 30s refresh
+        const interval = setInterval(fetchAllSignals, 8000); // 8s refresh
         return () => clearInterval(interval);
     }, [lang]);
 

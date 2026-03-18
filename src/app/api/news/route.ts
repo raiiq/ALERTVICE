@@ -25,6 +25,9 @@ async function freeTranslate(text: string, targetLang: string) {
     }
 }
 
+let lastSyncTime = 0;
+const SYNC_INTERVAL = 30000; // 30 seconds
+
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const lang = searchParams.get('lang') || 'en';
@@ -36,17 +39,28 @@ export async function GET(request: Request) {
     try {
         const supabaseAdmin = (supabaseUrl && supabaseServiceKey) ? createClient(supabaseUrl, supabaseServiceKey) : null;
 
-        // 1. Fetch latest from Telegram via Scraping
-        if (offset === 0 && !q) {
+        // 1. Fetch latest from Telegram via Scraping (Throttled)
+        const now = Date.now();
+        if (offset === 0 && !q && (now - lastSyncTime > SYNC_INTERVAL)) {
+            lastSyncTime = now;
             try {
                 const CHANNEL_URL = "https://t.me/s/alertvice";
                 const response = await fetch(CHANNEL_URL, { 
                     headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'Accept-Language': 'en-US,en;q=0.9,ar;q=0.8'
                     },
-                    cache: 'no-store' 
+                    cache: 'no-store',
+                    next: { revalidate: 0 }
                 });
+                
+                if (!response.ok) {
+                    console.error("Telegram Scraper: Failed to fetch channel HTML", response.status);
+                    throw new Error("Telegram unreachable");
+                }
+
                 const html = await response.text();
+                console.log(`Telegram Sync: Fetched ${html.length} bytes from ${CHANNEL_URL}`);
                 const $ = load(html);
 
                 const rawPosts: any[] = [];
@@ -125,7 +139,7 @@ export async function GET(request: Request) {
                         }
                     }
 
-                    const newsCandidates = grouped.reverse().slice(0, 20);
+                    const newsCandidates = grouped.reverse().slice(0, 40);
                     
                     // PRE-FILTER: Check Supabase for existing or SUPPRESSED (deleted) records
                     const telegramIds = newsCandidates.map(p => p.id);
@@ -214,7 +228,9 @@ Batch: ${prompts.join('\n')}`;
                             };
                         });
 
-                        await supabaseAdmin.from('posts').upsert(dbData, { onConflict: 'telegram_id, language' });
+                        const { error: upsertError } = await supabaseAdmin.from('posts').upsert(dbData, { onConflict: 'telegram_id, language' });
+                        if (upsertError) console.error("Supabase Upsert Error:", upsertError);
+                        else console.log(`Telegram Sync: Successfully synced ${dbData.length} posts to Supabase`);
                     }
                 }
             } catch (e) {
@@ -256,10 +272,15 @@ Batch: ${prompts.join('\n')}`;
             
             // Intelligence Signaling Framework
             if (urgent) {
-                // Tier 1: Strict Urgency (Keyword: عاجل)
+                // Tier 1: Strict Urgency (Keywords: عاجل, urgent, breaking, alert, broadcast, critical)
                 finalPosts = posts.filter((p: any) => {
                     const haystack = `${p.title} ${p.summary} ${p.content_html}`.toLowerCase();
-                    return haystack.includes('عاجل');
+                    return haystack.includes('عاجل') || 
+                           haystack.includes('urgent') || 
+                           haystack.includes('breaking') || 
+                           haystack.includes('alert') ||
+                           haystack.includes('broadcast') ||
+                           haystack.includes('critical');
                 }).slice(0, limit);
             } else if (type === 'signal') {
                 // Tier 2: Radar Flash (Text-primary intelligence)
