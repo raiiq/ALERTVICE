@@ -47,6 +47,7 @@ export default function RootLayout({
         className={`${libreFranklin.variable} ${libreFranklinCondensed.variable} ${ibmPlexArabic.variable} antialiased`}
       >
         <LanguageProvider>
+          <div className="bg-pulse-overlay"></div>
           <TranslationLoader />
           <Navbar />
           <GlobalSignals />

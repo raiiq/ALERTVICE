@@ -413,7 +413,10 @@ export default function Home() {
                       </button>
                     </div>
                   )}
-                  <Link href={`/news/${getPostId(p.id)}`} className="flex flex-col gap-4">
+                  <Link 
+                  href={`/news/${getPostId(p.id)}`} 
+                  className="liquid-card group radar-item-framework hover-zoom"
+                >
                     {(parseMedia(p.imageUrl).length > 0 || parseMedia(p.videoUrl).length > 0 || p.hasVideo) ? (
                       <div className="aspect-video rounded-none overflow-hidden border border-border-color group-hover:border-primary/30 transition-all">
                         <MediaDisplay images={parseMedia(p.imageUrl)} videos={parseMedia(p.videoUrl)} hasVideo={p.hasVideo} isAr={isAr} aspect="aspect-video" singleMode={true} />
@@ -440,7 +443,7 @@ export default function Home() {
                       </button>
                     </div>
                   )}
-                  <Link href={`/news/${getPostId(p.id)}`} className={`flex flex-col md:flex-row gap-8 ${isAr ? 'md:flex-row-reverse' : ''}`}>
+                  <Link href={`/news/${getPostId(p.id)}`} className={`flex flex-col md:flex-row gap-8 ${isAr ? 'md:flex-row-reverse' : ''} hover-zoom`}>
                     {(parseMedia(p.imageUrl).length > 0 || parseMedia(p.videoUrl).length > 0 || p.hasVideo) ? (
                       <div className="w-full md:w-[300px] shrink-0 rounded-none overflow-hidden border border-border-color">
                         <MediaDisplay images={parseMedia(p.imageUrl)} videos={parseMedia(p.videoUrl)} hasVideo={p.hasVideo} isAr={isAr} aspect="aspect-video" singleMode={true} />
@@ -606,7 +609,7 @@ export default function Home() {
                                (title + (p.plainText || "")).toLowerCase().includes("breaking");
                return (
                 <motion.div key={p.id} variants={itemVars}>
-                  <Link href={`/news/${getPostId(p.id)}`} className={`liquid-sidebar-card group radar-signal-framework ${isUrgent ? 'alarm-flash' : ''}`}>
+                  <Link href={`/news/${getPostId(p.id)}`} className={`liquid-sidebar-card group radar-signal-framework hover-zoom ${isUrgent ? 'alarm-flash' : ''}`}>
                     {/* Horizontal scanline sweep */}
                     <div className="animate-ingest" />
                     {/* Vertical data-stream bar with staggered delay */}

@@ -348,7 +348,33 @@ h1, h2, h3, h4, h5, h6 {
   border-left: 3px solid #ef4444 !important;
 }
 
-/* ── 5. DATA-STREAM SHIMMER — left edge light bar ── */
+/* ── 6. BACKGROUND ALARM PULSE ── */
+@keyframes alarm-bg-pulse {
+  0%, 100% { background-color: transparent; }
+  33% { background-color: rgba(239, 68, 68, 0.02); } /* Faint Red */
+  66% { background-color: rgba(56, 189, 248, 0.02); } /* Faint Blue */
+}
+
+.bg-pulse-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  animation: alarm-bg-pulse 10s ease-in-out infinite;
+  backdrop-filter: blur(100px);
+}
+
+/* ── 7. HOVER ZOOM UTILITY ── */
+.hover-zoom {
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hover-zoom:hover {
+  transform: scale(1.03) translateY(-4px);
+  z-index: 30;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+/* ── 8. DATA-STREAM TEXT ── */
 @keyframes data-stream {
   0%   { transform: translateY(100%); opacity: 0; }
   15%  { opacity: 1; }
