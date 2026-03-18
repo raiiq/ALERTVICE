@@ -245,11 +245,10 @@ Batch: ${prompts.join('\n')}`;
                     return haystack.includes('عاجل');
                 }).slice(0, limit);
             } else if (type === 'signal') {
-                // Tier 2: Radar Flash (Text-based intelligence only)
+                // Tier 2: Radar Flash (Text-primary intelligence)
                 finalPosts = posts.filter((p: any) => {
-                    const hasText = (p.title?.length > 10 || p.summary?.length > 10);
-                    const isMediaLean = !p.has_video; // Keep it lightweight, allow images but skip videos
-                    return hasText && isMediaLean;
+                    // Just ensure there is something to show in the marquee
+                    return (p.title?.length > 0 || p.plainText?.length > 0);
                 }).slice(0, limit);
             }
 

@@ -47,7 +47,6 @@ export default function RootLayout({
         className={`${libreFranklin.variable} ${libreFranklinCondensed.variable} ${ibmPlexArabic.variable} antialiased`}
       >
         <LanguageProvider>
-          <HealthCheck />
           <TranslationLoader />
           <Navbar />
           <GlobalSignals />
