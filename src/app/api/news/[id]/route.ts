@@ -54,6 +54,7 @@ export async function GET(
             return NextResponse.json({
                 post: {
                     id: `alertvice/${dbPost.telegram_id}`,
+                    dbId: dbPost.id,
                     textHtml: dbPost.content_html,
                     plainText: "",
                     imageUrl: dbPost.image_url,
@@ -165,8 +166,9 @@ export async function GET(
         }
 
         // Save to DB for persistence if we have admin rights
+        let dbId = null;
         if (supabaseAdmin) {
-            const { error: upsertErr } = await supabaseAdmin.from('posts').upsert({
+            const { data: upsertData, error: upsertErr } = await supabaseAdmin.from('posts').upsert({
                 telegram_id: id,
                 title: aiTitle,
                 summary: null,
@@ -178,12 +180,14 @@ export async function GET(
                 post_date: dateStr || new Date().toISOString(),
                 views: views || '0',
                 language: lang
-            });
+            }).select('id').single();
             if (upsertErr) console.error("Supabase upsert error (single):", upsertErr);
+            else dbId = upsertData?.id;
         }
 
         const post = {
             id: `alertvice/${id}`,
+            dbId,
             textHtml: aiFormattedHtml || textHtml,
             plainText,
             imageUrl,

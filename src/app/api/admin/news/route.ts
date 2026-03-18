@@ -39,13 +39,38 @@ export async function DELETE(request: Request) {
         const { id } = await request.json();
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-        const { error } = await supabase
+        // Fetch telegram_id before deleting
+        const { data: post, error: fetchErr } = await supabase
             .from('posts')
-            .delete()
-            .eq('id', id);
+            .select('telegram_id')
+            .eq('id', id)
+            .single();
 
-        if (error) throw error;
-        return NextResponse.json({ success: true });
+        if (fetchErr) throw fetchErr;
+
+        let suppressedId = null;
+
+        if (post?.telegram_id) {
+            suppressedId = post.telegram_id;
+            // Ensure record is in deleted_posts so it never comes back
+            await supabase
+                .from('deleted_posts')
+                .upsert([{ telegram_id: suppressedId }], { onConflict: 'telegram_id' });
+            
+            // Delete ALL language versions of this post
+            await supabase
+                .from('posts')
+                .delete()
+                .eq('telegram_id', suppressedId);
+        } else {
+            // Manual fallback deletion for non-telegram records
+            await supabase
+                .from('posts')
+                .delete()
+                .eq('id', id);
+        }
+
+        return NextResponse.json({ success: true, suppressed: suppressedId });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
@@ -98,7 +123,7 @@ export async function PATCH(request: Request) {
     }
 
     try {
-        const { id, language, updates } = await request.json();
+        const { id, updates } = await request.json();
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
         // Ensure has_video is synced if video_url is updated
@@ -109,8 +134,7 @@ export async function PATCH(request: Request) {
         const { error } = await supabase
             .from('posts')
             .update(updates)
-            .eq('telegram_id', id)
-            .eq('language', language);
+            .eq('id', id);
 
         if (error) throw error;
         return NextResponse.json({ success: true });

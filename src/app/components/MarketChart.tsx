@@ -17,7 +17,7 @@ interface MarketChartProps {
 export default function MarketChart({ data, color, height = 240 }: MarketChartProps) {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-    if (data.length < 2) return <div style={{ height }} className="w-full bg-white/5 animate-pulse rounded-2xl" />;
+    if (data.length < 2) return <div style={{ height }} className="w-full bg-foreground/5 animate-pulse rounded-none" />;
 
     const prices = data.map(d => d.value);
     const minPrice = Math.min(...prices);
@@ -66,14 +66,14 @@ export default function MarketChart({ data, color, height = 240 }: MarketChartPr
         <div className="relative w-full group/chart pt-2 pb-6" style={{ height }}>
             {/* Grid Lines */}
             <div className="absolute inset-x-0 top-2 bottom-6 flex flex-col justify-between pointer-events-none opacity-[0.04] z-0">
-                {[0, 1, 2, 3].map(i => <div key={i} className="w-full h-px bg-white" />)}
+                {[0, 1, 2, 3].map(i => <div key={i} className="w-full h-px bg-foreground" />)}
             </div>
 
             {/* Y-Axis Labels (HTML Overlay) */}
             <div className="absolute right-1 top-2 bottom-6 w-14 flex flex-col justify-between items-end pointer-events-none z-10">
-                <span className="text-[8px] sm:text-[9px] font-black font-mono text-white/15">{maxPrice.toFixed(2)}</span>
-                <span className="text-[8px] sm:text-[9px] font-black font-mono text-white/15">{((maxPrice + minPrice) / 2).toFixed(2)}</span>
-                <span className="text-[8px] sm:text-[9px] font-black font-mono text-white/15">{minPrice.toFixed(2)}</span>
+                <span className="text-[8px] sm:text-[9px] font-black font-mono text-foreground/15">{maxPrice.toFixed(2)}</span>
+                <span className="text-[8px] sm:text-[9px] font-black font-mono text-foreground/15">{((maxPrice + minPrice) / 2).toFixed(2)}</span>
+                <span className="text-[8px] sm:text-[9px] font-black font-mono text-foreground/15">{minPrice.toFixed(2)}</span>
             </div>
 
             <svg
@@ -198,9 +198,9 @@ export default function MarketChart({ data, color, height = 240 }: MarketChartPr
                         }}
                     >
                         {/* Outer ring */}
-                        <div className={`w-[9px] h-[9px] rounded-full border ${isPeak ? 'border-emerald-400/30' : 'border-red-400/30'} flex items-center justify-center`}>
+                        <div className={`w-[9px] h-[9px] rounded-none border ${isPeak ? 'border-emerald-400/30' : 'border-red-400/30'} flex items-center justify-center`}>
                             {/* Inner dot */}
-                            <div className={`w-[4px] h-[4px] rounded-full ${isPeak ? 'bg-emerald-400/80' : 'bg-red-400/80'}`} />
+                            <div className={`w-[4px] h-[4px] rounded-none ${isPeak ? 'bg-emerald-400/80' : 'bg-red-400/80'}`} />
                         </div>
                     </div>
                 );
@@ -218,9 +218,9 @@ export default function MarketChart({ data, color, height = 240 }: MarketChartPr
                 >
                     <div className="relative flex items-center justify-center">
                         {/* Outer glow ring */}
-                        <div className="w-[16px] h-[16px] rounded-full absolute" style={{ border: `1.5px solid ${color}30`, boxShadow: `0 0 8px ${color}20` }} />
+                        <div className="w-[16px] h-[16px] rounded-none absolute" style={{ border: `1.5px solid ${color}30`, boxShadow: `0 0 8px ${color}20` }} />
                         {/* Inner bright dot */}
-                        <div className="w-[6px] h-[6px] rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}` }} />
+                        <div className="w-[6px] h-[6px] rounded-none" style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}` }} />
                     </div>
                 </div>
             )}
@@ -231,9 +231,9 @@ export default function MarketChart({ data, color, height = 240 }: MarketChartPr
                 style={{ top: `calc(${currentY}% + 8px)`, transform: 'translateY(-50%)' }}
             >
                 <div className="flex items-center">
-                    <div className="h-px w-3 bg-white/15" />
-                    <div className="bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded shadow-[0_0_10px_rgba(255,255,255,0.2)]">
-                        <span className="text-[9px] font-black font-mono text-black leading-none">
+                    <div className="h-px w-3 bg-foreground/15" />
+                    <div className="bg-foreground/90 backdrop-blur-sm px-1.5 py-0.5 rounded shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+                        <span className="text-[9px] font-black font-mono text-foreground leading-none">
                             {currentPrice.toFixed(currentPrice < 10 ? 3 : 2)}
                         </span>
                     </div>
@@ -243,7 +243,7 @@ export default function MarketChart({ data, color, height = 240 }: MarketChartPr
             {/* X-Axis Labels */}
             <div className="absolute inset-x-0 bottom-0 flex justify-between pointer-events-none px-1 opacity-25">
                 {[0, Math.floor(data.length / 2), data.length - 1].map(i => (
-                    <span key={i} className="text-[7px] sm:text-[9px] font-black font-mono text-white">
+                    <span key={i} className="text-[7px] sm:text-[9px] font-black font-mono text-foreground">
                         {data[i]?.time}
                     </span>
                 ))}
@@ -264,19 +264,19 @@ export default function MarketChart({ data, color, height = 240 }: MarketChartPr
                             transform: 'translateX(-50%)'
                         }}
                     >
-                        <div className="bg-[#0c0c10]/95 border border-white/10 px-3 py-2 rounded-xl shadow-2xl backdrop-blur-xl flex flex-col gap-0.5 min-w-[110px]">
-                            <div className="flex justify-between items-center gap-4 border-b border-white/5 pb-1">
-                                <span className="text-[8px] font-black text-white/25 uppercase tracking-widest">Time</span>
-                                <span className="text-[10px] font-black text-white font-mono">{hoveredData.time}</span>
+                        <div className="bg-[#0c0c10]/95 border border-border-color px-3 py-2 rounded-none shadow-2xl backdrop-blur-xl flex flex-col gap-0.5 min-w-[110px]">
+                            <div className="flex justify-between items-center gap-4 border-b border-border-color/50 pb-1">
+                                <span className="text-[8px] font-black text-foreground/25 uppercase tracking-widest">Time</span>
+                                <span className="text-[10px] font-black text-foreground font-mono">{hoveredData.time}</span>
                             </div>
                             <div className="flex justify-between items-center gap-4">
-                                <span className="text-[8px] font-black text-white/25 uppercase tracking-widest">Price</span>
+                                <span className="text-[8px] font-black text-foreground/25 uppercase tracking-widest">Price</span>
                                 <span className="text-[12px] font-black font-mono" style={{ color }}>
                                     {hoveredData.value.toFixed(hoveredData.value < 10 ? 3 : 2)}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center gap-4">
-                                <span className="text-[8px] font-black text-white/25 uppercase tracking-widest">Δ</span>
+                                <span className="text-[8px] font-black text-foreground/25 uppercase tracking-widest">Δ</span>
                                 <span className={`text-[10px] font-black font-mono ${hoveredData.value >= currentPrice ? 'text-emerald-400' : 'text-red-400'}`}>
                                     {hoveredData.value >= currentPrice ? '+' : ''}{(hoveredData.value - currentPrice).toFixed(2)}
                                 </span>

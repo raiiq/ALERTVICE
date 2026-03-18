@@ -20,11 +20,14 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Invalid query' }, { status: 400 });
         }
 
+        // Strip trailing semicolon and whitespace to prevent subquery syntax errors
+        const cleanQuery = query.trim().replace(/;\s*$/, '');
+
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
         
         // Use RPC to execute raw SQL (requires the exec_sql function to be created in Supabase)
         const { data, error } = await supabase.rpc('exec_sql', {
-            query_text: query
+            query_text: cleanQuery
         });
 
         if (error) {

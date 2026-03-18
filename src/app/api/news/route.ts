@@ -1,234 +1,255 @@
 import { NextResponse } from 'next/server';
-import * as cheerio from 'cheerio';
-import { GoogleGenAI } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { load } from 'cheerio';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // Vercel Pro allows 300s; Hobby allows 60s
+export const revalidate = 0;
+const PROXY_SECRET = "ALERTVICE_INTEL_2026";
 
-// Optional AI init
-let ai: GoogleGenAI | null = null;
-if (process.env.GEMINI_API_KEY) {
-    ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-}
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const geminiKey = process.env.GEMINI_API_KEY || '';
+
+const ai = geminiKey ? new GoogleGenerativeAI(geminiKey) : null;
 
 async function freeTranslate(text: string, targetLang: string) {
+    if (!text) return "";
     try {
         const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
         const res = await fetch(url);
-        const data = await res.json();
-        return data[0].map((item: any) => item[0]).join('');
-    } catch {
+        const json = await res.json();
+        return json[0].map((s: any) => s[0]).join('');
+    } catch (e) {
         return text;
     }
 }
 
 export async function GET(request: Request) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !supabaseKey) {
-        return NextResponse.json(
-            { error: 'Supabase missing configuration (Requires anon key)', posts: [] },
-            { status: 503 }
-        );
-    }
-    
-    // Default to anon client for reading
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    // Use Service Role to bypass RLS for UPSERTs inside Server API Route, if available
-    const supabaseAdmin = supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
+    const { searchParams } = new URL(request.url);
+    const lang = searchParams.get('lang') || 'en';
+    const type = searchParams.get('type') || 'article';
+    const q = searchParams.get('q') || '';
+    const offset = parseInt(searchParams.get('offset') || '0');
+    const limit = parseInt(searchParams.get('limit') || '20');
 
     try {
-        const { searchParams } = new URL(request.url);
-        const lang = searchParams.get('lang') || 'en';
-        const limit = parseInt(searchParams.get('limit') || '40');
-        const offset = parseInt(searchParams.get('offset') || '0');
-        const q = searchParams.get('q') || '';
-        const type = searchParams.get('type'); // 'signal' (no media) or 'article' (has media)
-        const targetLanguage = lang === 'ar' ? 'Arabic' : 'English';
+        const supabaseAdmin = (supabaseUrl && supabaseServiceKey) ? createClient(supabaseUrl, supabaseServiceKey) : null;
 
-        // SYNC LOGIC (Only on start/refresh)
+        // 1. Fetch latest from Telegram via Scraping
         if (offset === 0 && !q) {
             try {
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 8000);
-                const response = await fetch('https://t.me/s/alertvice', {
-                    headers: { 'User-Agent': 'Mozilla/5.0' },
-                    cache: 'no-store',
-                    signal: controller.signal
+                const CHANNEL_URL = "https://t.me/s/alertvice";
+                const response = await fetch(CHANNEL_URL, { 
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                    },
+                    cache: 'no-store' 
                 });
-                clearTimeout(timeout);
+                const html = await response.text();
+                const $ = load(html);
 
-                if (response.ok) {
-                    const html = await response.text();
-                    const $ = cheerio.load(html);
-                    let scraped: any[] = [];
+                const rawPosts: any[] = [];
+                $('.tgme_widget_message').each((_: number, el: any) => {
+                    const $post = $(el);
+                    const dataPost = $post.attr('data-post') || "";
+                    if (!dataPost.includes('alertvice/')) return;
 
-                    $('.tgme_widget_message').each((_, el) => {
-                        let id = $(el).attr('data-post');
-                        if (id && !id.includes('/')) id = `alertvice/${id}`;
+                    const id = dataPost.split('/').pop();
+                    if (!id) return;
 
-                        const textEl = $(el).find('.tgme_widget_message_text');
-                        const textHtml = textEl.html() || '';
-                        const plainText = textEl.text().trim() || '';
-
-                        let imgs: string[] = [];
-                        let vids: string[] = [];
-
-                        $(el).find('video').each((_, v) => {
-                            const src = $(v).attr('src');
-                            if (src) vids.push(src);
-                        });
-
-                        $(el).find('.tgme_widget_message_photo_wrap, .tgme_widget_message_video_thumb').each((_, p) => {
-                            const style = $(p).attr('style') || '';
-                            const match = style.match(/background-image:url\(['"]?(.*?)['"]?\)/);
-                            if (match && match[1]) imgs.push(match[1]);
-                        });
-
-                        const date = $(el).find('.tgme_widget_message_date time').attr('datetime');
-                        const vws = $(el).find('.tgme_widget_message_views').text();
-
-                        if (id && (textHtml || imgs.length > 0 || vids.length > 0)) {
-                            scraped.push({
-                                id, textHtml, plainText,
-                                imageUrl: imgs.length > 0 ? JSON.stringify(imgs) : null,
-                                videoUrl: vids.length > 0 ? JSON.stringify(vids) : null,
-                                hasVideo: vids.length > 0 || $(el).find('.tgme_widget_message_video_player').length > 0,
-                                date: date || new Date().toISOString(),
-                                views: vws || '0'
-                            });
-                        }
+                    const textHtml = $post.find('.tgme_widget_message_text').html() || "";
+                    const plainText = $post.find('.tgme_widget_message_text').text().trim();
+                    
+                    const images: string[] = [];
+                    $post.find('.tgme_widget_message_photo_wrap').each((_: number, imgEl: any) => {
+                        const style = $(imgEl).attr('style') || "";
+                        const urlMatch = style.match(/background-image:url\('([^']+)'\)/);
+                        if (urlMatch) images.push(urlMatch[1]);
                     });
 
-                    // ADVANCED GROUPING (Albums & Multi-post updates)
+                    const videos: string[] = [];
+                    $post.find('video').each((_: number, vidEl: any) => {
+                        const src = $(vidEl).attr('src');
+                        if (src) videos.push(src);
+                    });
+
+                    const hasVideo = $post.find('.tgme_widget_message_video_player').length > 0 || videos.length > 0;
+
+                    if (plainText || images.length > 0 || videos.length > 0) {
+                        rawPosts.push({
+                            id,
+                            textHtml,
+                            plainText,
+                            imageUrl: images.length > 0 ? JSON.stringify(images) : null,
+                            videoUrl: videos.length > 0 ? JSON.stringify(videos) : null,
+                            hasVideo,
+                            date: $post.find('time').attr('datetime') || $post.find('.time').attr('datetime') || new Date().toISOString(),
+                            views: $post.find('.tgme_widget_message_views').text() || "0"
+                        });
+                    }
+                });
+
+                if (rawPosts.length > 0 && supabaseAdmin) {
+                    // Grouping logic for multi-media posts
                     const grouped: any[] = [];
                     let last: any = null;
-
-                    for (const post of scraped) {
-                        if (last && last.date === post.date && (last.plainText === post.plainText || !post.plainText || !last.plainText)) {
+                    for (const post of rawPosts) {
+                        if (last && last.id === post.id) {
                             const parse = (v: any) => v ? JSON.parse(v) : [];
-                            // Merging with 5/5 LIMIT as requested
                             const mergedImgs = [...new Set([...parse(last.imageUrl), ...parse(post.imageUrl)])].slice(0, 5);
                             const mergedVids = [...new Set([...parse(last.videoUrl), ...parse(post.videoUrl)])].slice(0, 5);
-
                             last.imageUrl = mergedImgs.length > 0 ? JSON.stringify(mergedImgs) : null;
                             last.videoUrl = mergedVids.length > 0 ? JSON.stringify(mergedVids) : null;
                             last.hasVideo = last.hasVideo || post.hasVideo;
-                            if (!last.plainText) {
-                                last.plainText = post.plainText;
-                                last.textHtml = post.textHtml;
-                            }
                         } else {
                             grouped.push(post);
                             last = post;
                         }
                     }
 
-                    const toUpsert = grouped.reverse();
-                    if (toUpsert.length > 0) {
-                        const { data: exist } = await supabase.from('posts').select('telegram_id, title').eq('language', lang).in('telegram_id', toUpsert.map(p => p.id));
-                        const existMap = new Map(exist?.map(p => [p.telegram_id, p.title]));
+                    const newsCandidates = grouped.reverse().slice(0, 20);
+                    
+                    // PRE-FILTER: Check Supabase for existing or SUPPRESSED (deleted) records
+                    const telegramIds = newsCandidates.map(p => p.id);
+                    const [existing, suppressed] = await Promise.all([
+                        supabaseAdmin.from('posts').select('telegram_id').in('telegram_id', telegramIds).eq('language', lang),
+                        supabaseAdmin.from('deleted_posts').select('telegram_id').in('telegram_id', telegramIds)
+                    ]);
+                    
+                    const skipSet = new Set([
+                        ...(existing.data?.map(e => e.telegram_id) || []),
+                        ...(suppressed.data?.map(s => s.telegram_id) || [])
+                    ]);
+                    
+                    const newsToProcess = newsCandidates.filter(p => !skipSet.has(p.id));
 
-                        let news = toUpsert.filter(p => !existMap.has(p.id) || (lang === 'en' && /[\u0600-\u06FF]/.test(existMap.get(p.id) || '')));
-                        news = news.slice(0, 15); // Smaller batch for performance
+                    if (newsToProcess.length > 0) {
+                        // Batch AI translation
+                        if (ai) {
+                            const prompts = newsToProcess.map((p, i) => `[${i}] ${p.plainText.substring(0, 600) || "Media Intel"}`);
+                            try {
+                                const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" });
+                                const targetLanguage = lang === 'ar' ? 'Arabic' : 'English';
+                                const promptStr = `Task: Act as a high-level intelligence analyst. Translate and summarize these news snippets into ${targetLanguage}.
+REQUIRMENTS:
+1. HEADLINE: Create an EXCITING, HIGH-IMPACT headline that captures the essence of the news with tactical precision. Use powerful, active words.
+2. SUMMARY: Write a FORMAL, SERIOUS, and EASY TO READ one-sentence summary. It should sound like a professional intelligence briefing.
+3. LANGUAGE: Output strictly in ${targetLanguage}.
+4. TAG: Assign a tactical tag: [politics|military|market|world|security].
 
-                        if (news.length > 0) {
-                            if (ai) {
-                                const prompts = news.map((p, i) => `[${i}] ${p.plainText.substring(0, 600) || "Media Intel"}`);
-                                try {
-                                    const res = await ai.models.generateContent({
-                                        model: 'gemini-2.0-flash',
-                                        contents: [{ role: 'user', parts: [{ text: `Task: Translate the following news snippets into ${targetLanguage}. Output ONLY JSON. Form: { "items": { "0": { "title": "...", "summary": "...", "tag": "politics|tech|market|world" } } } \n\nBatch: ${prompts.join('\n')}` }] }]
-                                    });
-                                    const aiText = res.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                                    const json = JSON.parse(aiText.replace(/```json|```/gi, '').trim() || '{}');
-                                    news.forEach((p, idx) => {
-                                        const item = json.items?.[idx.toString()];
-                                        if (item) {
-                                            p.aiTitle = item.title;
-                                            p.aiSummary = item.summary;
-                                            p.aiTag = item.tag;
-                                        }
-                                    });
-                                } catch (e) { console.error("AI Error", e); }
+Output ONLY JSON.
+Form: { "items": { "0": { "title": "HEADLINE", "summary": "SUMMARY", "tag": "TAG" } } }
+Batch: ${prompts.join('\n')}`;
+                                
+                                const result = await model.generateContent(promptStr);
+                                const response = await result.response;
+                                const aiText = response.text();
+                                const json = JSON.parse(aiText.replace(/```json|```/gi, '').trim() || '{}');
+                                
+                                newsToProcess.forEach((p, idx) => {
+                                    const item = json.items?.[idx.toString()];
+                                    if (item) {
+                                        p.aiTitle = item.title;
+                                        p.aiSummary = item.summary;
+                                        p.aiTag = item.tag;
+                                    }
+                                });
+                            } catch (e) { console.error("AI Batch failed", e); }
+                        }
+
+                        // Fallback translation for singles
+                        await Promise.allSettled(newsToProcess.map(async (p) => {
+                            if (!p.aiTitle) {
+                                const [title, summary] = await Promise.all([
+                                    freeTranslate(p.plainText?.substring(0, 60) || "Intel Update", lang),
+                                    freeTranslate(p.plainText?.substring(0, 200) || "Check detailed feed.", lang)
+                                ]);
+                                p.aiTitle = title;
+                                p.aiSummary = summary;
+                                p.aiTag = "world";
                             }
+                        }));
 
-                            await Promise.allSettled(news.map(async (p) => {
-                                if (!p.aiTitle) {
-                                    const [title, summary] = await Promise.all([
-                                        freeTranslate(p.plainText?.substring(0, 60) || "Intel Update", lang),
-                                        freeTranslate(p.plainText?.substring(0, 200) || "Check detailed feed.", lang)
-                                    ]);
-                                    p.aiTitle = title;
-                                    p.aiSummary = summary;
-                                    p.aiTag = "world";
-                                }
-                            }));
+                        const dbData = newsToProcess.map(p => {
+                            // Convert URLs to Proxies to bypass Telegram's temporary nature & hotlinking
+                            const proxyUrl = (u: any) => {
+                                if (!u) return null;
+                                try {
+                                    const urls = JSON.parse(u);
+                                    const proxied = urls.map((url: string) => `/api/proxy?url=${encodeURIComponent(url)}&s=${PROXY_SECRET}`);
+                                    return JSON.stringify(proxied);
+                                } catch { return u; }
+                            };
 
-                            const dbData = news.map(p => ({
+                            return {
                                 telegram_id: p.id,
                                 title: p.aiTitle,
                                 summary: p.aiSummary,
                                 tag: p.aiTag,
                                 content_html: p.textHtml,
-                                image_url: p.imageUrl,
+                                image_url: proxyUrl(p.imageUrl),
                                 has_video: p.hasVideo,
-                                video_url: p.videoUrl,
+                                video_url: proxyUrl(p.videoUrl),
                                 post_date: p.date,
                                 views: p.views,
                                 language: lang
-                            }));
-                            if (supabaseAdmin) {
-                                const { error: upsertErr } = await supabaseAdmin.from('posts').upsert(dbData, { onConflict: 'telegram_id, language' });
-                                if (upsertErr) console.error("Supabase upsert error:", upsertErr);
-                            } else {
-                                console.warn("Missing SUPABASE_SERVICE_ROLE_KEY. Skipping UPSERT because of RLS.");
-                            }
-                        }
+                            };
+                        });
+
+                        await supabaseAdmin.from('posts').upsert(dbData, { onConflict: 'telegram_id, language' });
                     }
                 }
-            } catch (e) { console.error("Sync partial fail", e); }
+            } catch (e) {
+                console.error("Sync partial fail", e);
+            }
         }
 
-        // DATABASE FETCH WITH OPTIMIZED COMMANDS
-        let query = supabase.from('posts').select('*').eq('language', lang);
+        // 2. Fetch from Database
+        if (supabaseAdmin) {
+            let query = supabaseAdmin
+                .from('posts')
+                .select('*')
+                .eq('language', lang)
+                .order('post_date', { ascending: false });
 
-        if (q) query = query.or(`title.ilike.%${q}%,summary.ilike.%${q}%`);
+            if (type === 'article') {
+                query = query.or('has_video.eq.true,image_url.neq.null');
+            } else if (type === 'signal') {
+                // Return latest signals without strict constraints to ensure the feed is always "Live"
+                query = query.limit(50);
+            }
 
-        // Type filters ALWAYS apply (even during search) to keep feeds clean
-        if (type === 'signal') {
-            // Signal monitor: text-only posts (no images AND no videos)
-            query = query.is('image_url', null).is('video_url', null);
-        } else if (type === 'article') {
-            // Main feed: only posts WITH media (image or video)
-            query = query.or('image_url.not.is.null,video_url.not.is.null');
+            if (q) {
+                query = query.or(`title.ilike.%${q}%,summary.ilike.%${q}%`);
+            }
+
+            const { data: posts, error } = await query.range(offset, offset + limit - 1);
+
+            if (error) throw error;
+
+            return NextResponse.json({
+                posts: posts.map((p: any) => ({
+                    id: `alertvice/${p.telegram_id}`,
+                    dbId: p.id,
+                    textHtml: p.content_html,
+                    plainText: (p.content_html || "").replace(/<[^>]*>?/gm, '').trim(),
+                    imageUrl: p.image_url,
+                    hasVideo: p.has_video,
+                    videoUrl: p.video_url,
+                    aiTitle: p.title,
+                    aiSummary: p.summary,
+                    aiTag: p.tag,
+                    date: p.post_date,
+                    views: p.views
+                })),
+                hasMore: posts.length === limit
+            });
         }
 
-        const { data: posts, error: err } = await query
-            .order('post_date', { ascending: false })
-            .range(offset, offset + limit - 1);
-
-        if (err) throw err;
-
-        const formatted = (posts || []).map(p => ({
-            id: p.telegram_id,
-            textHtml: p.content_html,
-            imageUrl: p.image_url,
-            hasVideo: p.has_video,
-            videoUrl: p.video_url,
-            date: p.post_date,
-            views: p.views,
-            aiTitle: p.title,
-            aiSummary: p.summary,
-            aiTag: p.tag
-        }));
-
-        return NextResponse.json({ posts: formatted, hasMore: formatted.length === limit });
+        return NextResponse.json({ posts: [] });
     } catch (error: any) {
-        console.error('API Final Error:', error);
-        return NextResponse.json({ error: 'Server error', posts: [] }, { status: 500 });
+        console.error("News API Error:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
-

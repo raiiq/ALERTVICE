@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Lora, Cairo, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Lora, Amiri, Inter } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -22,10 +22,10 @@ const lora = Lora({
   subsets: ["latin"],
 });
 
-const cairo = Cairo({
-  variable: "--font-cairo",
+const amiri = Amiri({
+  variable: "--font-amiri",
   subsets: ["arabic", "latin"],
-  display: 'swap',
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -41,7 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${lora.variable} ${cairo.variable} antialiased`}
+        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${lora.variable} ${amiri.variable} antialiased`}
       >
         {children}
       </body>

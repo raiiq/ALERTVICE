@@ -15,13 +15,13 @@ export default function TermsPage() {
     const isAr = lang === "ar";
 
     return (
-        <div className="min-h-screen bg-background text-foreground tracking-wide flex flex-col" dir={isAr ? "rtl" : "ltr"}>
+        <div className="min-h-screen bg-surfaceackground text-foreground tracking-wide flex flex-col" dir={isAr ? "rtl" : "ltr"}>
             {/* Header */}
             <header className="w-full bg-surface border-b border-border z-50 shadow-[0_4px_20px_rgba(0,0,0,0.5)] shrink-0">
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-[0_0_10px_var(--primary)]"></div>
-                        <Link href="/" className="text-2xl sm:text-3xl font-black tracking-tighter text-white uppercase drop-shadow-[0_0_8px_var(--primary)] hover:text-primary transition-all duration-300">
+                        <div className="w-3 h-3 bg-primary rounded-none animate-pulse shadow-[0_0_10px_var(--primary)]"></div>
+                        <Link href="/" className="text-2xl sm:text-3xl font-black tracking-tighter text-foreground uppercase drop-shadow-[0_0_8px_var(--primary)] hover:text-primary transition-all duration-300">
                             ALERTVICE <span className="text-primary font-light">NEWS</span>
                         </Link>
                     </div>
@@ -29,13 +29,13 @@ export default function TermsPage() {
             </header>
 
             <main className="flex-grow max-w-4xl mx-auto px-6 py-16">
-                <h1 className="text-4xl sm:text-6xl font-black text-white mb-10 uppercase tracking-tighter border-b border-primary pb-4">
+                <h1 className="text-4xl sm:text-6xl font-black text-foreground mb-10 uppercase tracking-tighter border-b border-primary pb-4">
                     {isAr ? "شروط الخدمة" : "Terms of Service"}
                 </h1>
 
                 <div className={`space-y-10 text-lg sm:text-xl leading-relaxed text-text-muted/90 font-light ${isAr ? "text-right" : "text-left"}`}>
                     <section>
-                        <h2 className="text-2xl font-bold text-white uppercase tracking-widest mb-4">
+                        <h2 className="text-2xl font-bold text-foreground uppercase tracking-widest mb-4">
                             {isAr ? "1. قبول الشروط" : "1. Acceptance of Terms"}
                         </h2>
                         <p>
@@ -47,7 +47,7 @@ export default function TermsPage() {
                     </section>
 
                     <section>
-                        <h2 className="text-2xl font-bold text-white uppercase tracking-widest mb-4">
+                        <h2 className="text-2xl font-bold text-foreground uppercase tracking-widest mb-4">
                             {isAr ? "2. ترخيص الاستخدام" : "2. Use License"}
                         </h2>
                         <p>
@@ -59,7 +59,7 @@ export default function TermsPage() {
                     </section>
 
                     <section>
-                        <h2 className="text-2xl font-bold text-white uppercase tracking-widest mb-4">
+                        <h2 className="text-2xl font-bold text-foreground uppercase tracking-widest mb-4">
                             {isAr ? "3. إخلاء المسؤولية" : "3. Disclaimer"}
                         </h2>
                         <p>
@@ -71,7 +71,7 @@ export default function TermsPage() {
                     </section>
 
                     <section>
-                        <h2 className="text-2xl font-bold text-white uppercase tracking-widest mb-4">
+                        <h2 className="text-2xl font-bold text-foreground uppercase tracking-widest mb-4">
                             {isAr ? "4. القانون المعمول به" : "4. Governing Law"}
                         </h2>
                         <p>
@@ -88,8 +88,8 @@ export default function TermsPage() {
                 <div className="max-w-[1400px] mx-auto px-4 flex flex-col md:flex-row justify-between items-start gap-10">
                     <div className="flex flex-col gap-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_var(--primary)]"></div>
-                            <span className="text-white font-black tracking-widest uppercase text-lg">Alertvice</span>
+                            <div className="w-2 h-2 bg-primary rounded-none shadow-[0_0_8px_var(--primary)]"></div>
+                            <span className="text-foreground font-black tracking-widest uppercase text-lg">Alertvice</span>
                         </div>
                         <p className="text-xs text-text-muted/60 max-w-xs leading-relaxed uppercase tracking-widest font-bold">
                             {isAr ? "الأخبار الاستخباراتية العالمية." : "Global Intelligence News Feed."}
@@ -97,23 +97,23 @@ export default function TermsPage() {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12 font-bold uppercase tracking-widest text-xs">
                         <div className="flex flex-col gap-4">
-                            <span className="text-white text-[10px] text-primary mb-2">{isAr ? "المنصة" : "Platform"}</span>
-                            <Link href="/" className="text-text-muted hover:text-white transition-colors">{isAr ? "الرئيسية" : "News Feed"}</Link>
-                            <Link href="/about" className="text-text-muted hover:text-white transition-colors">{isAr ? "عن الشركة" : "About Us"}</Link>
+                            <span className="text-foreground text-[10px] text-primary mb-2">{isAr ? "المنصة" : "Platform"}</span>
+                            <Link href="/" className="text-text-muted hover:text-foreground transition-colors">{isAr ? "الرئيسية" : "News Feed"}</Link>
+                            <Link href="/about" className="text-text-muted hover:text-foreground transition-colors">{isAr ? "عن الشركة" : "About Us"}</Link>
                         </div>
                         <div className="flex flex-col gap-4">
-                            <span className="text-white text-[10px] text-primary mb-2">{isAr ? "قانوني" : "Legal"}</span>
-                            <Link href="/terms" className="text-text-muted hover:text-white transition-colors">{isAr ? "شروط الخدمة" : "Terms of Service"}</Link>
+                            <span className="text-foreground text-[10px] text-primary mb-2">{isAr ? "قانوني" : "Legal"}</span>
+                            <Link href="/terms" className="text-text-muted hover:text-foreground transition-colors">{isAr ? "شروط الخدمة" : "Terms of Service"}</Link>
                             <span className="text-text-muted">{isAr ? "سياسة الخصوصية" : "Privacy Policy"}</span>
                         </div>
                         <div className="flex flex-col gap-4">
-                            <span className="text-white text-[10px] text-primary mb-2">{isAr ? "تواصل" : "Connect"}</span>
-                            <a href="https://t.me/alertvice" target="_blank" rel="noopener noreferrer" className="text-text-muted hover:text-white transition-colors">Telegram</a>
+                            <span className="text-foreground text-[10px] text-primary mb-2">{isAr ? "تواصل" : "Connect"}</span>
+                            <a href="https://t.me/alertvice" target="_blank" rel="noopener noreferrer" className="text-text-muted hover:text-foreground transition-colors">Telegram</a>
                             <span className="text-text-muted">Email: intel@alertvice.site</span>
                         </div>
                     </div>
                 </div>
-                <div className="max-w-[1400px] mx-auto px-4 mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center text-[10px] font-black uppercase tracking-[0.2em] text-text-muted/30">
+                <div className="max-w-[1400px] mx-auto px-4 mt-12 pt-8 border-t border-border-color/50 flex flex-col sm:flex-row justify-between items-center text-[10px] font-black uppercase tracking-[0.2em] text-text-muted/30">
                     <span>Alertvice Intelligence &copy; {mounted ? new Date().getFullYear() : "2026"}</span>
                     <span className="mt-4 sm:mt-0">{isAr ? "جميع الحقوق محفوظة" : "All rights reserved"}</span>
                 </div>

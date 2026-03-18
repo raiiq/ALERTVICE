@@ -411,7 +411,7 @@ export default function MonitorPage() {
 
     return (
         <div
-            className="fixed inset-0 text-white flex flex-col overflow-hidden"
+            className="fixed inset-0 text-foreground flex flex-col overflow-hidden"
             style={{ background: "#050508", fontFamily: "'Inter', system-ui, sans-serif" }}
         >
             {/* ── MAIN GLOBAL NAVBAR ── */}
@@ -427,7 +427,7 @@ export default function MonitorPage() {
                         placeholder="Scanning radar..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="bg-white/5 text-white/70 placeholder:text-[#0088ff]/20 text-[10px] py-1 pl-9 pr-4 rounded-md w-48 outline-none border border-white/5 focus:border-[#0088ff]/40 transition-all font-black uppercase tracking-widest"
+                        className="bg-foreground/5 text-foreground/70 placeholder:text-[#0088ff]/20 text-[10px] py-1 pl-9 pr-4 rounded-none w-48 outline-none border border-border-color/50 focus:border-[#0088ff]/40 transition-all font-black uppercase tracking-widest"
                     />
                 </div>
 
@@ -437,7 +437,7 @@ export default function MonitorPage() {
                         <div className="inline-flex gap-10 items-center animate-marquee text-[10px] font-bold text-[#0088ff]/50 tracking-widest uppercase">
                             {filteredSignals.slice(0, 15).map((s, i) => (
                                 <span key={i} className="flex items-center gap-3 shrink-0">
-                                    <span className="w-1.5 h-1.5 bg-[#0088ff] rounded-full shadow-[0_0_8px_#0088ff] animate-pulse" />
+                                    <span className="w-1.5 h-1.5 bg-[#0088ff] rounded-none shadow-[0_0_8px_#0088ff] animate-pulse" />
                                     {deduplicateTitle(s.aiTitle)}
                                 </span>
                             ))}
@@ -447,22 +447,22 @@ export default function MonitorPage() {
 
                 {/* Right Controls */}
                 <div className="flex items-center gap-4 shrink-0">
-                    <div className="flex items-center gap-1 bg-[#12121a] rounded-lg p-1 border border-white/5">
+                    <div className="flex items-center gap-1 bg-[#12121a] rounded-none p-1 border border-border-color/50">
                         <button
                             onClick={() => setTimeRange("6H")}
-                            className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${timeRange === "6H" ? "bg-[#0088ff] text-white shadow-[0_0_15px_rgba(0,136,255,0.4)]" : "text-white/30 hover:text-white/60"}`}
+                            className={`px-3 py-1 text-[10px] font-black rounded-none transition-all ${timeRange === "6H" ? "bg-[#0088ff] text-foreground shadow-[0_0_15px_rgba(0,136,255,0.4)]" : "text-foreground/30 hover:text-foreground/60"}`}
                         >
                             6H
                         </button>
                         <button
                             onClick={() => setTimeRange("24H")}
-                            className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${timeRange === "24H" ? "bg-[#0088ff] text-white shadow-[0_0_15px_rgba(0,136,255,0.4)]" : "text-white/30 hover:text-white/60"}`}
+                            className={`px-3 py-1 text-[10px] font-black rounded-none transition-all ${timeRange === "24H" ? "bg-[#0088ff] text-foreground shadow-[0_0_15px_rgba(0,136,255,0.4)]" : "text-foreground/30 hover:text-foreground/60"}`}
                         >
                             24H
                         </button>
                     </div>
-                    <div className="flex items-center gap-2 bg-[#00ff88]/5 border border-[#00ff88]/20 rounded-lg px-4 py-1.5 shadow-[inset_0_0_20px_rgba(0,255,136,0.02)]">
-                        <span className="w-2 h-2 bg-[#00ff88] rounded-full shadow-[0_0_10px_#00ff88] animate-pulse" />
+                    <div className="flex items-center gap-2 bg-[#00ff88]/5 border border-[#00ff88]/20 rounded-none px-4 py-1.5 shadow-[inset_0_0_20px_rgba(0,255,136,0.02)]">
+                        <span className="w-2 h-2 bg-[#00ff88] rounded-none shadow-[0_0_10px_#00ff88] animate-pulse" />
                         <span className="text-[10px] font-black text-[#00ff88] tracking-[0.2em] uppercase">9,412 Active Ops</span>
                     </div>
                 </div>
@@ -481,8 +481,8 @@ export default function MonitorPage() {
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
                                     className={`text-[10px] font-black tracking-[0.2em] uppercase pb-3 border-b-2 transition-all ${activeTab === tab
-                                        ? "text-white border-[#0088ff] drop-shadow-[0_0_10px_rgba(0,136,255,0.5)]"
-                                        : "text-white/20 border-transparent hover:text-white/50"
+                                        ? "text-foreground border-[#0088ff] drop-shadow-[0_0_10px_rgba(0,136,255,0.5)]"
+                                        : "text-foreground/20 border-transparent hover:text-foreground/50"
                                         }`}
                                 >
                                     {tab}
@@ -516,16 +516,16 @@ export default function MonitorPage() {
                                             </span>
                                             <span className="text-[9px] font-mono text-[#0088ff]/40 font-bold uppercase tracking-widest">R{Math.min(idx + 101, 999)}</span>
                                         </div>
-                                        <span className="text-[9px] text-white/30 font-mono italic">{getTimeAgo(post.date)}</span>
+                                        <span className="text-[9px] text-foreground/30 font-mono italic">{getTimeAgo(post.date)}</span>
                                     </div>
 
-                                    <p className="text-[12.5px] font-bold text-white/85 group-hover:text-white leading-relaxed line-clamp-3 transition-colors mb-2">
+                                    <p className="text-[12.5px] font-bold text-foreground/85 group-hover:text-foreground leading-relaxed line-clamp-3 transition-colors mb-2">
                                         {title}
                                     </p>
 
                                     {post.location && (
                                         <div className="flex items-center gap-2 mt-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                            <div className="w-1.5 h-1.5 bg-[#0088ff] rounded-full shadow-[0_0_5px_#0088ff]" />
+                                            <div className="w-1.5 h-1.5 bg-[#0088ff] rounded-none shadow-[0_0_5px_#0088ff]" />
                                             <span className="text-[9px] font-black text-[#0088ff] uppercase tracking-widest">{post.location.name} Intelligence</span>
                                         </div>
                                     )}
@@ -533,7 +533,7 @@ export default function MonitorPage() {
                             );
                         }) : (
                             <div className="p-10 text-center flex flex-col items-center gap-4 opacity-30 mt-10">
-                                <div className="w-12 h-12 border-2 border-dashed border-[#0088ff] rounded-full animate-spin" />
+                                <div className="w-12 h-12 border-2 border-dashed border-[#0088ff] rounded-none animate-spin" />
                                 <span className="text-[10px] font-bold tracking-[0.3em] uppercase">Intercepting Feed...</span>
                             </div>
                         )}
@@ -556,18 +556,18 @@ export default function MonitorPage() {
 
                     {/* Top-Right Status Badge */}
                     <div className="absolute top-5 right-5 z-30 flex flex-col gap-3 items-end pointer-events-none">
-                        <div className="bg-black/80 backdrop-blur-2xl rounded-md border border-white/[0.08] px-4 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+                        <div className="bg-surfaceackground/80 backdrop-blur-2xl rounded-none border border-white/[0.08] px-4 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
                             <div className="flex items-center gap-3">
                                 <div className="flex flex-col items-end leading-none">
                                     <span className="text-[9px] font-black text-[#0088ff] tracking-[0.2em] uppercase">Operational Status</span>
-                                    <span className="text-[11px] font-mono text-white mt-1">NOMINAL</span>
+                                    <span className="text-[11px] font-mono text-foreground mt-1">NOMINAL</span>
                                 </div>
-                                <div className="w-2 h-8 bg-[#0088ff]/20 rounded-full overflow-hidden relative">
+                                <div className="w-2 h-8 bg-[#0088ff]/20 rounded-none overflow-hidden relative">
                                     <div className="absolute bottom-0 w-full bg-[#0088ff] animate-pulse" style={{ height: '70%' }} />
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-black/80 backdrop-blur-2xl rounded-md border border-white/[0.08] px-4 py-2 shadow-[0_5px_20px_rgba(0,0,0,0.5)] text-[9px] font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <div className="bg-surfaceackground/80 backdrop-blur-2xl rounded-none border border-white/[0.08] px-4 py-2 shadow-[0_5px_20px_rgba(0,0,0,0.5)] text-[9px] font-black text-foreground/40 uppercase tracking-[0.2em] flex items-center gap-2">
                             <span className="text-[#0088ff]">MEA</span> Sector Sync Active
                         </div>
                     </div>

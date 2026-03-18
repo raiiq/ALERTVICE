@@ -14,12 +14,9 @@ const CATEGORIES = [
 export default function AdminDashboard() {
     const [posts, setPosts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'all' | 'articles' | 'signals' | 'sql'>('all');
     const [editingPost, setEditingPost] = useState<any>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [sqlQuery, setSqlQuery] = useState('');
-    const [sqlResult, setSqlResult] = useState<any>(null);
-    const [isExecutingSql, setIsExecutingSql] = useState(false);
+    const [activeTab, setActiveTab] = useState<'all' | 'articles' | 'signals'>('all');
     const [newPost, setNewPost] = useState({
         title: '',
         summary: '',
@@ -108,29 +105,6 @@ export default function AdminDashboard() {
         }
     };
 
-    const handleExecuteSql = async () => {
-        if (!sqlQuery.trim()) return;
-        setIsExecutingSql(true);
-        setSqlResult(null);
-        try {
-            const res = await fetch('/api/admin/sql', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: sqlQuery }),
-            });
-            const data = await res.json();
-            setSqlResult(data);
-            // Refresh posts if the query was not just a SELECT
-            if (!sqlQuery.trim().toLowerCase().startsWith('select')) {
-                fetchPosts();
-            }
-        } catch (err: any) {
-            setSqlResult({ error: err.message });
-        } finally {
-            setIsExecutingSql(false);
-        }
-    };
-
     const filteredPosts = posts.filter(post => {
         const hasMedia = (post.image_url && post.image_url.length > 0) || (post.video_url && post.video_url.length > 0) || post.has_video;
         if (activeTab === 'articles') return hasMedia;
@@ -155,14 +129,14 @@ export default function AdminDashboard() {
 
     if (loading) return (
         <div className="min-h-screen bg-[#05070a] flex items-center justify-center">
-            <div className="text-white text-xl animate-pulse tracking-widest">INITIALIZING COMMAND...</div>
+            <div className="text-foreground text-xl animate-pulse tracking-widest">INITIALIZING COMMAND...</div>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-[#05070a] text-white flex">
+        <div className="min-h-screen bg-[#05070a] text-foreground flex">
             {/* Sidebar */}
-            <aside className="w-64 border-r border-white/5 bg-[#0a0c11] p-6 hidden lg:flex flex-col sticky top-0 h-screen">
+            <aside className="w-64 border-r border-border-color/50 bg-[#0a0c11] p-6 hidden lg:flex flex-col sticky top-0 h-screen">
                 <div className="mb-12">
                     <h2 className="text-xl font-black tracking-tighter text-blue-500">ALERTVICE Admin</h2>
                 </div>
@@ -170,40 +144,41 @@ export default function AdminDashboard() {
                 <nav className="space-y-2 flex-grow">
                     <button 
                         onClick={() => setActiveTab('all')}
-                        className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'all' ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20' : 'text-gray-500 hover:text-white'}`}
+                        className={`w-full text-left px-4 py-3 rounded-none text-sm font-bold transition-all ${activeTab === 'all' ? 'bg-surfacelue-600/10 text-blue-400 border border-blue-500/20' : 'text-gray-500 hover:text-foreground'}`}
                     >
                         DASHBOARD
                     </button>
                     <button 
                         onClick={() => setActiveTab('articles')}
-                        className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'articles' ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20' : 'text-gray-500 hover:text-white'}`}
+                        className={`w-full text-left px-4 py-3 rounded-none text-sm font-bold transition-all ${activeTab === 'articles' ? 'bg-surfacelue-600/10 text-blue-400 border border-blue-500/20' : 'text-gray-500 hover:text-foreground'}`}
                     >
                         MEDIA ARTICLES
                     </button>
                     <button 
                         onClick={() => setActiveTab('signals')}
-                        className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'signals' ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20' : 'text-gray-500 hover:text-white'}`}
+                        className={`w-full text-left px-4 py-3 rounded-none text-sm font-bold transition-all ${activeTab === 'signals' ? 'bg-surfacelue-600/10 text-blue-400 border border-blue-500/20' : 'text-gray-500 hover:text-foreground'}`}
                     >
                         TEXT SIGNALS
                     </button>
                     <button 
-                        onClick={() => setActiveTab('sql')}
-                        className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'sql' ? 'bg-amber-600/10 text-amber-400 border border-amber-500/20' : 'text-gray-500 hover:text-white'}`}
+                        onClick={() => router.push('/admin/sql')}
+                        className="w-full text-left px-4 py-3 rounded-none text-sm font-bold transition-all text-gray-500 hover:text-amber-400 hover:bg-surfacember-600/5 group flex items-center justify-between"
                     >
                         SQL CONSOLE
+                        <svg className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                     </button>
                 </nav>
 
                 <div className="mt-auto space-y-4">
                     <button 
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-600/20"
+                        className="w-full bg-surfacelue-600 hover:bg-surfacelue-500 text-foreground font-bold py-3 rounded-none transition-all shadow-lg shadow-blue-600/20"
                     >
                         + NEW INTEL
                     </button>
                     <button 
                         onClick={() => router.push('/')}
-                        className="w-full bg-white/5 hover:bg-white/10 text-gray-400 font-bold py-3 rounded-xl transition-all text-xs"
+                        className="w-full bg-foreground/5 hover:bg-foreground/10 text-gray-400 font-bold py-3 rounded-none transition-all text-xs"
                     >
                         LIVE FEED
                     </button>
@@ -214,26 +189,22 @@ export default function AdminDashboard() {
             <main className="flex-1 p-4 md:p-8 lg:p-12 max-w-7xl mx-auto w-full">
                 <header className="flex justify-between items-end mb-8">
                     <div>
-                        <h1 className="text-4xl font-black tracking-tighter uppercase whitespace-nowrap text-white">
-                            {activeTab === 'all' ? 'CENTRAL FEED' : activeTab === 'articles' ? 'MEDIA INTEL' : activeTab === 'signals' ? 'SIGNAL STREAM' : 'SQL POWER CONSOLE'}
+                        <h1 className="text-4xl font-black tracking-tighter uppercase whitespace-nowrap text-foreground">
+                             REAL-TIME DATASET CONTROL
                         </h1>
-                        <p className="text-blue-500 text-[10px] font-bold tracking-[0.4em] uppercase mt-2">
-                             {activeTab === 'sql' ? 'DIRECT DATABASE OVERRIDE' : 'REAL-TIME DATASET CONTROL'}
-                        </p>
                     </div>
                     <div className="lg:hidden">
-                        <button onClick={() => setIsCreateModalOpen(true)} className="bg-blue-600 p-3 rounded-full shadow-xl">
+                        <button onClick={() => setIsCreateModalOpen(true)} className="bg-surfacelue-600 p-3 rounded-none shadow-xl">
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" /></svg>
                         </button>
                     </div>
                 </header>
 
-                {activeTab !== 'sql' ? (
-                <div className="bg-[#0a0c11] border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl backdrop-blur-xl">
+                <div className="bg-[#0a0c11] border border-border-color/50 rounded-[2rem] overflow-hidden shadow-2xl backdrop-blur-xl">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>
-                                <tr className="bg-white/5 text-[9px] uppercase tracking-[0.3em] text-gray-500 font-black border-b border-white/10">
+                                <tr className="bg-foreground/5 text-[9px] uppercase tracking-[0.3em] text-gray-500 font-black border-b border-border-color">
                                     <th className="px-8 py-5">Source</th>
                                     <th className="px-8 py-5">Content Preview</th>
                                     <th className="px-8 py-5">Intel Type</th>
@@ -243,7 +214,7 @@ export default function AdminDashboard() {
                             </thead>
                             <tbody className="divide-y divide-white/[0.03]">
                                 {filteredPosts.map((post) => (
-                                    <tr key={`${post.id}-${post.language}`} className="hover:bg-white/[0.01] transition-colors group">
+                                    <tr key={`${post.id}-${post.language}`} className="hover:bg-foreground/[0.01] transition-colors group">
                                         <td className="px-8 py-6">
                                             <div className="flex flex-col">
                                                 <span className="text-[10px] font-mono text-gray-600">ID: {post.telegram_id?.substring(0, 10) || 'MANUAL'}...</span>
@@ -252,7 +223,7 @@ export default function AdminDashboard() {
                                         </td>
                                         <td className="px-8 py-6">
                                             <div className="max-w-md">
-                                                <h3 className="font-bold text-gray-200 group-hover:text-white transition-colors truncate">{post.title}</h3>
+                                                <h3 className="font-bold text-gray-200 group-hover:text-foreground transition-colors truncate">{post.title}</h3>
                                                 <p className="text-xs text-gray-500 mt-1 truncate opacity-60">{post.summary}</p>
                                             </div>
                                         </td>
@@ -262,10 +233,10 @@ export default function AdminDashboard() {
                                                     <span className="bg-emerald-500/10 text-emerald-500 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-500/20">IMG</span>
                                                 )}
                                                 {(post.has_video || (post.video_url?.length || 0) > 0) && (
-                                                    <span className="bg-amber-500/10 text-amber-500 text-[8px] font-black px-1.5 py-0.5 rounded border border-amber-500/20">VID</span>
+                                                    <span className="bg-surfacember-500/10 text-amber-500 text-[8px] font-black px-1.5 py-0.5 rounded border border-amber-500/20">VID</span>
                                                 )}
                                                 {(!post.has_video && (!post.image_url || post.image_url.length === 0)) && (
-                                                    <span className="bg-blue-500/10 text-blue-500 text-[8px] font-black px-1.5 py-0.5 rounded border border-blue-500/20">TXT</span>
+                                                    <span className="bg-surfacelue-500/10 text-blue-500 text-[8px] font-black px-1.5 py-0.5 rounded border border-blue-500/20">TXT</span>
                                                 )}
                                             </div>
                                         </td>
@@ -274,10 +245,10 @@ export default function AdminDashboard() {
                                         </td>
                                         <td className="px-8 py-6 text-right">
                                             <div className="flex justify-end gap-3">
-                                                <button onClick={() => setEditingPost(post)} className="text-gray-500 hover:text-blue-400 transition-colors p-2 hover:bg-blue-400/5 rounded-lg">
+                                                <button onClick={() => setEditingPost(post)} className="text-gray-500 hover:text-blue-400 transition-colors p-2 hover:bg-surfacelue-400/5 rounded-none">
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                                 </button>
-                                                <button onClick={() => handleDelete(post.id)} className="text-gray-500 hover:text-red-500 transition-colors p-2 hover:bg-red-500/5 rounded-lg">
+                                                <button onClick={() => handleDelete(post.id)} className="text-gray-500 hover:text-red-500 transition-colors p-2 hover:bg-red-500/5 rounded-none">
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                                 </button>
                                             </div>
@@ -288,50 +259,6 @@ export default function AdminDashboard() {
                         </table>
                     </div>
                 </div>
-                ) : (
-                    <div className="space-y-6">
-                        <div className="bg-[#0d1117] border border-white/5 rounded-3xl p-6 shadow-2xl">
-                             <label className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] mb-4 block">COMMAND BUFFER</label>
-                             <textarea 
-                                value={sqlQuery}
-                                onChange={(e) => setSqlQuery(e.target.value)}
-                                className="w-full bg-black/50 border border-amber-500/20 rounded-xl p-6 font-mono text-sm text-amber-200 min-h-[200px] outline-none focus:border-amber-500/50 transition-all"
-                                placeholder="SELECT * FROM posts LIMIT 10;"
-                             />
-                             <div className="flex justify-between items-center mt-6">
-                                <div className="flex gap-4">
-                                    <button onClick={() => setSqlQuery("SELECT * FROM posts ORDER BY post_date DESC LIMIT 50;")} className="text-[9px] font-black text-gray-500 hover:text-white border border-white/10 px-3 py-1.5 rounded-lg transition-all">RECENT POSTS</button>
-                                    <button onClick={() => setSqlQuery("SELECT tag, count(*) FROM posts GROUP BY tag;")} className="text-[9px] font-black text-gray-500 hover:text-white border border-white/10 px-3 py-1.5 rounded-lg transition-all">STATS BY TAG</button>
-                                    <button onClick={() => setSqlQuery("DELETE FROM posts WHERE title IS NULL OR title = '';")} className="text-[9px] font-black text-red-500/50 hover:text-red-500 border border-red-500/10 px-3 py-1.5 rounded-lg transition-all">CLEAN EMPTY</button>
-                                </div>
-                                <button 
-                                    onClick={handleExecuteSql}
-                                    disabled={isExecutingSql}
-                                    className="bg-amber-600 hover:bg-amber-500 text-white font-black px-12 py-3 rounded-xl shadow-lg shadow-amber-600/20 transition-all disabled:opacity-50"
-                                >
-                                    {isExecutingSql ? 'EXECUTING...' : 'RUN QUERY'}
-                                </button>
-                             </div>
-                        </div>
-
-                        {sqlResult && (
-                            <div className="bg-[#0a0c11] border border-white/5 rounded-3xl p-8 overflow-hidden">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4 block">EXECUTION RESULT</label>
-                                {sqlResult.error ? (
-                                    <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-2xl text-red-400 font-mono text-xs">
-                                        Error: {sqlResult.error}
-                                    </div>
-                                ) : (
-                                    <div className="overflow-x-auto max-h-[600px]">
-                                        <pre className="text-amber-100/70 font-mono text-[11px] leading-relaxed">
-                                            {JSON.stringify(sqlResult.result, null, 2)}
-                                        </pre>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
             </main>
 
             {/* Modals */}
@@ -344,7 +271,7 @@ export default function AdminDashboard() {
                     >
                         <motion.div 
                             initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className="bg-[#0a0c11] w-full max-w-2xl h-full border-l border-white/5 p-8 overflow-y-auto shadow-[-20px_0_50px_rgba(0,0,0,0.5)]"
+                            className="bg-[#0a0c11] w-full max-w-2xl h-full border-l border-border-color/50 p-8 overflow-y-auto shadow-[-20px_0_50px_rgba(0,0,0,0.5)]"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="flex justify-between items-center mb-10">
@@ -356,7 +283,7 @@ export default function AdminDashboard() {
                                         {isCreateModalOpen ? 'GENERATE NEW RECORD' : `REF: ${editingPost.telegram_id}`}
                                     </p>
                                 </div>
-                                <button onClick={() => { setEditingPost(null); setIsCreateModalOpen(false); }} className="p-3 hover:bg-white/5 rounded-full transition-colors">
+                                <button onClick={() => { setEditingPost(null); setIsCreateModalOpen(false); }} className="p-3 hover:bg-foreground/5 rounded-none transition-colors">
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
                                 </button>
                             </div>
@@ -368,7 +295,7 @@ export default function AdminDashboard() {
                                         <input 
                                             value={isCreateModalOpen ? newPost.title : editingPost.title}
                                             onChange={(e) => isCreateModalOpen ? setNewPost({...newPost, title: e.target.value}) : setEditingPost({...editingPost, title: e.target.value})}
-                                            className="w-full bg-white/[0.02] border border-white/5 rounded-2xl p-5 text-xl font-bold focus:border-blue-500/50 outline-none transition-all"
+                                            className="w-full bg-foreground/[0.02] border border-border-color/50 rounded-none p-5 text-xl font-bold focus:border-blue-500/50 outline-none transition-all"
                                             placeholder="Impactful headline..."
                                         />
                                     </div>
@@ -378,7 +305,7 @@ export default function AdminDashboard() {
                                         <textarea 
                                             value={isCreateModalOpen ? newPost.summary : (editingPost.summary || '')}
                                             onChange={(e) => isCreateModalOpen ? setNewPost({...newPost, summary: e.target.value}) : setEditingPost({...editingPost, summary: e.target.value})}
-                                            className="w-full bg-white/[0.02] border border-white/5 rounded-2xl p-5 text-gray-300 min-h-[150px] focus:border-blue-500/50 outline-none transition-all"
+                                            className="w-full bg-foreground/[0.02] border border-border-color/50 rounded-none p-5 text-gray-300 min-h-[150px] focus:border-blue-500/50 outline-none transition-all"
                                             placeholder="Detailed content breakdown..."
                                         />
                                     </div>
@@ -389,7 +316,7 @@ export default function AdminDashboard() {
                                             <select 
                                                 value={isCreateModalOpen ? newPost.tag : (editingPost.tag || 'world')}
                                                 onChange={(e) => isCreateModalOpen ? setNewPost({...newPost, tag: e.target.value}) : setEditingPost({...editingPost, tag: e.target.value})}
-                                                className="w-full bg-white/[0.02] border border-white/5 rounded-2xl p-4 font-bold outline-none cursor-pointer"
+                                                className="w-full bg-foreground/[0.02] border border-border-color/50 rounded-none p-4 font-bold outline-none cursor-pointer"
                                             >
                                                 {CATEGORIES.map(c => <option key={c.id} value={c.id} className="bg-[#0a0c11]">{c.en}</option>)}
                                             </select>
@@ -399,7 +326,7 @@ export default function AdminDashboard() {
                                             <select 
                                                 value={isCreateModalOpen ? newPost.language : editingPost.language}
                                                 onChange={(e) => isCreateModalOpen ? setNewPost({...newPost, language: e.target.value}) : setEditingPost({...editingPost, language: e.target.value})}
-                                                className="w-full bg-white/[0.02] border border-white/5 rounded-2xl p-4 font-bold outline-none cursor-pointer"
+                                                className="w-full bg-foreground/[0.02] border border-border-color/50 rounded-none p-4 font-bold outline-none cursor-pointer"
                                             >
                                                 <option value="en" className="bg-[#0a0c11]">ENGLISH (EN)</option>
                                                 <option value="ar" className="bg-[#0a0c11]">ARABIC (AR)</option>
@@ -408,34 +335,34 @@ export default function AdminDashboard() {
                                     </div>
 
                                     {/* Media Management */}
-                                    <div className="pt-6 border-t border-white/5">
+                                    <div className="pt-6 border-t border-border-color/50">
                                         <div className="flex justify-between items-center mb-6">
                                            <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Multimedia Assets</label>
                                            <div className="flex gap-2">
-                                                <button type="button" onClick={() => addUrl('image', isCreateModalOpen ? newPost : editingPost, isCreateModalOpen ? setNewPost : setEditingPost)} className="text-[9px] font-black bg-emerald-500/10 text-emerald-500 px-3 py-1.5 rounded-full border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all">+ IMAGE</button>
-                                                <button type="button" onClick={() => addUrl('video', isCreateModalOpen ? newPost : editingPost, isCreateModalOpen ? setNewPost : setEditingPost)} className="text-[9px] font-black bg-amber-500/10 text-amber-500 px-3 py-1.5 rounded-full border border-amber-500/20 hover:bg-amber-500 hover:text-white transition-all">+ VIDEO</button>
+                                                <button type="button" onClick={() => addUrl('image', isCreateModalOpen ? newPost : editingPost, isCreateModalOpen ? setNewPost : setEditingPost)} className="text-[9px] font-black bg-emerald-500/10 text-emerald-500 px-3 py-1.5 rounded-none border border-emerald-500/20 hover:bg-emerald-500 hover:text-foreground transition-all">+ IMAGE</button>
+                                                <button type="button" onClick={() => addUrl('video', isCreateModalOpen ? newPost : editingPost, isCreateModalOpen ? setNewPost : setEditingPost)} className="text-[9px] font-black bg-surfacember-500/10 text-amber-500 px-3 py-1.5 rounded-none border border-amber-500/20 hover:bg-surfacember-500 hover:text-foreground transition-all">+ VIDEO</button>
                                            </div>
                                         </div>
 
                                         <div className="space-y-4">
                                             {/* Image Grid */}
                                             {(isCreateModalOpen ? newPost.image_url : editingPost.image_url)?.map((url: string, i: number) => (
-                                                <div key={i} className="flex items-center gap-4 bg-white/[0.02] border border-white/5 p-3 rounded-2xl group">
-                                                    <img src={url} className="w-12 h-12 rounded-lg object-cover border border-white/10" alt="Preview" />
+                                                <div key={i} className="flex items-center gap-4 bg-foreground/[0.02] border border-border-color/50 p-3 rounded-none group">
+                                                    <img src={url} className="w-12 h-12 rounded-none object-cover border border-border-color" alt="Preview" />
                                                     <span className="flex-1 text-[10px] text-gray-500 truncate font-mono">{url}</span>
-                                                    <button type="button" onClick={() => removeUrl('image', i, isCreateModalOpen ? newPost : editingPost, isCreateModalOpen ? setNewPost : setEditingPost)} className="text-red-500 p-2 hover:bg-red-500/10 rounded-lg group-hover:opacity-100 transition-opacity">
+                                                    <button type="button" onClick={() => removeUrl('image', i, isCreateModalOpen ? newPost : editingPost, isCreateModalOpen ? setNewPost : setEditingPost)} className="text-red-500 p-2 hover:bg-red-500/10 rounded-none group-hover:opacity-100 transition-opacity">
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                                                     </button>
                                                 </div>
                                             ))}
                                             {/* Video Grid */}
                                             {(isCreateModalOpen ? newPost.video_url : editingPost.video_url)?.map((url: string, i: number) => (
-                                                <div key={i} className="flex items-center gap-4 bg-white/[0.02] border border-white/5 p-3 rounded-2xl group">
-                                                    <div className="w-12 h-12 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
+                                                <div key={i} className="flex items-center gap-4 bg-foreground/[0.02] border border-border-color/50 p-3 rounded-none group">
+                                                    <div className="w-12 h-12 rounded-none bg-surfacember-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
                                                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm10 1a1 1 0 00-1-1H5a1 1 0 000 2h6a1 1 0 001-1z" /></svg>
                                                     </div>
                                                     <span className="flex-1 text-[10px] text-gray-500 truncate font-mono">{url}</span>
-                                                    <button type="button" onClick={() => removeUrl('video', i, isCreateModalOpen ? newPost : editingPost, isCreateModalOpen ? setNewPost : setEditingPost)} className="text-red-500 p-2 hover:bg-red-500/10 rounded-lg group-hover:opacity-100 transition-opacity">
+                                                    <button type="button" onClick={() => removeUrl('video', i, isCreateModalOpen ? newPost : editingPost, isCreateModalOpen ? setNewPost : setEditingPost)} className="text-red-500 p-2 hover:bg-red-500/10 rounded-none group-hover:opacity-100 transition-opacity">
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                                                     </button>
                                                 </div>
@@ -447,14 +374,14 @@ export default function AdminDashboard() {
                                 <div className="pt-10 flex gap-4">
                                     <button 
                                         type="submit"
-                                        className="flex-1 bg-gradient-to-r from-blue-600 to-blue-400 text-white font-black py-5 rounded-2xl shadow-2xl shadow-blue-600/20 hover:scale-[1.02] transition-all"
+                                        className="flex-1 bg-gradient-to-r from-blue-600 to-blue-400 text-foreground font-black py-5 rounded-none shadow-2xl shadow-blue-600/20 hover:scale-[1.02] transition-all"
                                     >
                                         {isCreateModalOpen ? 'DEPLOY INTEL RECORD' : 'COMMIT REVISIONS'}
                                     </button>
                                     <button 
                                         type="button"
                                         onClick={() => { setEditingPost(null); setIsCreateModalOpen(false); }}
-                                        className="px-10 bg-white/5 hover:bg-white/10 text-gray-400 font-bold rounded-2xl transition-all"
+                                        className="px-10 bg-foreground/5 hover:bg-foreground/10 text-gray-400 font-bold rounded-none transition-all"
                                     >
                                         DISCARD
                                     </button>
