@@ -107,10 +107,10 @@ export default function Home() {
 
       if (reset || isRefresh) {
         setArticles(prev => getUniquePosts(reset ? [] : prev, fetched));
-        setOffset(fetched.length);
+        setOffset(data.nextOffset !== undefined ? data.nextOffset : fetched.length);
       } else {
         setArticles(prev => getUniquePosts(prev, fetched));
-        setOffset(prev => prev + fetched.length);
+        setOffset(prevData => data.nextOffset !== undefined ? data.nextOffset : prevData + fetched.length);
       }
       setHasMore(data.hasMore);
     } catch (err: any) {

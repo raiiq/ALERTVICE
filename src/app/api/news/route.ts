@@ -248,8 +248,9 @@ Batch: ${prompts.join('\n')}`;
                 .eq('language', lang)
                 .order('post_date', { ascending: false });
 
-            // If urgent, we need to scan more records since "urgent" isn't a DB column yet
-            const fetchLimit = urgent ? 100 : limit;
+            // If article, fetch 4x limit so we can filter down to exactly enough media-only posts
+            const dbLimit = (type === 'article' && !urgent) ? limit * 4 : limit;
+            const fetchLimit = urgent ? 100 : dbLimit;
             const fetchOffset = urgent ? 0 : offset;
 
             if (!urgent) {
@@ -298,6 +299,14 @@ Batch: ${prompts.join('\n')}`;
                     const { data: fallback } = await supabaseAdmin.from('posts').select('*').eq('language', 'en').order('post_date', { ascending: false }).limit(fetchLimit);
                     if (fallback) finalPosts = fallback.filter(checkSignal).slice(0, limit);
                 }
+            } else if (type === 'article') {
+                // Main Feed: Strictly WITH MEDIA only (images or video)
+                const checkArticle = (p: any) => {
+                    const hasImage = p.image_url && p.image_url !== '[]' && p.image_url !== 'null';
+                    const hasVideo = p.has_video === true || (p.video_url && p.video_url !== '[]' && p.video_url !== 'null');
+                    return hasImage || hasVideo;
+                };
+                finalPosts = posts.filter(checkArticle).slice(0, limit);
             }
 
             return NextResponse.json({
@@ -318,7 +327,8 @@ Batch: ${prompts.join('\n')}`;
                         views: p.views
                     };
                 }),
-                hasMore: !urgent && posts.length === limit
+                hasMore: !urgent && posts.length === fetchLimit,
+                nextOffset: fetchOffset + posts.length
             });
         }
 
