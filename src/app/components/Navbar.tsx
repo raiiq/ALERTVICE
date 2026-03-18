@@ -45,11 +45,14 @@ export default function Navbar({
         { id: 'world', en: 'WORLD', ar: 'عالمي' },
         { id: 'politics', en: 'POLITICS', ar: 'سياسة' },
         { id: 'market', en: 'MARKET', ar: 'سوق' },
-        { id: 'live', en: 'ALERT RADAR', ar: 'رادار التحذير' }
+        { id: 'live', en: 'ALERT RADAR', ar: 'رادار التحذير' },
+        { id: 'admin', en: 'ADMIN', ar: 'مدير' }
     ];
 
     const handleCategoryClick = (catId: string) => {
-        if (catId === 'market') {
+        if (catId === 'admin') {
+            router.push('/admin/login');
+        } else if (catId === 'market') {
             router.push('/market');
         } else if (catId === 'live') {
             router.push('/live');
@@ -111,7 +114,9 @@ export default function Navbar({
                                         onClick={() => handleCategoryClick(cat.id)}
                                         className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase transition-all duration-200 ${((pathname === '/' && activeCategory === cat.id) || (pathname === '/' + cat.id))
                                             ? 'bg-primary/15 text-primary border border-primary/30'
-                                            : 'text-white/30 hover:text-white/70 border border-transparent hover:border-white/10'
+                                            : cat.id === 'admin' 
+                                                ? 'text-white/20 hover:text-white border border-transparent hover:border-white/10' 
+                                                : 'text-white/30 hover:text-white/70 border border-transparent hover:border-white/10'
                                             }`}
                                     >
                                         {isAr ? cat.ar : cat.en}
@@ -227,15 +232,6 @@ export default function Navbar({
                                             </button>
                                         ))}
                                     </div>
-                                </div>
-                                <div className="mt-4 pt-4 border-t border-white/5 flex justify-center">
-                                    <Link 
-                                        href="/admin/login" 
-                                        onClick={closeMenu}
-                                        className="text-[10px] font-bold text-white/10 hover:text-primary/40 transition-colors uppercase tracking-[0.2em]"
-                                    >
-                                        Admin Portal
-                                    </Link>
                                 </div>
                             </div>
                         </motion.div>
