@@ -1043,3 +1043,68 @@ h1, h2, h3, h4, h5, h6 {
  20% { left: 100%; }
  100% { left: 100%; }
 }
+
+/* ── 9. TACTICAL PLYR VIDEO OVERRIDES ── */
+.military-plyr-wrapper {
+  --plyr-color-main: rgba(239, 68, 68, 1);
+  --plyr-video-controls-background: rgba(0, 0, 0, 0.6);
+  --plyr-control-radius: 0px;
+  --plyr-menu-radius: 0px;
+  --plyr-tooltip-radius: 0px;
+  --plyr-badge-border-radius: 0px;
+  --plyr-font-family: var(--font-condensed), 'Courier New', monospace;
+  --plyr-font-size-base: 11px;
+  --plyr-font-weight-regular: 700;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Override default rounded corners and shadows */
+.military-plyr-wrapper .plyr {
+  height: 100%;
+  border-radius: 0;
+  background: transparent;
+}
+
+.military-plyr-wrapper .plyr__video-wrapper {
+  height: 100%;
+  background: transparent;
+}
+
+.military-plyr-wrapper .plyr__control--overlaid {
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  box-shadow: inset 0 0 20px rgba(239, 68, 68, 0.1), 0 0 30px rgba(0, 0, 0, 0.5);
+  border-radius: 0;
+  padding: 18px;
+  backdrop-filter: blur(4px);
+  transition: all 0.3s ease;
+}
+
+.military-plyr-wrapper .plyr__control--overlaid:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 1);
+  box-shadow: inset 0 0 20px rgba(239, 68, 68, 0.4), 0 0 40px rgba(239, 68, 68, 0.3);
+}
+
+.military-plyr-wrapper .plyr__control--overlaid svg {
+  fill: #fff;
+  filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));
+}
+
+.military-plyr-wrapper .plyr--video .plyr__controls {
+  padding: 15px;
+  background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.military-plyr-wrapper .plyr__progress__buffer {
+  background: rgba(255,255,255,0.1);
+}
+
+.military-plyr-wrapper .plyr__menu__container {
+  background: rgba(10, 10, 10, 0.95);
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+}
