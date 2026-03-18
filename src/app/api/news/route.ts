@@ -70,7 +70,7 @@ export async function GET(request: Request) {
 
                     const images: string[] = [];
                     $post.find('.tgme_widget_message_photo_wrap').each((_: number, imgEl: any) => {
-                        const style = $(el).attr('style') || "";
+                        const style = $(imgEl).attr('style') || "";
                         const urlMatch = style.match(/background-image:url\('([^']+)'\)/);
                         if (urlMatch) images.push(absUrl(urlMatch[1]));
                     });
@@ -82,8 +82,8 @@ export async function GET(request: Request) {
                     });
 
                     // Capture Video Thumbnails as images
-                    $post.find('.tgme_widget_message_video_player, .tgme_widget_message_video_wrap').each((_: number, el: any) => {
-                        const style = $(el).attr('style') || "";
+                    $post.find('.tgme_widget_message_video_player, .tgme_widget_message_video_wrap').each((_: number, vEl: any) => {
+                        const style = $(vEl).attr('style') || "";
                         const urlMatch = style.match(/background-image:url\('([^']+)'\)/);
                         if (urlMatch) {
                             const u = absUrl(urlMatch[1]);
