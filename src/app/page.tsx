@@ -647,7 +647,7 @@ export default function Home() {
                       </div>
                       <span className="text-[10px] font-bold font-mono uppercase blip-flicker">ID-{getPostId(p.id).slice(-4)}</span>
                     </div>
-                    <h4 className={`text-[16px] font-bold text-foreground/80 group-hover:text-primary transition-all duration-300 leading-[1.7] ${alignClass} line-clamp-4 group-hover:line-clamp-none`}>
+                    <h4 className={`text-[16px] font-bold text-foreground/80 group-hover:text-primary leading-[1.7] ${alignClass} radar-smooth-expand`}>
                       {flags.length > 0 && (
                           <div className={`inline-flex gap-1 items-center mb-1 ${isAr ? 'ml-2' : 'mr-2'}`}>
                               {flags.map((flag, i) => (

@@ -405,6 +405,21 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 20px 40px rgba(0,0,0,0.4);
 }
 
+/* ── 7.5 SMOOTH TEXT EXPAND (LIVE RADAR) ── */
+.radar-smooth-expand {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  max-height: 109px; 
+  transition: max-height 0.7s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
+}
+
+.radar-signal-framework:hover .radar-smooth-expand {
+  -webkit-line-clamp: 999;
+  max-height: 1000px;
+}
+
 /* ── 8. DATA-STREAM TEXT ── */
 @keyframes data-stream {
   0%   { transform: translateY(100%); opacity: 0; }
