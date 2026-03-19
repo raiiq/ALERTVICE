@@ -34,16 +34,16 @@ export async function GET(request: Request) {
                 .eq('language', lang)
                 .order('post_date', { ascending: false });
 
-            // If article, fetch 4x limit so we can filter down to exactly enough media-only posts
-            const dbLimit = (type === 'article' && !urgent) ? limit * 4 : limit;
-            const fetchLimit = urgent ? 100 : dbLimit;
-            const fetchOffset = urgent ? 0 : offset;
-
-            if (!urgent) {
-                if (type === 'signal') {
-                    query = query.limit(50);
-                }
+            if (type === 'article') {
+                // Main Feed: Strictly WITH MEDIA only (images or video)
+                query = query.or('has_video.eq.true,image_url.not.is.null');
+            } else if (type === 'signal') {
+                // Radar Flash: Strictly NO MEDIA
+                query = query.filter('has_video', 'eq', false).filter('image_url', 'is', null);
             }
+
+            const fetchLimit = urgent ? 100 : limit;
+            const fetchOffset = urgent ? 0 : offset;
 
             if (q) {
                 query = query.or(`title.ilike.%${q}%,summary.ilike.%${q}%`);
@@ -69,30 +69,16 @@ export async function GET(request: Request) {
                     const { data: fallback } = await supabaseAdmin.from('posts').select('*').eq('language', 'en').order('post_date', { ascending: false }).limit(fetchLimit);
                     if (fallback) finalPosts = fallback.filter(checkUrgent).slice(0, limit);
                 }
-            } else if (type === 'signal') {
-                // Tier 2: Radar Flash (Strictly Text-primary intelligence WITHOUT MEDIA)
-                const checkSignal = (p: any) => {
-                    const title = p.title || "";
-                    const content = p.content_html || "";
-                    const hasImage = p.image_url && p.image_url !== '[]' && p.image_url !== 'null';
-                    const hasVideo = p.has_video === true || (p.video_url && p.video_url !== '[]' && p.video_url !== 'null');
-                    return (title.length > 0 || content.length > 0) && !hasImage && !hasVideo;
-                };
-                finalPosts = posts.filter(checkSignal).slice(0, limit);
-
+            } else if (type === 'signal' && finalPosts.length === 0 && lang !== 'en') {
                 // RELIABILITY FALLBACK: If Arabic (or other) is empty, fetch English 
-                if (finalPosts.length === 0 && lang !== 'en') {
-                    const { data: fallback } = await supabaseAdmin.from('posts').select('*').eq('language', 'en').order('post_date', { ascending: false }).limit(fetchLimit);
-                    if (fallback) finalPosts = fallback.filter(checkSignal).slice(0, limit);
-                }
-            } else if (type === 'article') {
-                // Main Feed: Strictly WITH MEDIA only (images or video)
-                const checkArticle = (p: any) => {
-                    const hasImage = p.image_url && p.image_url !== '[]' && p.image_url !== 'null';
-                    const hasVideo = p.has_video === true || (p.video_url && p.video_url !== '[]' && p.video_url !== 'null');
-                    return hasImage || hasVideo;
-                };
-                finalPosts = posts.filter(checkArticle).slice(0, limit);
+                const { data: fallback } = await supabaseAdmin.from('posts')
+                    .select('*')
+                    .eq('language', 'en')
+                    .filter('has_video', 'eq', false)
+                    .filter('image_url', 'is', null)
+                    .order('post_date', { ascending: false })
+                    .limit(fetchLimit);
+                if (fallback) finalPosts = fallback;
             }
 
             return NextResponse.json({

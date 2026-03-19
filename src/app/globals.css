@@ -37,9 +37,9 @@
   --color-surface-hover: var(--surface-hover);
   --color-border: var(--border-color);
   --color-text-muted: var(--text-muted);
-  --radius-xl: 0px;
-  --radius-2xl: 0px;
-  --radius-3xl: 0px;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
 }
 
 body {
@@ -74,9 +74,9 @@ button, input, select, textarea {
   line-height: 1.8;
 }
 
-/* Force Square Matrix Design except for Liquid UI elements */
+/* Global reset removed to allow rounded corners class to function */
 * {
-  border-radius: 0 !important;
+  /* border-radius: 0 !important; */
 }
 
 .liquid-nav, .liquid-nav *, .liquid-nav-glass, .liquid-nav-glass * {
@@ -654,14 +654,22 @@ h1, h2, h3, h4, h5, h6 {
 .reading-text {
   font-family: var(--font-roboto), 'Georgia', 'Times New Roman', serif;
   font-size: 1.0625rem;
-  line-height: 1.75;
+  line-height: 1.85;
   font-weight: 400;
+}
+
+.reading-text p {
+  margin-bottom: 1.5rem;
+}
+
+.reading-text p:last-child {
+  margin-bottom: 0;
 }
 
 [dir='rtl'] .reading-text {
   font-family: var(--font-arabic), 'Segoe UI', Arial, sans-serif;
   font-size: 1.05rem;
-  line-height: 2;
+  line-height: 2.1;
 }
 
 /* MARQUEE ANIMATIONS */

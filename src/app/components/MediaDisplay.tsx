@@ -37,7 +37,7 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
 
     if (allMedia.length === 0 && hasVideo) {
         return (
-            <div className={`w-full h-full relative overflow-hidden rounded-none border border-border-color bg-surfaceackground flex items-center justify-center ${aspect || ''}`}>
+            <div className={`w-full h-full relative overflow-hidden rounded-2xl border border-border-color bg-surfaceackground flex items-center justify-center ${aspect || ''}`}>
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.1)_0%,transparent_70%)] animate-pulse"></div>
                 <div className="flex flex-col items-center gap-4 relative z-10">
                     <div className="w-16 h-16 border border-primary/40 rounded-none flex items-center justify-center">
@@ -56,7 +56,7 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
         const item = allMedia[0];
         if (!item) return null;
         return (
-            <div className={`w-full h-full relative overflow-hidden rounded-none border border-border bg-surface ${aspect || ''} group/media`}>
+            <div className={`w-full h-full relative overflow-hidden rounded-2xl border border-border bg-surface ${aspect || ''} group/media`}>
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.05)_0%,transparent_70%)]"></div>
                 {item.type === 'video' ? (
                     <div className="relative w-full h-full group/video military-plyr-wrapper">
@@ -70,7 +70,7 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
                             controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen', 'settings'],
                             settings: ['quality', 'speed'],
                             playsinline: true,
-                            autoplay: true,
+                            autoplay: false,
                             muted: true
                           }}
                         />
@@ -128,7 +128,7 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
     const displayMedia = allMedia.slice(0, gridLimit);
 
     return (
-        <div className="w-full relative overflow-hidden rounded-none border border-border bg-surfaceackground shadow-2xl">
+        <div className="w-full relative overflow-hidden rounded-2xl border border-border bg-surfaceackground shadow-2xl">
             <div className={`grid gap-0.5 ${displayMedia.length >= 3 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                 {displayMedia.map((item, idx) => {
                     const isFeature = (displayMedia.length === 3 && idx === 0) || (displayMedia.length >= 5 && idx === 0);
@@ -143,7 +143,7 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
                                         source={{ type: 'video', sources: [{ src: item.url, provider: 'html5' }] }}
                                         options={{ 
                                             controls: ['play-large', 'play', 'mute', 'fullscreen'], 
-                                            autoplay: true, 
+                                            autoplay: false, 
                                             muted: true, 
                                             playsinline: true 
                                         }}
