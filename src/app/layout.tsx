@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import { Libre_Franklin, IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
+import { Suspense } from "react";
+import { LanguageProvider } from "./context/LanguageContext";
+import Navbar from "./components/Navbar";
+import GlobalSignals from "./components/GlobalSignals";
+import TranslationLoader from "./components/TranslationLoader";
+import LanguageWrapper from "./components/LanguageWrapper";
 
 // Universal English font — Libre Franklin (Tactical/News style)
 const libreFranklin = Libre_Franklin({
@@ -30,12 +36,6 @@ export const metadata: Metadata = {
   description: "Live news updates from Telegram",
 };
 
-import HealthCheck from "./components/HealthCheck";
-import { LanguageProvider } from "./context/LanguageContext";
-import Navbar from "./components/Navbar";
-import GlobalSignals from "./components/GlobalSignals";
-import TranslationLoader from "./components/TranslationLoader";
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -46,16 +46,20 @@ export default function RootLayout({
       <body
         className={`${libreFranklin.variable} ${libreFranklinCondensed.variable} ${ibmPlexArabic.variable} antialiased bg-background`}
       >
-        <LanguageProvider>
-          <div className="bg-pulse-overlay">
-            <div className="pulse-blob-1"></div>
-            <div className="pulse-blob-2"></div>
-          </div>
-          <TranslationLoader />
-          <Navbar />
-          <GlobalSignals />
-          {children}
-        </LanguageProvider>
+        <Suspense fallback={null}>
+          <LanguageProvider>
+            <LanguageWrapper>
+              <div className="bg-pulse-overlay">
+                <div className="pulse-blob-1"></div>
+                <div className="pulse-blob-2"></div>
+              </div>
+              <TranslationLoader />
+              <Navbar />
+              <GlobalSignals />
+              {children}
+            </LanguageWrapper>
+          </LanguageProvider>
+        </Suspense>
       </body>
     </html>
   );

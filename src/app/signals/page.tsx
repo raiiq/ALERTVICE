@@ -21,12 +21,13 @@ const TAG_COLORS: Record<string, { bg: string; text: string }> = {
     default: { bg: "#1c1c22", text: "#9ca3af" },
 };
 
-function getTimeAgo(dateStr: string): string {
+function getTimeAgo(dateStr: string, isAr: boolean): string {
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "JUST NOW";
-    if (mins < 60) return `${mins}M AGO`;
-    return `${Math.floor(mins / 60)}H AGO`;
+    if (mins < 1) return isAr ? "الآن" : "JUST NOW";
+    if (mins < 60) return isAr ? `${mins} دقيقة` : `${mins}M AGO`;
+    const hours = Math.floor(mins / 60);
+    return isAr ? `${hours} ساعة` : `${hours}H AGO`;
 }
 
 export default function SignalsPage() {
@@ -64,12 +65,12 @@ export default function SignalsPage() {
             <header className="pt-20 px-6 pb-4 border-b border-white/10 bg-surface/80 backdrop-blur-md sticky top-0 z-50">
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col">
-                        <h1 className="text-xl font-black tracking-[0.2em] text-primary uppercase">RADAR SIGNALS</h1>
-                        <p className="text-[10px] font-bold text-foreground/40 tracking-widest uppercase mt-1">Live Intelligence Intercepts</p>
+                        <h1 className="text-xl font-black tracking-[0.2em] text-primary uppercase">{isAr ? 'رادار الإشارات' : 'RADAR SIGNALS'}</h1>
+                        <p className="text-[10px] font-bold text-foreground/40 tracking-widest uppercase mt-1">{isAr ? 'اعتراضات الاستخبارات الحية' : 'Live Intelligence Intercepts'}</p>
                     </div>
                     <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 px-3 py-1 animate-pulse">
                         <div className="w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_#38bdf8]"></div>
-                        <span className="text-[10px] font-black text-primary tracking-widest uppercase">SCANNING</span>
+                        <span className="text-[10px] font-black text-primary tracking-widest uppercase">{isAr ? 'جارٍ المسح' : 'SCANNING'}</span>
                     </div>
                 </div>
             </header>
@@ -79,7 +80,7 @@ export default function SignalsPage() {
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-30">
                         <div className="w-12 h-12 border-2 border-dashed border-primary rounded-none animate-spin"></div>
-                        <span className="text-[10px] font-black tracking-[0.3em] uppercase">Intercepting Feed...</span>
+                        <span className="text-[10px] font-black tracking-[0.3em] uppercase">{isAr ? 'جاري الاعتراض...' : 'Intercepting Feed...'}</span>
                     </div>
                 ) : signals.length > 0 ? (
                     <div className="flex flex-col gap-4">
@@ -101,14 +102,14 @@ export default function SignalsPage() {
                                                     className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded"
                                                     style={{ background: tagStyle.bg, color: tagStyle.text, border: `1px solid ${tagStyle.text}33` }}
                                                 >
-                                                    {post.aiTag || "SIGNAL"}
+                                                    {post.aiTag || (isAr ? "عام" : "SIGNAL")}
                                                 </span>
                                                 <span className="text-[9px] font-mono text-primary/40 font-bold uppercase tracking-widest">
                                                     ID-{Math.min(idx + 101, 999)}
                                                 </span>
                                             </div>
                                             <span className="text-[9px] text-foreground/30 font-mono italic">
-                                                {getTimeAgo(post.date)}
+                                                {getTimeAgo(post.date, isAr)}
                                             </span>
                                         </div>
 

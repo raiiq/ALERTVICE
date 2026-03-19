@@ -134,15 +134,17 @@ export default function ArticlePage() {
                 {loading ? (
                     <div className="flex-grow flex flex-col items-center justify-center text-primary gap-4 py-20">
                         <div className="w-12 h-12 border-4 border-white/5 border-t-primary rounded-none animate-spin shadow-[0_0_15px_var(--primary)]"></div>
-                        <span className="font-bold uppercase tracking-widest text-sm drop-shadow-[0_0_8px_var(--primary)] animate-pulse">Decrypting Source...</span>
+                        <span className="font-bold uppercase tracking-widest text-sm drop-shadow-[0_0_8px_var(--primary)] animate-pulse">
+                            {isAr ? 'فك تشفير المصدر...' : 'Decrypting Source...'}
+                        </span>
                     </div>
                 ) : error ? (
                     <div className="flex-grow flex items-center justify-center p-8">
                         <div className="border border-red-500/50 bg-red-950/20 p-8 max-w-2xl mx-auto rounded-none shadow-[0_0_20px_rgba(239,68,68,0.2)] text-center">
-                            <h2 className="text-2xl font-black text-red-500 mb-4 tracking-wider">NETWORK ERROR</h2>
+                            <h2 className="text-2xl font-black text-red-500 mb-4 tracking-wider">{isAr ? 'خطأ في الشبكة' : 'NETWORK ERROR'}</h2>
                             <p className="text-muted-foreground text-sm mb-8 leading-relaxed max-w-md mx-auto">{error}</p>
                             <Link href="/" className="px-6 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/50 font-bold uppercase tracking-widest text-xs rounded transition-all">
-                                Initialize Reconnection
+                                {isAr ? 'بدء إعادة الاتصال' : 'Initialize Reconnection'}
                             </Link>
                         </div>
                     </div>
@@ -155,7 +157,7 @@ export default function ArticlePage() {
                                     <div className="flex items-center justify-between mb-4">
                                         <span className={`text-primary font-bold tracking-widest uppercase text-xs flex items-center gap-2 drop-shadow-[0_0_5px_var(--primary)] ${alignClass}`}>
                                             <span className="w-2 h-2 rounded-none bg-primary animate-pulse shadow-[0_0_8px_var(--primary)]"></span>
-                                            {isAr ? 'تقرير عاجل' : 'Live Report'}
+                                            {isAr ? 'تقرير مباشر' : 'Live Report'}
                                             {post.aiTag && (
                                                 <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-[10px] ml-2 font-black">{post.aiTag}</span>
                                             )}
@@ -168,7 +170,7 @@ export default function ArticlePage() {
                                         )}
                                     </div>
                                     <h1 className={`text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] font-black text-foreground leading-[1.2] mb-8 tracking-tight ${alignClass}`}>
-                                        {post.aiTitle || "BREAKING NEWS ALERT"}
+                                        {post.aiTitle || (isAr ? "تنبيه أخبار عاجلة" : "BREAKING NEWS ALERT")}
                                     </h1>
                                     <div className={`flex flex-col sm:flex-row sm:items-center justify-between border-y border-white/10 py-4 mb-8 bg-white/5 px-4 rounded-none ${isAr ? 'flex-row-reverse' : ''}`}>
                                         <div className="text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-3">
@@ -181,7 +183,7 @@ export default function ArticlePage() {
                                             <time className="text-xs text-muted-foreground/60 font-bold tracking-widest uppercase">{formatDate(post.date)}</time>
                                             <span className="flex items-center gap-1.5 text-xs text-muted-foreground/60 font-black uppercase">
                                                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5-2.24 5-5-2.24 5-5zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" /></svg>
-                                                {post.views} Views
+                                                {post.views} {isAr ? 'مشاهدة' : 'Views'}
                                             </span>
                                         </div>
                                     </div>
@@ -236,7 +238,7 @@ export default function ArticlePage() {
                         <span>&copy; {mounted ? new Date().getFullYear() : "2026"} Alertvice</span>
                         <div className="flex items-center gap-2">
                             <span className="w-1 h-1 rounded-none bg-green-500/20"></span>
-                            <span>Encrypted</span>
+                            <span>{isAr ? 'مشفر' : 'Encrypted'}</span>
                         </div>
                     </div>
                 </div>

@@ -1108,3 +1108,38 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid rgba(255,255,255,0.1);
   backdrop-filter: blur(10px);
 }
+
+/* MARQUEE ANIMATIONS */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-rtl {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+.animate-marquee {
+  display: flex !important;
+  width: max-content !important;
+  animation: marquee 120s linear infinite;
+}
+
+.animate-marquee-rtl {
+  display: flex !important;
+  width: max-content !important;
+  animation: marquee-rtl 120s linear infinite;
+}
+
+.animate-urgent-marquee {
+  display: flex !important;
+  width: max-content !important;
+  animation: marquee 60s linear infinite;
+}
+
+.animate-urgent-marquee-rtl {
+  display: flex !important;
+  width: max-content !important;
+  animation: marquee-rtl 60s linear infinite;
+}

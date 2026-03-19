@@ -130,8 +130,11 @@ export async function syncTelegramChannel() {
         // DUAL SYNC: We need to process both English and Arabic
         const languages = ['en', 'ar'];
         for (const lang of languages) {
+            // CLONE news items specifically for this language to avoid mutation leakage
+            const newsItems = newsToProcess.map(p => ({ ...p }));
+            
             // Check existing
-            const telegramIds = newsToProcess.map(p => p.id);
+            const telegramIds = newsItems.map(p => p.id);
             const { data: existing } = await supabaseAdmin.from('posts').select('telegram_id').in('telegram_id', telegramIds).eq('language', lang);
             const { data: suppressed } = await supabaseAdmin.from('deleted_posts').select('telegram_id').in('telegram_id', telegramIds);
             
@@ -140,7 +143,7 @@ export async function syncTelegramChannel() {
                 ...(suppressed?.map(s => s.telegram_id) || [])
             ]);
             
-            const freshItems = newsToProcess.filter(p => !skipSet.has(p.id));
+            const freshItems = newsItems.filter(p => !skipSet.has(p.id));
             if (freshItems.length === 0) continue;
 
             // AI translation if available

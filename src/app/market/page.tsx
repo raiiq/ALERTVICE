@@ -97,7 +97,7 @@ export default function MarketDashboard() {
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
                             <h3 className={`text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20`}>
-                                {item.symbol} Futures
+                                {item.symbol} {isAr ? 'عقود' : 'Futures'}
                             </h3>
                             <div className="w-1.5 h-1.5 rounded-none bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
                         </div>
@@ -162,12 +162,12 @@ export default function MarketDashboard() {
                 {/* Performance Metrics Row */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 sm:mb-8 pt-6 border-t border-border-color/50">
                     {[
-                        { label: '24h Change', val: '+24.6%' },
-                        { label: 'Weekly', val: '+49.3%' },
-                        { label: 'Monthly', val: '+68.1%' },
-                        { label: 'Quarterly', val: '+87.4%' }
+                        { label: isAr ? 'تغير ٢٤ ساعة' : '24h Change', val: '+24.6%' },
+                        { label: isAr ? 'أسبوعي' : 'Weekly', val: '+49.3%' },
+                        { label: isAr ? 'شهري' : 'Monthly', val: '+68.1%' },
+                        { label: isAr ? 'ربعي' : 'Quarterly', val: '+87.4%' }
                     ].map((m, i) => (
-                        <div key={i} className="flex flex-col items-start gap-1">
+                        <div key={i} className={`flex flex-col gap-1 ${isAr ? 'items-end' : 'items-start'}`}>
                             <span className="text-[9px] sm:text-[10px] font-black text-foreground/20 uppercase tracking-tight">{m.label}</span>
                             <span className="text-[11px] sm:text-[12px] font-black text-emerald-400 font-mono">{m.val}</span>
                         </div>
@@ -179,11 +179,11 @@ export default function MarketDashboard() {
                     <div className="flex items-center gap-2">
                         <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-none bg-emerald-500 shadow-[0_0_8px_#10b981]" />
                         <span className="text-[9px] sm:text-[11px] font-black text-foreground/40 uppercase tracking-widest leading-none">
-                            Source: <span className="text-foreground/70">XTB.GLOB_FIN</span>
+                            {isAr ? 'المصدر: ' : 'Source: '} <span className="text-foreground/70">XTB.GLOB_FIN</span>
                         </span>
                     </div>
                     <span className="text-[9px] sm:text-[11px] font-black font-mono text-foreground/20 uppercase">
-                        Ref: {new Date(item.lastUpdated).toLocaleTimeString([], { hour12: false })}
+                        {isAr ? 'مرجع: ' : 'Ref: '} {new Date(item.lastUpdated).toLocaleTimeString([], { hour12: false })}
                     </span>
                 </div>
             </motion.div>

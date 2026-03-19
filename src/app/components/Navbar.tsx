@@ -25,7 +25,7 @@ export default function Navbar({
     refreshing = false,
     onRefresh
 }: NavbarProps) {
-    const { lang, toggleLang, isAr } = useLanguage();
+    const { lang, setLang, toggleLang, isAr } = useLanguage();
     const [isAdmin, setIsAdmin] = useState(false);
     const [theme, setTheme] = useState('dark');
     const pathname = usePathname();
@@ -98,6 +98,7 @@ export default function Navbar({
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 260, damping: 20 }}
                 className="fixed bottom-6 left-0 right-0 z-[1000] lg:hidden px-4 flex justify-center pointer-events-none"
+                dir="ltr"
             >
                 <nav className="relative liquid-nav-glass w-full max-w-[360px] h-16 bg-background/80 backdrop-blur-3xl border border-white/10 rounded-[2rem] flex items-center px-2 shadow-[0_20px_40px_rgba(0,0,0,0.6)] pointer-events-auto">
                     {/* Top edge glow line */}
@@ -155,7 +156,7 @@ export default function Navbar({
 
                         {/* 5. LANGUAGE */}
                         <button 
-                            onClick={toggleLang}
+                            onClick={() => { window.location.href = pathname + '?lang=' + (lang === 'ar' ? 'en' : 'ar'); }}
                             className="flex flex-col items-center gap-1 flex-1 text-foreground/30 hover:text-primary transition-all"
                         >
                             <div className="w-5 h-5 flex items-center justify-center font-black text-[12px] border-2 border-current rounded-none">
@@ -233,7 +234,7 @@ export default function Navbar({
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 className={`hidden lg:flex fixed top-0 right-0 z-[200] ${pathname === '/' ? 'left-[600px]' : 'left-0'}`}
             >
-                <div className="w-full h-16 bg-background/80 backdrop-blur-3xl border-b border-white/5 flex items-center px-8 relative overflow-hidden group/nav">
+                <div className="w-full h-16 bg-background/80 backdrop-blur-3xl border-b border-white/5 flex items-center px-8 relative overflow-hidden group/nav" dir="ltr">
                     {/* Top Edge Glow Line */}
                     <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/20 to-transparent"></div>
                     
@@ -315,13 +316,13 @@ export default function Navbar({
                             {/* LANGUAGE TOGGLE */}
                             <div className="flex items-center h-12 bg-white/5 px-2 gap-1">
                                 <button
-                                    onClick={() => lang !== 'ar' && toggleLang()}
+                                    onClick={() => { window.location.href = pathname + '?lang=ar'; }}
                                     className={`px-4 h-9 text-[11px] font-black transition-all ${lang === 'ar' ? 'bg-primary text-primary-foreground' : 'text-foreground/20 hover:text-foreground'}`}
                                 >
                                     AR
                                 </button>
                                 <button
-                                    onClick={() => lang !== 'en' && toggleLang()}
+                                    onClick={() => { window.location.href = pathname + '?lang=en'; }}
                                     className={`px-4 h-9 text-[11px] font-black transition-all ${lang === 'en' ? 'bg-primary text-primary-foreground' : 'text-foreground/20 hover:text-foreground'}`}
                                 >
                                     EN

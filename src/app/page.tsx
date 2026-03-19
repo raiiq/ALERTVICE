@@ -31,7 +31,7 @@ export default function Home() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
-  const { lang, toggleLang, isAr } = useLanguage();
+  const { lang, toggleLang, isAr, isTranslating } = useLanguage();
   const [activeCategory, setActiveCategory] = useState("all");
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
@@ -41,7 +41,6 @@ export default function Home() {
   const [loadingFading, setLoadingFading] = useState(false);
   const [loadingGone, setLoadingGone] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isTranslating, setIsTranslating] = useState(false);
   const [editingPost, setEditingPost] = useState<NewsPost | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
@@ -335,32 +334,7 @@ export default function Home() {
         </motion.div>
       )}
 
-      {/* TACTICAL TRANSLATION LOADER */}
-      <AnimatePresence>
-        {isTranslating && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] bg-background/60 backdrop-blur-xl flex items-center justify-center p-8"
-          >
-            <div className="flex flex-col items-center gap-6">
-              <div className="relative">
-                <div className="w-16 h-16 border border-primary/20 rounded-none animate-spin-slow"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-2 h-2 bg-primary rounded-none animate-pulse"></div>
-                </div>
-              </div>
-              <div className="flex flex-col items-center text-center">
-                <span className="text-[10px] font-black text-primary uppercase tracking-[0.5em] animate-pulse">
-                  {lang === 'ar' ? 'جارٍ الترجمة الفورية...' : 'INSTANT TRANSLATION IN PROGRESS...'}
-                </span>
-                <span className="text-[8px] font-bold text-foreground/20 uppercase tracking-[0.3em] mt-4 border-t border-white/5 pt-4">ALERTVICE TERMINAL MESH v2.0</span>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Note: Translation loader is now globally handled in layout.tsx via TranslationLoader component */}
 
       {/* Add top padding on desktop to clear the fixed navbar */}
       <main className="flex-grow w-full flex flex-col lg:flex-row mx-auto relative z-10 pt-0 lg:pt-16 lg:pl-[600px]">

@@ -2,17 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function TermsPage() {
+    const { lang, isAr } = useLanguage();
     const [mounted, setMounted] = useState(false);
-    const [lang, setLang] = useState("en");
 
     useEffect(() => {
         setMounted(true);
-        setLang(localStorage.getItem("newsLang") || "en");
     }, []);
-
-    const isAr = lang === "ar";
 
     return (
         <div className="min-h-screen bg-surfaceackground text-foreground tracking-wide flex flex-col" dir={isAr ? "rtl" : "ltr"}>
