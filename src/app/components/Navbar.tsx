@@ -252,31 +252,7 @@ export default function Navbar({
                             <h1 className="text-sm font-black tracking-[0.3em] text-foreground group-hover:text-primary transition-all duration-500">ALERTVICE</h1>
                         </Link>
 
-                        {/* 2. CATEGORY INSTRUMENTS (Equal Sized Pills) */}
-                        <div className="flex items-center gap-2 bg-white/5 p-1 border border-white/10 rounded-none h-14">
-                            {categories.map(cat => {
-                                const isActive = (pathname === '/' && activeCategory === cat.id) || (pathname === '/' + cat.id);
-                                return (
-                                    <button
-                                        key={cat.id}
-                                        onClick={() => handleCategoryClick(cat.id)}
-                                        className={`h-12 px-6 text-[12px] font-black uppercase transition-all duration-500 relative overflow-hidden group/btn ${isActive ? 'text-primary bg-white/5' : 'text-foreground/40 hover:text-foreground'} ${isAr ? 'tracking-normal' : 'tracking-widest'}`}
-                                    >
-                                        <span 
-                                            className="relative z-10"
-                                            style={isAr ? { fontFamily: 'var(--font-arabic)', fontSize: '14px' } : {}}
-                                        >
-                                            {isAr ? cat.ar : cat.en}
-                                        </span>
-                                        {/* Hover Shimmer */}
-                                        <div className="absolute inset-0 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
-                                        {isActive && <motion.div layoutId="activeCat" className="absolute bottom-0 left-0 right-0 h-[3px] bg-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]"></motion.div>}
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        {/* 3. TACTICAL SEARCH */}
+                        {/* 2. TACTICAL SEARCH */}
                         <form
                             onSubmit={handleSearch ? handleSearch : (e) => { e.preventDefault(); router.push('/?q=' + searchQuery); }}
                             className="flex-1 max-w-sm relative group/search h-11"
@@ -295,57 +271,82 @@ export default function Navbar({
                             <div className="absolute inset-0 pointer-events-none border border-primary/0 group-focus-within/search:border-primary/20 transition-all"></div>
                         </form>
 
-                        {/* 4. CONTROL TERMINAL */}
-                        <div className="flex items-center gap-1.5 h-14 bg-white/5 p-1 border border-white/10 rounded-none">
+                        {/* 3. CONTROL TERMINAL */}
+                        <div className="flex items-center gap-1 h-14 bg-white/5 p-1 border border-white/10 rounded-none shrink-0 overflow-hidden">
+                            {/* CATEGORIES */}
+                            <div className="flex items-center">
+                                {categories.map((cat, idx) => {
+                                    const isActive = (pathname === '/' && activeCategory === cat.id) || (pathname === '/' + cat.id);
+                                    return (
+                                        <div key={cat.id} className="flex items-center">
+                                            {idx > 0 && <div className="w-[1px] h-3 bg-white/5 mx-0.5"></div>}
+                                            <button
+                                                onClick={() => handleCategoryClick(cat.id)}
+                                                className={`h-11 px-3 text-[10px] font-black uppercase transition-all duration-300 relative group/btn ${isActive ? 'text-primary bg-white/5 shadow-[inset_0_0_10px_rgba(var(--primary-rgb),0.05)]' : 'text-foreground/40 hover:text-foreground hover:bg-white/5'}`}
+                                            >
+                                                <span 
+                                                    className="relative z-10"
+                                                    style={isAr ? { fontFamily: 'var(--font-arabic)', fontSize: '11px' } : {}}
+                                                >
+                                                    {isAr ? cat.ar : cat.en}
+                                                </span>
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="w-[1px] h-5 bg-white/10 mx-1"></div>
+
                             {/* THEME */}
                             <button
                                 onClick={toggleTheme}
-                                className="w-12 h-12 flex items-center justify-center transition-all duration-500 hover:bg-white/10 text-foreground/40 hover:text-primary"
+                                className="w-10 h-10 flex items-center justify-center transition-all duration-500 hover:bg-white/10 text-foreground/40 hover:text-primary shrink-0"
                                 title="Toggle Theme"
                             >
                                 {theme === 'dark' ? (
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l.707-.707M6.343 6.343l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l.707-.707M6.343 6.343l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
                                 ) : (
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                                 )}
                             </button>
 
-                            {/* DIVIDER */}
                             <div className="w-[1px] h-5 bg-white/10 mx-1"></div>
 
                             {/* LANGUAGE TOGGLE */}
-                            <div className="flex items-center h-12 bg-white/5 px-2 gap-1">
+                            <div className="flex items-center h-10 bg-white/5 px-1.5 gap-1 shrink-0">
                                 <button
                                     onClick={() => { window.location.href = pathname + '?lang=ar'; }}
-                                    className={`px-4 h-9 text-[11px] font-black transition-all ${lang === 'ar' ? 'bg-primary text-primary-foreground' : 'text-foreground/20 hover:text-foreground'}`}
+                                    className={`px-3 h-8 text-[10px] font-black transition-all ${lang === 'ar' ? 'bg-primary text-primary-foreground' : 'text-foreground/20 hover:text-foreground'}`}
                                 >
                                     AR
                                 </button>
                                 <button
                                     onClick={() => { window.location.href = pathname + '?lang=en'; }}
-                                    className={`px-4 h-9 text-[11px] font-black transition-all ${lang === 'en' ? 'bg-primary text-primary-foreground' : 'text-foreground/20 hover:text-foreground'}`}
+                                    className={`px-3 h-8 text-[10px] font-black transition-all ${lang === 'en' ? 'bg-primary text-primary-foreground' : 'text-foreground/20 hover:text-foreground'}`}
                                 >
                                     EN
                                 </button>
                             </div>
 
-                            {/* DIVIDER */}
                             <div className="w-[1px] h-5 bg-white/10 mx-1"></div>
 
                             {/* REFRESH */}
                             {onRefresh && (
                                 <button 
                                     onClick={onRefresh} 
-                                    className={`w-9 h-9 flex items-center justify-center text-foreground/20 hover:text-primary transition-all ${refreshing ? 'animate-spin text-primary' : ''}`}
+                                    className={`w-8 h-8 flex items-center justify-center text-foreground/20 hover:text-primary transition-all shrink-0 ${refreshing ? 'animate-spin text-primary' : ''}`}
                                 >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                                 </button>
                             )}
+
+                            <div className="w-[1px] h-5 bg-white/10 mx-1"></div>
 
                             {/* ADMIN STATUS */}
                             <button 
                                 onClick={() => router.push(isAdmin ? '/admin/dashboard' : '/admin/login')}
-                                className={`w-9 h-9 flex items-center justify-center transition-all ${isAdmin ? 'text-primary' : 'text-foreground/20 hover:text-primary'}`}
+                                className={`w-9 h-9 flex items-center justify-center transition-all shrink-0 ${isAdmin ? 'text-primary' : 'text-foreground/20 hover:text-primary'}`}
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                             </button>
