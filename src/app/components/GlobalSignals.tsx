@@ -161,65 +161,81 @@ export default function GlobalSignals() {
                         <span>{isAr ? 'سوق' : 'MARKET DATA'}</span>
                     </div>
                     <div className="market-dispatch-content relative overflow-hidden flex-1 h-full flex items-center">
-                        <div className="flex items-center gap-8 md:gap-10 w-full h-full overflow-x-auto scrollbar-hide px-6 md:px-12 py-1">
-                            {/* ISX60 */}
-                            <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-foreground/50 font-black tracking-widest uppercase">ISX 60</span>
-                                <span className="text-foreground font-bold">{parseFloat(marketData.isx60.price || '0').toLocaleString()} <span className="text-[9px] text-foreground/40 font-normal ml-1">IQD</span></span>
-                                <span className={`text-[10px] font-bold ${parseFloat(marketData.isx60.change || '0') >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                    {parseFloat(marketData.isx60.change || '0') >= 0 ? '+' : ''}{marketData.isx60.change} ({marketData.isx60.changePercent}%)
-                                </span>
-                            </div>
-                            {/* Divider */}
-                            <div className="w-px h-3 bg-border-color shrink-0 hidden sm:block"></div>
-                            {/* BRENT */}
-                            <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-foreground/50 font-black tracking-widest uppercase">BRENT</span>
-                                <span className="text-foreground font-bold">${marketData.brent.price}</span>
-                                <span className={`text-[10px] font-bold ${parseFloat(marketData.brent.change || '0') >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                    {parseFloat(marketData.brent.change || '0') >= 0 ? '+' : ''}{marketData.brent.change} ({marketData.brent.changePercent}%)
-                                </span>
-                            </div>
-                            {/* MURBAN */}
-                            <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-foreground/50 font-black tracking-widest uppercase">MURBAN</span>
-                                <span className="text-foreground font-bold">${marketData.murban.price}</span>
-                                <span className={`text-[10px] font-bold ${parseFloat(marketData.murban.change || '0') >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                    {parseFloat(marketData.murban.change || '0') >= 0 ? '+' : ''}{marketData.murban.change} ({marketData.murban.changePercent}%)
-                                </span>
-                            </div>
-                            {/* WTI */}
-                            <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-foreground/50 font-black tracking-widest uppercase">WTI</span>
-                                <span className="text-foreground font-bold">${marketData.wti.price}</span>
-                                <span className={`text-[10px] font-bold ${parseFloat(marketData.wti.change || '0') >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                    {parseFloat(marketData.wti.change || '0') >= 0 ? '+' : ''}{marketData.wti.change} ({marketData.wti.changePercent}%)
-                                </span>
-                            </div>
-                            {/* NATGAS */}
-                            <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-foreground/50 font-black tracking-widest uppercase">NAT GAS</span>
-                                <span className="text-foreground font-bold">${marketData.natgas.price}</span>
-                                <span className={`text-[10px] font-bold ${parseFloat(marketData.natgas.change || '0') >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                    {parseFloat(marketData.natgas.change || '0') >= 0 ? '+' : ''}{marketData.natgas.change} ({marketData.natgas.changePercent}%)
-                                </span>
-                            </div>
-                            {/* GOLD */}
-                            <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-foreground/50 font-black tracking-widest uppercase">GOLD</span>
-                                <span className="text-foreground font-bold">${marketData.gold.price}</span>
-                                <span className={`text-[10px] font-bold ${parseFloat(marketData.gold.change || '0') >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                    {parseFloat(marketData.gold.change || '0') >= 0 ? '+' : ''}{marketData.gold.change} ({marketData.gold.changePercent}%)
-                                </span>
-                            </div>
-                            {/* SILVER */}
-                            <div className="flex items-center gap-2 shrink-0 pr-8">
-                                <span className="text-foreground/50 font-black tracking-widest uppercase">SILVER</span>
-                                <span className="text-foreground font-bold">${marketData.silver.price}</span>
-                                <span className={`text-[10px] font-bold ${parseFloat(marketData.silver.change || '0') >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                    {parseFloat(marketData.silver.change || '0') >= 0 ? '+' : ''}{marketData.silver.change} ({marketData.silver.changePercent}%)
-                                </span>
-                            </div>
+                        <div className={`${isAr ? 'animate-marquee-rtl' : 'animate-marquee'} flex items-center gap-12 px-6`}>
+                            {[...Array(2)].map((_, i) => (
+                                <div key={i} className="flex items-center gap-12">
+                                    {/* ISX60 */}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-foreground/50 font-black tracking-widest uppercase">ISX 60</span>
+                                        <span className="text-foreground font-bold">{parseFloat(marketData.isx60.price || '0').toLocaleString()} <span className="text-[9px] text-foreground/40 font-normal ml-1">IQD</span></span>
+                                        <span className={`text-[10px] font-bold ${parseFloat(marketData.isx60.change || '0') >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                            {parseFloat(marketData.isx60.change || '0') >= 0 ? '+' : ''}{marketData.isx60.change} ({marketData.isx60.changePercent}%)
+                                        </span>
+                                    </div>
+                                    {/* Divider */}
+                                    <div className="w-px h-3 bg-border-color shrink-0"></div>
+                                    {/* BRENT */}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-foreground/50 font-black tracking-widest uppercase">BRENT</span>
+                                        <span className="text-foreground font-bold">${marketData.brent.price}</span>
+                                        <span className={`text-[10px] font-bold ${parseFloat(marketData.brent.change || '0') >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                            {parseFloat(marketData.brent.change || '0') >= 0 ? '+' : ''}{marketData.brent.change} ({marketData.brent.changePercent}%)
+                                        </span>
+                                    </div>
+                                    {/* Divider */}
+                                    <div className="w-px h-3 bg-border-color shrink-0"></div>
+                                    {/* MURBAN */}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-foreground/50 font-black tracking-widest uppercase">MURBAN</span>
+                                        <span className="text-foreground font-bold">${marketData.murban.price}</span>
+                                        <span className={`text-[10px] font-bold ${parseFloat(marketData.murban.change || '0') >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                            {parseFloat(marketData.murban.change || '0') >= 0 ? '+' : ''}{marketData.murban.change} ({marketData.murban.changePercent}%)
+                                        </span>
+                                    </div>
+                                    {/* Divider */}
+                                    <div className="w-px h-3 bg-border-color shrink-0"></div>
+                                    {/* WTI */}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-foreground/50 font-black tracking-widest uppercase">WTI</span>
+                                        <span className="text-foreground font-bold">${marketData.wti.price}</span>
+                                        <span className={`text-[10px] font-bold ${parseFloat(marketData.wti.change || '0') >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                            {parseFloat(marketData.wti.change || '0') >= 0 ? '+' : ''}{marketData.wti.change} ({marketData.wti.changePercent}%)
+                                        </span>
+                                    </div>
+                                    {/* Divider */}
+                                    <div className="w-px h-3 bg-border-color shrink-0"></div>
+                                    {/* NATGAS */}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-foreground/50 font-black tracking-widest uppercase">NAT GAS</span>
+                                        <span className="text-foreground font-bold">${marketData.natgas.price}</span>
+                                        <span className={`text-[10px] font-bold ${parseFloat(marketData.natgas.change || '0') >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                            {parseFloat(marketData.natgas.change || '0') >= 0 ? '+' : ''}{marketData.natgas.change} ({marketData.natgas.changePercent}%)
+                                        </span>
+                                    </div>
+                                    {/* Divider */}
+                                    <div className="w-px h-3 bg-border-color shrink-0"></div>
+                                    {/* GOLD */}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-foreground/50 font-black tracking-widest uppercase">GOLD</span>
+                                        <span className="text-foreground font-bold">${marketData.gold.price}</span>
+                                        <span className={`text-[10px] font-bold ${parseFloat(marketData.gold.change || '0') >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                            {parseFloat(marketData.gold.change || '0') >= 0 ? '+' : ''}{marketData.gold.change} ({marketData.gold.changePercent}%)
+                                        </span>
+                                    </div>
+                                    {/* Divider */}
+                                    <div className="w-px h-3 bg-border-color shrink-0"></div>
+                                    {/* SILVER */}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-foreground/50 font-black tracking-widest uppercase">SILVER</span>
+                                        <span className="text-foreground font-bold">${marketData.silver.price}</span>
+                                        <span className={`text-[10px] font-bold ${parseFloat(marketData.silver.change || '0') >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                            {parseFloat(marketData.silver.change || '0') >= 0 ? '+' : ''}{marketData.silver.change} ({marketData.silver.changePercent}%)
+                                        </span>
+                                    </div>
+                                    {/* Divider */}
+                                    <div className="w-px h-3 bg-border-color shrink-0 mr-8"></div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </Link>
