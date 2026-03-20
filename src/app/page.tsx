@@ -98,8 +98,8 @@ export default function Home() {
     const currentOffset = (reset || isRefresh) ? 0 : offset;
 
     try {
-      // Always use type=article to ensure only media posts appear in the main feed
-      const res = await fetch(`/api/news?lang=${currentLang}&offset=${currentOffset}&limit=12&type=article&q=${encodeURIComponent(q)}&t=${Date.now()}`);
+      // Increased limit from 12 to 24 for better scroll coverage
+      const res = await fetch(`/api/news?lang=${currentLang}&offset=${currentOffset}&limit=24&type=article&q=${encodeURIComponent(q)}&t=${Date.now()}`);
       if (!res.ok) throw new Error("Connection unstable");
       const data = await res.json();
       const fetched = data.posts || [];
@@ -112,6 +112,12 @@ export default function Home() {
         setOffset(prevData => data.nextOffset !== undefined ? data.nextOffset : prevData + fetched.length);
       }
       setHasMore(data.hasMore);
+
+      // If we got nothing but there should be more (waiting for backfill), 
+      // add a small forced delay before allow loading more again
+      if (!isRefresh && !reset && fetched.length === 0 && data.hasMore) {
+          await new Promise(r => setTimeout(r, 3000));
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -210,7 +216,7 @@ export default function Home() {
         fetchArticles(false, lang, true);
       } else if (!loading && !loadingMore && !refreshing) {
         // Silent Auto-Refresh loop
-        fetch(`/api/news?lang=${lang}&offset=0&limit=12&type=article&t=${Date.now()}`)
+        fetch(`/api/news?lang=${lang}&offset=0&limit=24&type=article&t=${Date.now()}`)
           .then(res => res.json())
           .then(data => {
             if (data.posts && data.posts.length > 0) {
@@ -274,7 +280,7 @@ export default function Home() {
           loadMore();
         }
       },
-      { threshold: 0, rootMargin: '800px' }
+      { threshold: 0, rootMargin: '1200px' }
     );
 
     if (observerTarget.current) {
@@ -543,14 +549,7 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* TACTICAL DIAGNOSTIC TERMINAL (Hidden diagnostic info for UI consistency) */}
-      <div className="fixed bottom-24 right-4 z-[999] flex flex-col items-end gap-1 pointer-events-none opacity-20 hover:opacity-100 transition-opacity">
-          <div className="bg-black/80 backdrop-blur-md border border-primary/10 p-2 font-mono text-[8px] text-primary space-y-1">
-              <div className="flex justify-between gap-4"><span>STATUS:</span> <span className={loadingMore ? "animate-pulse text-red-500" : "text-green-500"}>{loadingMore ? "UP-LINKING" : "IDLE"}</span></div>
-              <div className="flex justify-between gap-4"><span>CACHE_SIZE:</span> <span>{articles.length}</span></div>
-              <div className="flex justify-between gap-4"><span>DB_DEPTH:</span> <span>{offset}</span></div>
-          </div>
-      </div>
+
 
       {/* ADMIN EDIT MODAL */}
       <AnimatePresence>

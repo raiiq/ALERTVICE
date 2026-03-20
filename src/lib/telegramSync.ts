@@ -24,18 +24,19 @@ async function freeTranslate(text: string, targetLang: string) {
 let lastSyncTime = 0;
 const SYNC_INTERVAL = 45000; // 45 seconds
 
-export async function syncTelegramChannel() {
+export async function syncTelegramChannel(before?: string) {
     const now = Date.now();
-    if (now - lastSyncTime < SYNC_INTERVAL) {
+    // Throttle only if NOT fetching specifically older posts
+    if (!before && now - lastSyncTime < SYNC_INTERVAL) {
         return { skipped: true, reason: 'Throttled' };
     }
-    lastSyncTime = now;
+    if (!before) lastSyncTime = now;
 
     try {
         const supabaseAdmin = (supabaseUrl && supabaseServiceKey) ? createClient(supabaseUrl, supabaseServiceKey) : null;
         if (!supabaseAdmin) throw new Error("Supabase unavailable");
 
-        const CHANNEL_URL = "https://t.me/s/alertvice";
+        const CHANNEL_URL = `https://t.me/s/alertvice${before ? `?before=${before}` : ''}`;
         const response = await fetch(CHANNEL_URL, { 
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -50,6 +51,7 @@ export async function syncTelegramChannel() {
         const $ = load(html);
         const rawPosts: any[] = [];
 
+        let runningDate: string | null = null;
         $('.tgme_widget_message').each((_: number, el: any) => {
             const $post = $(el);
             const dataPost = $post.attr('data-post') || "";
@@ -93,6 +95,17 @@ export async function syncTelegramChannel() {
             const hasVideo = $post.find('.tgme_widget_message_video_player').length > 0 || videos.length > 0;
 
             if (plainText || images.length > 0 || videos.length > 0) {
+                let postDate = $post.find('time[datetime]').attr('datetime') || $post.find('a.tgme_widget_message_date time').attr('datetime') || $post.find('.time').attr('datetime') || null;
+                
+                // Forward-fill: Telegram's standard view is oldest-to-newest.
+                // If a message lacks a date, it inherits the date of the message before it.
+                if (!postDate && runningDate) {
+                    postDate = runningDate;
+                }
+                if (postDate) {
+                    runningDate = postDate;
+                }
+
                 rawPosts.push({
                     id,
                     textHtml,
@@ -100,7 +113,7 @@ export async function syncTelegramChannel() {
                     imageUrl: images.length > 0 ? JSON.stringify(images) : null,
                     videoUrl: videos.length > 0 ? JSON.stringify(videos) : null,
                     hasVideo,
-                    date: $post.find('time').attr('datetime') || $post.find('.time').attr('datetime') || new Date().toISOString(),
+                    date: postDate,
                     views: $post.find('.tgme_widget_message_views').text() || "0"
                 });
             }
@@ -119,13 +132,19 @@ export async function syncTelegramChannel() {
                 last.imageUrl = mergedImgs.length > 0 ? JSON.stringify(mergedImgs) : null;
                 last.videoUrl = mergedVids.length > 0 ? JSON.stringify(mergedVids) : null;
                 last.hasVideo = last.hasVideo || post.hasVideo;
+                if (!last.date && post.date) last.date = post.date;
             } else {
                 grouped.push(post);
                 last = post;
             }
         }
 
-        const newsToProcess = grouped.reverse().slice(0, 40);
+        const fallbackDate = new Date().toISOString();
+        grouped.forEach(p => {
+            if (!p.date) p.date = fallbackDate;
+        });
+
+        const newsToProcess = grouped.reverse().slice(0, 100);
         
         // DUAL SYNC: We need to process both English and Arabic
         const languages = ['en', 'ar'];
@@ -133,17 +152,8 @@ export async function syncTelegramChannel() {
             // CLONE news items specifically for this language to avoid mutation leakage
             const newsItems = newsToProcess.map(p => ({ ...p }));
             
-            // Check existing
-            const telegramIds = newsItems.map(p => p.id);
-            const { data: existing } = await supabaseAdmin.from('posts').select('telegram_id').in('telegram_id', telegramIds).eq('language', lang);
-            const { data: suppressed } = await supabaseAdmin.from('deleted_posts').select('telegram_id').in('telegram_id', telegramIds);
-            
-            const skipSet = new Set([
-                ...(existing?.map(e => e.telegram_id) || []),
-                ...(suppressed?.map(s => s.telegram_id) || [])
-            ]);
-            
-            const freshItems = newsItems.filter(p => !skipSet.has(p.id));
+            // Re-sync all to fix historical date issues
+            const freshItems = newsItems; // Bypass skipSet
             if (freshItems.length === 0) continue;
 
             // AI translation if available

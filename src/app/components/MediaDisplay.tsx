@@ -37,13 +37,13 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
 
     if (allMedia.length === 0 && hasVideo) {
         return (
-            <div className={`w-full h-full relative overflow-hidden rounded-2xl border border-border-color bg-surfaceackground flex items-center justify-center ${aspect || ''}`}>
+            <div className={`w-full h-full relative overflow-hidden rounded-2xl border border-border-color bg-surface flex items-center justify-center ${aspect || ''}`}>
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.1)_0%,transparent_70%)] animate-pulse"></div>
                 <div className="flex flex-col items-center gap-4 relative z-10">
                     <div className="w-16 h-16 border border-primary/40 rounded-none flex items-center justify-center">
                         <div className="w-2 h-2 bg-primary rounded-none animate-ping"></div>
                     </div>
-                    <div className="bg-red-600/80/90 text-foreground px-3 py-1 rounded-none text-[9px] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(239,68,68,0.3)] animate-pulse flex items-center gap-2">
+                    <div className="bg-red-600/90 text-white px-3 py-1 rounded-none text-[9px] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(239,68,68,0.3)] animate-pulse flex items-center gap-2">
                         <span className="w-1.5 h-1.5 bg-foreground rounded-none"></span>
                         SECURE STREAM ACTIVATED
                     </div>
@@ -128,7 +128,7 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
     const displayMedia = allMedia.slice(0, gridLimit);
 
     return (
-        <div className="w-full relative overflow-hidden rounded-2xl border border-border bg-surfaceackground shadow-2xl">
+        <div className="w-full relative overflow-hidden rounded-2xl border border-border bg-surface shadow-2xl">
             <div className={`grid gap-0.5 ${displayMedia.length >= 3 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                 {displayMedia.map((item, idx) => {
                     const isFeature = (displayMedia.length === 3 && idx === 0) || (displayMedia.length >= 5 && idx === 0);
@@ -171,8 +171,8 @@ export const MediaDisplay = ({ images, videos, hasVideo, isAr, aspect, singleMod
                 })}
             </div>
             {hasVideo && videos.length === 0 && (
-                <div className="absolute top-4 left-4 bg-red-600/80 text-foreground px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest shadow-lg z-20 flex items-center gap-1.5 animate-pulse">
-                    <span className="w-1.5 h-1.5 bg-foreground rounded-none"></span>
+                <div className="absolute top-4 left-4 bg-red-600/90 text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest shadow-lg z-20 flex items-center gap-1.5 animate-pulse">
+                    <span className="w-1.5 h-1.5 bg-white rounded-none"></span>
                     SECURE STREAM ACTIVATED
                 </div>
             )}

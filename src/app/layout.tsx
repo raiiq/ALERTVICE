@@ -7,6 +7,7 @@ import Navbar from "./components/Navbar";
 import GlobalSignals from "./components/GlobalSignals";
 import TranslationLoader from "./components/TranslationLoader";
 import LanguageWrapper from "./components/LanguageWrapper";
+import { MainLoader } from "./components/MainLoader";
 
 // Universal English font — Libre Franklin (Tactical/News style)
 const libreFranklin = Libre_Franklin({
@@ -46,7 +47,7 @@ export default function RootLayout({
       <body
         className={`${libreFranklin.variable} ${libreFranklinCondensed.variable} ${ibmPlexArabic.variable} antialiased bg-background`}
       >
-        <Suspense fallback={null}>
+        <Suspense fallback={<MainLoader />}>
           <LanguageProvider>
             <LanguageWrapper>
               <div className="bg-pulse-overlay">

@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     const type = searchParams.get('type') || 'article';
     const q = searchParams.get('q') || '';
     const offset = parseInt(searchParams.get('offset') || '0');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const limit = parseInt(searchParams.get('limit') || '30');
 
     try {
         const supabaseAdmin = (supabaseUrl && supabaseServiceKey) ? createClient(supabaseUrl, supabaseServiceKey) : null;
@@ -81,6 +81,30 @@ export async function GET(request: Request) {
                 if (fallback) finalPosts = fallback;
             }
 
+            if (!urgent && posts.length === 0 && offset > 0 && !q) {
+                // We reached the end of synced DB but frontend wants more
+                // Run sync synchronously to provide data in THIS request
+                const { data: oldest } = await supabaseAdmin.from('posts').select('telegram_id').order('telegram_id', { ascending: true }).limit(1);
+                if (oldest?.[0]) {
+                    await syncTelegramChannel(oldest[0].telegram_id);
+                    // Refetch now that sync is done
+                    const { data: refetched } = await query.range(fetchOffset, fetchOffset + fetchLimit - 1);
+                    if (refetched && refetched.length > 0) {
+                        finalPosts = refetched;
+                    }
+                }
+            } else if (!urgent && posts.length < fetchLimit && !q) {
+                // Near the end, background-sync for the NEXT scroll
+                (async () => {
+                    const { data: oldest } = await supabaseAdmin.from('posts').select('telegram_id').order('telegram_id', { ascending: true }).limit(1);
+                    if (oldest?.[0]) await syncTelegramChannel(oldest[0].telegram_id);
+                })();
+            }
+
+            // Intelligence Signaling Framework:
+            // Ensure hasMore stays true for Articles during pagination to allow deep-sync to catch up
+            const hasMore = !urgent && (posts.length === fetchLimit || (type === 'article' && offset < 5000));
+
             return NextResponse.json({
                 posts: finalPosts.map((p: any) => {
                     const plainText = (p.content_html || "").replace(/<[^>]*>?/gm, '').trim();
@@ -99,7 +123,7 @@ export async function GET(request: Request) {
                         views: p.views
                     };
                 }),
-                hasMore: !urgent && posts.length === fetchLimit,
+                hasMore: hasMore,
                 nextOffset: fetchOffset + posts.length
             });
         }
