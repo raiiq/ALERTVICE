@@ -60,6 +60,7 @@ export default function Navbar({
     const categories = [
         { id: 'world', en: 'WORLD', ar: 'عالمي' },
         { id: 'market', en: 'MARKET', ar: 'سوق' },
+        { id: 'iran-cooldown', en: 'IRAN', ar: 'إيران' },
         ...(isAdmin ? [{ id: 'sql', en: 'SQL', ar: 'برمجة' }] : [])
     ];
 
@@ -72,6 +73,8 @@ export default function Navbar({
             router.push('/market');
         } else if (catId === 'live') {
             router.push('/live');
+        } else if (catId === 'iran-cooldown') {
+            window.location.href = '/iran-cooldown';
         } else {
             if (pathname !== '/') {
                 router.push('/?cat=' + catId);
@@ -112,7 +115,7 @@ export default function Navbar({
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                             <span 
-                                className={`text-[10px] font-black uppercase ${isAr ? 'tracking-normal' : 'tracking-[0.1em]'}`}
+                                className={`text-[8px] font-black uppercase ${isAr ? 'tracking-normal' : 'tracking-[0.1em]'}`}
                                 style={isAr ? { fontFamily: 'var(--font-arabic)' } : {}}
                             >
                                 {isAr ? 'بحث' : 'SEARCH'}
@@ -130,10 +133,27 @@ export default function Navbar({
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                             )}
                             <span 
-                                className={`text-[10px] font-black uppercase ${isAr ? 'tracking-normal' : 'tracking-[0.1em]'}`}
+                                className={`text-[8px] font-black uppercase ${isAr ? 'tracking-normal' : 'tracking-[0.1em]'}`}
                                 style={isAr ? { fontFamily: 'var(--font-arabic)' } : {}}
                             >
                                 {isAr ? 'الوضع' : 'THEME'}
+                            </span>
+                        </button>
+
+                        {/* 3. LIVE (NEW) */}
+                        <button 
+                            onClick={() => handleCategoryClick('live')}
+                            className={`flex flex-col items-center gap-1 flex-1 transition-all ${pathname === '/live' ? 'text-primary' : 'text-foreground/30'}`}
+                        >
+                            <div className="relative">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_5px_red]"></span>
+                            </div>
+                            <span 
+                                className={`text-[8px] font-black uppercase ${isAr ? 'tracking-normal' : 'tracking-[0.1em]'}`}
+                                style={isAr ? { fontFamily: 'var(--font-arabic)' } : {}}
+                            >
+                                {isAr ? 'مباشر' : 'LIVE'}
                             </span>
                         </button>
 
@@ -147,7 +167,7 @@ export default function Navbar({
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                             </div>
                             <span 
-                                className={`text-[10px] font-black uppercase ${isAr ? 'tracking-normal' : 'tracking-[0.1em]'}`}
+                                className={`text-[8px] font-black uppercase ${isAr ? 'tracking-normal' : 'tracking-[0.1em]'}`}
                                 style={isAr ? { fontFamily: 'var(--font-arabic)' } : {}}
                             >
                                 {isAr ? 'عالمي' : 'WORLD'}
@@ -163,7 +183,7 @@ export default function Navbar({
                                 {lang.toUpperCase()}
                             </div>
                             <span 
-                                className={`text-[10px] font-black uppercase ${isAr ? 'tracking-normal' : 'tracking-[0.1em]'}`}
+                                className={`text-[8px] font-black uppercase ${isAr ? 'tracking-normal' : 'tracking-[0.1em]'}`}
                                 style={isAr ? { fontFamily: 'var(--font-arabic)' } : {}}
                             >
                                 {isAr ? 'اللغة' : 'LANG'}
@@ -177,10 +197,29 @@ export default function Navbar({
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
                             <span 
-                                className={`text-[10px] font-black uppercase ${isAr ? 'tracking-normal' : 'tracking-[0.1em]'}`}
+                                className={`text-[8px] font-black uppercase ${isAr ? 'tracking-normal' : 'tracking-[0.1em]'}`}
                                 style={isAr ? { fontFamily: 'var(--font-arabic)' } : {}}
                             >
                                 {isAr ? 'سوق' : 'MARKET'}
+                            </span>
+                        </button>
+
+                        {/* 7. IRAN (NEW) */}
+                        <button 
+                            onClick={() => handleCategoryClick('iran-cooldown')}
+                            className={`flex flex-col items-center gap-1 flex-1 transition-all ${pathname === '/iran-cooldown' ? 'text-red-500' : 'text-foreground/30'}`}
+                        >
+                            <div className="relative">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                {pathname !== '/iran-cooldown' && (
+                                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_5px_red]"></span>
+                                )}
+                            </div>
+                            <span 
+                                className={`text-[8px] font-black uppercase ${isAr ? 'tracking-normal' : 'tracking-[0.1em]'}`}
+                                style={isAr ? { fontFamily: 'var(--font-arabic)' } : {}}
+                            >
+                                {isAr ? 'إيران' : 'IRAN'}
                             </span>
                         </button>
                     </div>
@@ -280,17 +319,34 @@ export default function Navbar({
                                     return (
                                         <div key={cat.id} className="flex items-center">
                                             {idx > 0 && <div className="w-[1px] h-3 bg-white/5 mx-0.5"></div>}
-                                            <button
-                                                onClick={() => handleCategoryClick(cat.id)}
-                                                className={`h-11 px-3 text-[10px] font-black uppercase transition-all duration-300 relative group/btn ${isActive ? 'text-primary bg-white/5 shadow-[inset_0_0_10px_rgba(var(--primary-rgb),0.05)]' : 'text-foreground/40 hover:text-foreground hover:bg-white/5'}`}
-                                            >
-                                                <span 
-                                                    className="relative z-10"
-                                                    style={isAr ? { fontFamily: 'var(--font-arabic)', fontSize: '11px' } : {}}
+                                            {cat.id === 'iran-cooldown' ? (
+                                                <button
+                                                    onClick={() => handleCategoryClick(cat.id)}
+                                                    className={`h-11 px-3 text-[10px] font-black uppercase transition-all duration-300 relative group/btn flex items-center ${isActive ? 'text-primary bg-white/5 shadow-[inset_0_0_10px_rgba(var(--primary-rgb),0.05)]' : 'text-red-500 hover:text-red-400 hover:bg-white/5'}`}
                                                 >
-                                                    {isAr ? cat.ar : cat.en}
-                                                </span>
-                                            </button>
+                                                    <span 
+                                                        className="relative z-10 flex items-center gap-1.5"
+                                                        style={isAr ? { fontFamily: 'var(--font-arabic)', fontSize: '11px' } : {}}
+                                                    >
+                                                        {pathname !== '/iran-cooldown' && (
+                                                            <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_5px_currentColor]"></span>
+                                                        )}
+                                                        {isAr ? cat.ar : cat.en}
+                                                    </span>
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleCategoryClick(cat.id)}
+                                                    className={`h-11 px-3 text-[10px] font-black uppercase transition-all duration-300 relative group/btn ${isActive ? 'text-primary bg-white/5 shadow-[inset_0_0_10px_rgba(var(--primary-rgb),0.05)]' : 'text-foreground/40 hover:text-foreground hover:bg-white/5'}`}
+                                                >
+                                                    <span 
+                                                        className="relative z-10"
+                                                        style={isAr ? { fontFamily: 'var(--font-arabic)', fontSize: '11px' } : {}}
+                                                    >
+                                                        {isAr ? cat.ar : cat.en}
+                                                    </span>
+                                                </button>
+                                            )}
                                         </div>
                                     );
                                 })}

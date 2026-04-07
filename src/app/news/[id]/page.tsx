@@ -169,6 +169,21 @@ export default function ArticlePage() {
                                             </div>
                                         )}
                                     </div>
+                                    
+                                    {/* IRAN TARGETING GLOBAL LINK (SIGNAL PAGE) */}
+                                    <Link 
+                                        href="/iran-cooldown"
+                                        className="mb-6 block w-full bg-red-600/10 border border-red-600/50 p-3 hover:bg-red-600/20 transition-all group"
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-[0_0_8px_red]"></span>
+                                                <span className="text-red-500 font-black text-xs uppercase tracking-[0.2em]">IRAN TARGETING: COOLDOWN ACTIVE</span>
+                                            </div>
+                                            <span className="text-red-500/50 group-hover:text-red-500 text-[10px] font-bold uppercase transition-all tracking-widest">VIEW INTEL →</span>
+                                        </div>
+                                    </Link>
+
                                     <h1 className={`text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] font-black text-foreground leading-[1.2] mb-8 tracking-tight ${alignClass}`}>
                                         {post.aiTitle || (isAr ? "تنبيه أخبار عاجلة" : "BREAKING NEWS ALERT")}
                                     </h1>

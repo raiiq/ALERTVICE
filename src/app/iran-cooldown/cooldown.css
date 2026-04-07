@@ -1,0 +1,282 @@
+/* src/app/iran-cooldown/cooldown.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto+Condensed:wght@400;700;900&family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@700&display=swap');
+
+:root {
+  --military-red: #ff2d2d;
+  --military-yellow: #ffd000;
+  --news-black: rgba(10, 10, 10, 0.85);
+}
+
+.cooldown-page-wrapper {
+  background-color: #000;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* Move baseline up */
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace; /* Default technical font */
+}
+
+
+/* Background Trump image - 50% transparent */
+.trump-bg-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/trump-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.5;
+  filter: grayscale(100%) saturate(0);
+  z-index: 0;
+}
+
+/* Map layer - very transparent and blurs slightly */
+.map-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  opacity: 0.4;
+  mix-blend-mode: soft-light;
+}
+
+/* Content Container - fits navbar width constraints */
+.cooldown-content-container {
+  width: 100%;
+  max-width: 1200px; /* Aligned with standard desktop navbar width */
+  height: 100%;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between; /* Spread elements */
+  padding: 18vh 2rem 5vh 2rem; /* 18vh pushes the header exactly to eye-level */
+}
+
+/* News Header */
+.news-header {
+  background: var(--military-red);
+  color: white;
+  padding: 1rem 3rem;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(255, 45, 45, 0.4);
+}
+
+.news-header h1 {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.5rem, 4vw, 4.5rem);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.3rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.news-subtitle {
+  background: black;
+  color: var(--military-yellow);
+  padding: 0.5rem 2rem;
+  margin-top: -5px;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4rem;
+  font-size: 1.1rem;
+  z-index: 2;
+}
+
+/* Timer - News Style */
+.timer-container {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.timer-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.timer-value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(4rem, 15vw, 10rem);
+  font-weight: 900;
+  color: white;
+  line-height: 0.9;
+  text-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+}
+
+.timer-label {
+  font-size: 1rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--military-yellow);
+  background: black;
+  padding: 2px 10px;
+  border-radius: 4px;
+}
+
+/* Target List Styles */
+.target-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.target-item {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 1.1rem;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.target-item strong {
+  font-family: 'Orbitron', sans-serif;
+  color: var(--military-yellow);
+  letter-spacing: 0.15rem;
+}
+
+.news-footer {
+  width: 100%;
+  max-width: 900px;
+  background: var(--news-black);
+  padding: 2rem;
+  border-left: 8px solid var(--military-red);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+}
+
+.status-badge {
+  display: inline-block;
+  background: var(--military-red);
+  padding: 3px 8px;
+  border-radius: 2px;
+  margin-right: 10px;
+  animation: blink 1s infinite;
+}
+
+/* Warning Box */
+.nuclear-warning {
+  color: white;
+  font-weight: bold;
+  font-size: 1.1rem;
+  background-color: rgba(255,0,0,0.3);
+  padding: 0.5rem 1.5rem;
+  border: 1px solid red;
+  margin-top: 10px;
+  text-align: center;
+  max-width: 90%;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .news-header {
+    padding: 0.6rem 1rem;
+    width: auto;
+    max-width: 95%;
+  }
+  
+  .news-header h1 {
+    font-size: 1.1rem; /* Highly targeted for small screens */
+    white-space: normal;
+    line-height: 1.1;
+  }
+  
+  .news-subtitle {
+    font-size: 0.55rem;
+    letter-spacing: 0.1rem;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .nuclear-warning {
+    font-size: 0.75rem;
+    padding: 0.4rem 1rem;
+    margin-top: 5px;
+  }
+
+  .cooldown-content-container {
+    padding: 8vh 0.25rem 8vh 0.25rem;
+    justify-content: flex-start;
+    gap: 1.2rem;
+  }
+
+  .timer-container {
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .timer-value {
+    font-size: 2rem;
+  }
+
+  .timer-label {
+    font-size: 0.5rem;
+  }
+
+  .news-footer {
+    padding: 0.6rem;
+    max-width: 98%;
+  }
+
+  .target-item {
+    font-size: 0.7rem;
+    gap: 3px;
+  }
+  
+  .return-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+  }
+  
+  /* Additional fix for vertical overflow */
+  .news-footer div:last-child {
+    display: none !important; /* Hide technical alert text on small mobile if it overflows */
+  }
+}
+
+/* Leaflet Overrides - Tactical B&W Tint */
+.leaflet-container {
+  filter: grayscale(100%) contrast(1.2) brightness(0.8);
+}
+
+/* Return Button Style */
+.return-button {
+  background: white;
+  color: black;
+  padding: 0.8rem 2rem;
+  font-weight: 900;
+  text-decoration: none;
+  font-size: 1rem;
+  letter-spacing: 0.1rem;
+  border: 2px solid white;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.return-button:hover {
+  background: var(--military-red);
+  color: white;
+  border-color: var(--military-red);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 45, 45, 0.4);
+}
+

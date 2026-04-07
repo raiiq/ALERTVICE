@@ -4,6 +4,8 @@ import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
 import { deduplicateTitle } from "../components/MediaDisplay";
 import { useLanguage } from "../context/LanguageContext";
+import { extractFlags } from "../../utils/flags";
+import { motion } from "framer-motion";
 
 interface NewsPost {
     id: string;
@@ -415,21 +417,21 @@ export default function MonitorPage() {
             {/* ── MAIN GLOBAL NAVBAR IS NOW IN ROOT LAYOUT ── */}
 
             {/* ── RADAR-SPECIFIC BAR ── */}
-            <header className="h-10 border-b border-white/[0.08] bg-[#09090c]/80 backdrop-blur-md flex items-center gap-4 px-4 shrink-0 z-[800] shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
+            <header className="h-auto min-h-10 py-2 lg:py-0 border-b border-white/[0.08] bg-[#09090c]/80 backdrop-blur-md flex flex-col lg:flex-row items-center gap-4 px-4 shrink-0 z-[800] shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
                 {/* Search */}
-                <div className="relative group">
+                <div className="relative group w-full lg:w-48">
                     <svg className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#0088ff]/40 pointer-events-none group-focus-within:text-[#0088ff] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     <input
                         type="text"
                         placeholder="Scanning radar..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="bg-foreground/5 text-foreground/70 placeholder:text-[#0088ff]/20 text-[10px] py-1 pl-9 pr-4 rounded-none w-48 outline-none border border-border-color/50 focus:border-[#0088ff]/40 transition-all font-black uppercase tracking-widest"
+                        className="bg-foreground/5 text-foreground/70 placeholder:text-[#0088ff]/20 text-[10px] py-1 pl-9 pr-4 rounded-none w-full outline-none border border-border-color/50 focus:border-[#0088ff]/40 transition-all font-black uppercase tracking-widest"
                     />
                 </div>
 
-                {/* Ticker */}
-                <div className="flex-1 overflow-hidden h-full flex items-center mx-6">
+                {/* Ticker - Hidden on very small mobile to save space */}
+                <div className="hidden sm:flex flex-1 overflow-hidden h-full items-center mx-6">
                     <div className="whitespace-nowrap overflow-hidden h-full flex items-center">
                         <div className="inline-flex gap-10 items-center animate-marquee text-[10px] font-bold text-[#0088ff]/50 tracking-widest uppercase">
                             {[...filteredSignals.slice(0, 20), ...filteredSignals.slice(0, 20), ...filteredSignals.slice(0, 20)].map((s, i) => (
@@ -469,7 +471,7 @@ export default function MonitorPage() {
             <div className="flex-1 flex overflow-hidden">
 
                 {/* ── LEFT FEED PANEL ── */}
-                <aside className="w-[320px] bg-[#09090c] border-r border-white/[0.08] flex flex-col shrink-0 z-50 shadow-[4px_0_30px_rgba(0,0,0,0.5)]">
+                <aside className="w-full lg:w-[320px] bg-[#09090c] border-r border-white/[0.08] flex flex-col shrink-0 z-50 shadow-[4px_0_30px_rgba(0,0,0,0.5)]">
                     {/* Tabs */}
                     <div className="px-5 pt-4 pb-0 border-b border-white/[0.05]">
                         <div className="flex items-center gap-6 mb-4">
@@ -494,39 +496,64 @@ export default function MonitorPage() {
                         className="flex-1 overflow-y-auto"
                         style={{ scrollbarWidth: "thin", scrollbarColor: "#0088ff44 transparent" }}
                     >
-                        {filteredSignals.length > 0 ? filteredSignals.map((post, idx) => {
-                            const tagStyle = TAG_COLORS[post.aiTag ?? "default"] ?? TAG_COLORS.default;
-                            const title = deduplicateTitle(post.aiTitle) || post.plainText?.slice(0, 120);
+                        {filteredSignals.length > 0 ? filteredSignals.map((p, idx) => {
+                            const title = deduplicateTitle(p.aiTitle) || p.plainText?.slice(0, 120);
+                            const flags = extractFlags((p.plainText || '') + ' ' + title);
+                            const isUrgent = (title + (p.plainText || "")).toLowerCase().includes("urgent") || 
+                                           (title + (p.plainText || "")).toLowerCase().includes("عاجل") ||
+                                           (title + (p.plainText || "")).toLowerCase().includes("breaking");
+
                             return (
-                                <button
-                                    key={post.id + idx}
-                                    onClick={() => post.location && handleFlyTo(post.location.lat, post.location.lng)}
-                                    className="w-full text-left px-5 py-4 border-b border-white/[0.04] border-l-4 border-l-transparent hover:border-l-[#0088ff] hover:bg-[#0088ff]/[0.03] transition-all group"
+                                <motion.div 
+                                    key={p.id + idx}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: idx * 0.05 }}
                                 >
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <span
-                                                className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded shadow-[0_0_8px_rgba(0,136,255,0.2)]"
-                                                style={{ background: tagStyle.bg, color: tagStyle.text, border: `1px solid ${tagStyle.text}33` }}
-                                            >
-                                                {post.aiTag || "Signal"}
-                                            </span>
-                                            <span className="text-[9px] font-mono text-[#0088ff]/40 font-bold uppercase tracking-widest">R{Math.min(idx + 101, 999)}</span>
+                                    <Link 
+                                        href={`/news/${getPostId(p.id)}`}
+                                        className={`w-full text-left px-5 py-6 border-b border-white/[0.04] flex flex-col gap-3 relative overflow-hidden group liquid-sidebar-card radar-signal-framework ${isUrgent ? 'alarm-flash' : ''}`}
+                                    >
+                                        <div className="animate-ingest" />
+                                        <div className="signal-stream" style={{ ['--stream-delay' as any]: `${(idx % 5) * 0.7}s` }} />
+                                        
+                                        <div className={`flex justify-between items-center ${isAr ? 'flex-row-reverse' : ''}`}>
+                                            <div className={`flex items-center gap-2 ${isAr ? 'flex-row-reverse' : ''}`}>
+                                                <div className="w-1.5 h-1.5 bg-[#0088ff] rounded-none shadow-[0_0_8px_#0088ff] animate-pulse" />
+                                                <span className="text-[11px] font-bold text-[#0088ff]/60 font-mono tracking-widest">
+                                                    {new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                                </span>
+                                            </div>
+                                            <span className="text-[10px] font-bold font-mono uppercase text-foreground/20 blip-flicker">ID-{getPostId(p.id).slice(-4)}</span>
                                         </div>
-                                        <span className="text-[9px] text-foreground/30 font-mono italic">{getTimeAgo(post.date)}</span>
-                                    </div>
 
-                                    <p className="text-[12.5px] font-bold text-foreground/85 group-hover:text-foreground leading-relaxed line-clamp-3 transition-colors mb-2">
-                                        {title}
-                                    </p>
+                                        <h4 className={`text-[16px] font-bold text-foreground/80 group-hover:text-[#0088ff] leading-[1.7] transition-all duration-300 ${isAr ? 'text-right' : 'text-left'}`}>
+                                            {flags.length > 0 && (
+                                                <div className={`inline-flex gap-1 items-center mb-1 ${isAr ? 'ml-2' : 'mr-2'}`}>
+                                                    {flags.map((flag, i) => (
+                                                        <div key={i} className="flex items-center justify-center w-[20px] h-[14px] rounded-[1px] overflow-hidden border border-white/20 shadow-sm shrink-0 bg-white/5">
+                                                            <img src={`https://flagcdn.com/w20/${flag}.png`} alt={flag} className="w-full h-full object-cover" />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {title}
+                                        </h4>
 
-                                    {post.location && (
-                                        <div className="flex items-center gap-2 mt-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                            <div className="w-1.5 h-1.5 bg-[#0088ff] rounded-none shadow-[0_0_5px_#0088ff]" />
-                                            <span className="text-[9px] font-black text-[#0088ff] uppercase tracking-widest">{post.location.name} Intelligence</span>
-                                        </div>
-                                    )}
-                                </button>
+                                        {p.aiSummary && p.aiSummary !== title && (
+                                            <p className={`text-[14px] text-foreground/40 mt-1 leading-relaxed hidden group-hover:block transition-all duration-500 ${isAr ? 'text-right' : 'text-left'}`}>
+                                                {p.aiSummary}
+                                            </p>
+                                        )}
+
+                                        {p.location && (
+                                            <div className={`flex items-center gap-2 mt-2 opacity-100 ${isAr ? 'flex-row-reverse' : ''}`}>
+                                                <div className="w-2 h-[1px] bg-[#0088ff]/30" />
+                                                <span className="text-[9px] font-black text-[#0088ff]/40 uppercase tracking-[0.2em]">SECTOR: {p.location.name}</span>
+                                            </div>
+                                        )}
+                                    </Link>
+                                </motion.div>
                             );
                         }) : (
                             <div className="p-10 text-center flex flex-col items-center gap-4 opacity-30 mt-10">
@@ -537,7 +564,7 @@ export default function MonitorPage() {
                     </div>
                 </aside>
                 {/* ── GLOBE / MAP ── */}
-                <main className="flex-1 relative overflow-hidden bg-[#050508]">
+                <main className="hidden lg:flex flex-1 relative overflow-hidden bg-[#050508]">
                     {isClient && (
                         <GlobeMap
                             signals={filteredSignals}

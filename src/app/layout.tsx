@@ -46,6 +46,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${libreFranklin.variable} ${libreFranklinCondensed.variable} ${ibmPlexArabic.variable} antialiased bg-background`}
+        suppressHydrationWarning
       >
         <Suspense fallback={<MainLoader />}>
           <LanguageProvider>

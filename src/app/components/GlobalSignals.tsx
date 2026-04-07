@@ -84,8 +84,21 @@ export default function GlobalSignals() {
         return newArr;
     };
 
+    if (pathname === '/iran-cooldown') return null;
+
     return (
         <div className={`ticker-wrapper border-b border-white/5 mb-0 relative z-[100] sticky top-0 lg:top-16 ${pathname === '/' ? 'lg:ml-[600px] lg:w-[calc(100%-600px)]' : 'lg:ml-0 lg:w-full'}`}>
+            {/* 0. GLOBAL ALERT BAR (TOP OF ALL BADGES) */}
+            <div className="flex justify-center bg-black/40 border-b border-white/5 py-1">
+                <Link 
+                    href="/iran-cooldown"
+                    className="bg-red-600 text-white px-4 py-1 text-[10px] font-black uppercase flex items-center gap-2 animate-pulse shadow-[0_0_15px_rgba(255,0,0,0.6)] border border-red-400/50 rounded-sm"
+                >
+                    <span className="w-2 h-2 bg-white rounded-full"></span>
+                    {isAr ? 'هدف إيران: العد التنازلي نشط' : 'IRAN TARGETING: COOLDOWN ACTIVE'}
+                </Link>
+            </div>
+
             {/* 1. INTELLIGENCE TICKER (RADAR FLASH) */}
             <div className="intelligence-ticker">
                 <div className="ticker-badge">
