@@ -57,6 +57,22 @@ export default function Navbar({
         } catch (e) { /* ignore */ }
     };
 
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    const handleRefresh = () => {
+        if (isRefreshing) return;
+        setIsRefreshing(true);
+        
+        // 1. Refresh Server Components
+        router.refresh();
+        
+        // 2. Dispatch global event for client components (GlobalSignals, Feed)
+        window.dispatchEvent(new CustomEvent('intelligence-refresh'));
+        
+        // 3. Tactical Cooldown (3s) to prevent spamming the node/Vercel
+        setTimeout(() => setIsRefreshing(false), 3000);
+    };
+
     const categories = [
         { id: 'world', en: 'WORLD', ar: 'عالمي' },
         { id: 'market', en: 'MARKET', ar: 'سوق' },
@@ -65,22 +81,22 @@ export default function Navbar({
     ];
 
     const handleCategoryClick = (catId: string) => {
+        console.log(`[Navbar] Navigation Tactical: ${catId}`);
         if (catId === 'admin') {
-            router.push(isAdmin ? '/admin/dashboard' : '/admin/login');
+            window.location.assign(isAdmin ? '/admin/dashboard' : '/admin/login');
         } else if (catId === 'sql') {
-            router.push('/admin/sql');
+            window.location.assign('/admin/sql');
         } else if (catId === 'market') {
-            router.push('/market');
+            window.location.assign('/market');
         } else if (catId === 'live') {
-            router.push('/live');
+            window.location.assign('/live');
         } else if (catId === 'iran-cooldown') {
-            window.location.href = '/iran-cooldown';
+            window.location.assign('/iran-cooldown');
+        } else if (catId === 'all') {
+            window.location.assign('/');
         } else {
-            if (pathname !== '/') {
-                router.push('/?cat=' + catId);
-            } else if (setActiveCategory) {
-                setActiveCategory(catId);
-            }
+            // General categories (World, etc.) - These remain SPA style for speed
+            router.push('/?cat=' + catId);
         }
     };
 
@@ -319,38 +335,42 @@ export default function Navbar({
                                     return (
                                         <div key={cat.id} className="flex items-center">
                                             {idx > 0 && <div className="w-[1px] h-3 bg-white/5 mx-0.5"></div>}
-                                            {cat.id === 'iran-cooldown' ? (
-                                                <button
-                                                    onClick={() => handleCategoryClick(cat.id)}
-                                                    className={`h-11 px-3 text-[10px] font-black uppercase transition-all duration-300 relative group/btn flex items-center ${isActive ? 'text-primary bg-white/5 shadow-[inset_0_0_10px_rgba(var(--primary-rgb),0.05)]' : 'text-red-500 hover:text-red-400 hover:bg-white/5'}`}
+                                            <button
+                                                onClick={() => handleCategoryClick(cat.id)}
+                                                className={`h-11 px-3 text-[10px] font-black uppercase transition-all duration-300 relative group/btn ${isActive ? 'text-primary bg-white/5 shadow-[inset_0_0_10px_rgba(var(--primary-rgb),0.05)]' : (cat.id === 'iran-cooldown' ? 'text-red-500 hover:text-red-400' : 'text-foreground/40 hover:text-foreground')} hover:bg-white/5`}
+                                            >
+                                                <span 
+                                                    className="relative z-10 flex items-center gap-1.5"
+                                                    style={isAr ? { fontFamily: 'var(--font-arabic)', fontSize: '11px' } : {}}
                                                 >
-                                                    <span 
-                                                        className="relative z-10 flex items-center gap-1.5"
-                                                        style={isAr ? { fontFamily: 'var(--font-arabic)', fontSize: '11px' } : {}}
-                                                    >
-                                                        {pathname !== '/iran-cooldown' && (
-                                                            <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_5px_currentColor]"></span>
-                                                        )}
-                                                        {isAr ? cat.ar : cat.en}
-                                                    </span>
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={() => handleCategoryClick(cat.id)}
-                                                    className={`h-11 px-3 text-[10px] font-black uppercase transition-all duration-300 relative group/btn ${isActive ? 'text-primary bg-white/5 shadow-[inset_0_0_10px_rgba(var(--primary-rgb),0.05)]' : 'text-foreground/40 hover:text-foreground hover:bg-white/5'}`}
-                                                >
-                                                    <span 
-                                                        className="relative z-10"
-                                                        style={isAr ? { fontFamily: 'var(--font-arabic)', fontSize: '11px' } : {}}
-                                                    >
-                                                        {isAr ? cat.ar : cat.en}
-                                                    </span>
-                                                </button>
-                                            )}
+                                                    {cat.id === 'iran-cooldown' && pathname !== '/iran-cooldown' && (
+                                                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_5px_currentColor]"></span>
+                                                    )}
+                                                    {isAr ? cat.ar : cat.en}
+                                                </span>
+                                            </button>
                                         </div>
                                     );
                                 })}
                             </div>
+
+                            {/* REFRESH CONTROL */}
+                            <div className="w-[1px] h-10 bg-white/10 mx-1 shrink-0"></div>
+                            <button
+                                onClick={handleRefresh}
+                                disabled={isRefreshing}
+                                className={`h-11 w-11 flex items-center justify-center transition-all ${isRefreshing ? 'opacity-50 cursor-wait' : 'hover:bg-white/10 text-primary active:scale-95'}`}
+                                title={isAr ? "تحديث الاستخبارات" : "REFRESH INTELLIGENCE"}
+                            >
+                                <svg 
+                                    className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </button>
 
                             <div className="w-[1px] h-5 bg-white/10 mx-1"></div>
 

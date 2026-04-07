@@ -48,7 +48,6 @@ export default function RootLayout({
         className={`${libreFranklin.variable} ${libreFranklinCondensed.variable} ${ibmPlexArabic.variable} antialiased bg-background`}
         suppressHydrationWarning
       >
-        <Suspense fallback={<MainLoader />}>
           <LanguageProvider>
             <LanguageWrapper>
               <div className="bg-pulse-overlay">
@@ -58,10 +57,11 @@ export default function RootLayout({
               <TranslationLoader />
               <Navbar />
               <GlobalSignals />
-              {children}
+              <Suspense fallback={<MainLoader />}>
+                {children}
+              </Suspense>
             </LanguageWrapper>
           </LanguageProvider>
-        </Suspense>
       </body>
     </html>
   );

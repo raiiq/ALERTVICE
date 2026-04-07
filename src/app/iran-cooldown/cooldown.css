@@ -21,6 +21,10 @@
   font-family: 'JetBrains Mono', monospace; /* Default technical font */
 }
 
+.font-arabic {
+  font-family: var(--font-arabic, 'IBM Plex Sans Arabic'), sans-serif !important;
+}
+
 
 /* Background Trump image - 50% transparent */
 .trump-bg-overlay {
@@ -154,9 +158,13 @@
   max-width: 900px;
   background: var(--news-black);
   padding: 2rem;
-  border-left: 8px solid var(--military-red);
   backdrop-filter: blur(15px);
   box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+}
+
+[dir="rtl"] .news-footer {
+  border-left: none;
+  border-right: 8px solid var(--military-red);
 }
 
 .status-badge {
@@ -164,7 +172,7 @@
   background: var(--military-red);
   padding: 3px 8px;
   border-radius: 2px;
-  margin-right: 10px;
+  margin-inline-end: 10px;
   animation: blink 1s infinite;
 }
 

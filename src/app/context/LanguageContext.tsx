@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type Language = "en" | "ar";
@@ -20,6 +20,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const [isTranslating, setIsTranslating] = useState(false);
     const router = useRouter();
     const searchParams = useSearchParams();
+    const [isPending, startTransition] = useTransition();
+
+    // Combined pending states
+    const activeTranslating = isTranslating || isPending;
 
     // React to URL changes (e.g. from router.push)
     useEffect(() => {
@@ -51,16 +55,18 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         setIsTranslating(true);
         
         try {
-            setLangState(newLang);
-            localStorage.setItem("newsLang", newLang);
-            
-            // Refresh server components and cache
-            router.refresh();
-            
-            // Keep the overlay for a short duration to mask content refresh
-            setTimeout(() => {
-                setIsTranslating(false);
-            }, 800);
+            startTransition(() => {
+                setLangState(newLang);
+                localStorage.setItem("newsLang", newLang);
+                
+                // Refresh server components and cache
+                router.refresh();
+                
+                // Keep the overlay for a short duration to mask content refresh
+                setTimeout(() => {
+                    setIsTranslating(false);
+                }, 400); // Tactical speed enhancement
+            });
         } catch (err) {
             console.error("[LanguageContext] Failed to persist language:", err);
             setIsTranslating(false);
@@ -75,7 +81,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const isAr = lang === "ar";
 
     return (
-        <LanguageContext.Provider value={{ lang, setLang, toggleLang, isAr, isTranslating }}>
+        <LanguageContext.Provider value={{ lang, setLang, toggleLang, isAr, isTranslating: activeTranslating }}>
             {children}
         </LanguageContext.Provider>
     );

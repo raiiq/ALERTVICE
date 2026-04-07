@@ -68,8 +68,18 @@ export default function GlobalSignals() {
         };
 
         fetchAllSignals();
-        const interval = setInterval(fetchAllSignals, 1000); // 1s refresh
-        return () => clearInterval(interval);
+        const interval = setInterval(fetchAllSignals, 30000); // 30s background refresh (Tactical efficiency)
+        
+        const handleManualRefresh = () => {
+            console.log("[GlobalSignals] Manual Refresh Triggered");
+            fetchAllSignals();
+        };
+        window.addEventListener('intelligence-refresh', handleManualRefresh);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('intelligence-refresh', handleManualRefresh);
+        };
     }, [lang]);
 
     const getPostId = (fullId: string) => fullId.split('/').pop();
@@ -78,6 +88,7 @@ export default function GlobalSignals() {
     const repeatArray = (arr: any[], min: number) => {
         if (arr.length === 0) return [];
         let newArr = [...arr];
+        // Optimized: Reduced massive repetition for better browser performance
         while (newArr.length < min) {
             newArr = [...newArr, ...arr];
         }
@@ -108,7 +119,7 @@ export default function GlobalSignals() {
                 <div className="ticker-content relative overflow-hidden flex-1 h-full flex items-center" dir="ltr">
                     <div className={`${isAr ? 'animate-marquee-rtl' : 'animate-marquee'} flex items-center gap-32`}>
                         {signals.length > 0 ? (
-                            repeatArray(signals, 20).map((p, idx) => {
+                            repeatArray(signals, 4).map((p, idx) => {
                                 const flags = extractFlags((p.plainText || '') + ' ' + (p.aiTitle || ''));
                                 return (
                                 <Link key={`ticker-${idx}`} href={`/news/${getPostId(p.id)}`} className={`text-[10px] font-bold text-foreground/80 hover:text-primary transition-all uppercase whitespace-nowrap tracking-wider ${isAr ? 'flex-row-reverse' : ''}`}>
@@ -148,11 +159,11 @@ export default function GlobalSignals() {
                 <div className="urgent-dispatch-content relative overflow-hidden flex-1 h-full flex items-center" dir="ltr">
                     {urgentSignals.length > 0 ? (
                         <div className={`${isAr ? 'animate-urgent-marquee-rtl' : 'animate-urgent-marquee'} flex items-center gap-64`}>
-                            {repeatArray(urgentSignals, 20).map((post, idx) => {
+                            {repeatArray(urgentSignals, 4).map((post, idx) => {
                                 const flags = extractFlags((post.plainText || '') + ' ' + (post.aiTitle || ''));
                                 return (
                                 <Link key={`urgent-${idx}`} href={`/news/${getPostId(post.id)}`} className={`text-[14px] font-bold text-white hover:underline transition-all whitespace-nowrap tracking-wider flex items-center gap-4 ${isAr ? 'flex-row-reverse' : ''}`}>
-                                    <span className="opacity-60 text-[10px] whitespace-nowrap">{new Date(post.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                                    <span className="opacity-60 text-[10px] whitespace-nowrap" suppressHydrationWarning>{new Date(post.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                                     {flags.length > 0 && (
                                         <div className="flex gap-1 items-center">
                                             {flags.map((flag, i) => (
@@ -184,7 +195,7 @@ export default function GlobalSignals() {
                     </div>
                     <div className="market-dispatch-content relative overflow-hidden flex-1 h-full flex items-center" dir="ltr">
                         <div className={`${isAr ? 'animate-marquee-rtl' : 'animate-marquee'} flex items-center gap-12 px-6`}>
-                            {repeatArray([...Array(1)], 10).map((_, i) => (
+                            {repeatArray([...Array(1)], 3).map((_, i) => (
                                 <div key={i} className={`flex items-center gap-12 ${isAr ? 'flex-row-reverse' : ''}`}>
                                     {/* ISX60 */}
                                     <div className={`flex items-center gap-2 shrink-0 ${isAr ? 'flex-row-reverse' : ''}`}>

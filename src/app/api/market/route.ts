@@ -119,10 +119,13 @@ export async function GET(req: Request) {
         ];
 
         if (supabaseAdmin) {
-            const { error: insertErr } = await supabaseAdmin.from('market_history').insert(entries);
-            if (insertErr) console.error("Market history insert error:", insertErr);
+            // Background Task: Persist to Supabase without blocking the GET response
+            (async () => {
+                const { error: insertErr } = await supabaseAdmin.from('market_history').insert(entries);
+                if (insertErr) console.error("Market history insert error:", insertErr);
+            })();
         } else {
-            console.warn("Missing SUPABASE_SERVICE_ROLE_KEY. Skipping market history insert.");
+            console.warn("Missing SUPABASE_SERVICE_ROLE_KEY. Skipping market history background insert.");
         }
 
         // ... existing timeframe logic ...
@@ -217,6 +220,10 @@ export async function GET(req: Request) {
                 changePercent: silverPrice > 0 ? (silverChange / silverPrice * 100).toFixed(2) : '0.00',
                 lastUpdated: timestamp,
                 history: formatHistory('SILVER')
+            }
+        }, {
+            headers: {
+                'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=59',
             }
         });
     } catch (error) {

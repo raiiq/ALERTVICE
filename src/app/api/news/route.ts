@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { syncTelegramChannel } from '@/lib/telegramSync';
 
+// Tactical optimization: Allow edge caching while keeping dynamism
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 60; // 60s baseline edge revalidation
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -19,9 +20,28 @@ export async function GET(request: Request) {
     try {
         const supabaseAdmin = (supabaseUrl && supabaseServiceKey) ? createClient(supabaseUrl, supabaseServiceKey) : null;
 
-        // 1. Sync Latest from Telegram (Library handles throttling and dual-language)
+        // 1. Background Sync (Decoupled from blocking path)
+        // Only attempt sync on the first page and if not a search
         if (offset === 0 && !q) {
-            await syncTelegramChannel();
+            // FIRE AND FORGET: Do not await external network sync on the critical path
+            (async () => {
+                try {
+                    // Check if we already synced recently to avoid slamming Telegram/Supabase
+                    const { data: latest } = await supabaseAdmin!
+                        .from('posts')
+                        .select('post_date')
+                        .order('post_date', { ascending: false })
+                        .limit(1);
+                    
+                    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+                    if (!latest?.[0] || latest[0].post_date < fiveMinutesAgo) {
+                        console.log("[API News] Background Sync Initiated");
+                        await syncTelegramChannel();
+                    }
+                } catch (e) {
+                    console.error("Background sync failed silently:", e);
+                }
+            })();
         }
 
         // 2. Fetch from Database
@@ -125,6 +145,10 @@ export async function GET(request: Request) {
                 }),
                 hasMore: hasMore,
                 nextOffset: fetchOffset + posts.length
+            }, {
+                headers: {
+                    'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=59',
+                }
             });
         }
 

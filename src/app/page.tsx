@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import { MediaDisplay, parseMedia, deduplicateTitle } from "./components/MediaDisplay";
 import { motion, AnimatePresence } from "framer-motion";
@@ -303,20 +303,22 @@ export default function Home() {
   const getPostId = (idString: string) => idString.split('/').pop() || "";
   const alignClass = isAr ? 'text-right' : 'text-left';
 
-  // URGENT SIGNAL FILTERING (TELEGRAM SIGNALS ONLY)
-  const urgentSignals = signals.filter(s => {
+  // URGENT SIGNAL FILTERING (TELEGRAM SIGNALS ONLY) - Memoized for Latency Reduction
+  const urgentSignals = useMemo(() => signals.filter(s => {
     const combined = ((s.plainText || "") + " " + (s.aiTitle || "") + " " + (s.aiSummary || "")).toLowerCase();
     return combined.includes("عاجل") || combined.includes("urgent") || combined.includes("breaking") || combined.includes("alert");
-  }).slice(0, 1);
-  const monitorPosts = signals.slice(0, 50);
-  const filteredPosts = articles.filter(p => {
+  }).slice(0, 1), [signals]);
+
+  const monitorPosts = useMemo(() => signals.slice(0, 50), [signals]);
+
+  const filteredPosts = useMemo(() => articles.filter(p => {
     if (activeCategory === "all" || activeCategory === "world") return true;
     return p.aiTag === activeCategory;
-  });
+  }), [articles, activeCategory]);
 
-  const heroPost = filteredPosts.length > 0 ? filteredPosts[0] : null;
-  const secondaryPosts = filteredPosts.length > 1 ? filteredPosts.slice(1, 5) : [];
-  const feedPosts = filteredPosts.length > 5 ? filteredPosts.slice(5) : [];
+  const heroPost = useMemo(() => filteredPosts.length > 0 ? filteredPosts[0] : null, [filteredPosts]);
+  const secondaryPosts = useMemo(() => filteredPosts.length > 1 ? filteredPosts.slice(1, 5) : [], [filteredPosts]);
+  const feedPosts = useMemo(() => filteredPosts.length > 5 ? filteredPosts.slice(5) : [], [filteredPosts]);
 
   const militaryLoader = (
     <div className="fixed inset-0 z-[10000] bg-black/95 flex items-center justify-center p-8 font-mono overflow-hidden">
@@ -351,20 +353,9 @@ export default function Home() {
     </div>
   );
 
-  if (!mounted || (loading && articles.length === 0)) return militaryLoader;
 
   return (
     <div className={`min-h-screen text-foreground tracking-wide flex flex-col relative z-10`} dir={isAr ? "rtl" : "ltr"}>
-      {/* LOADING SCREEN OVERLAY */}
-      {!loadingGone && (
-        <motion.div 
-          initial={{ opacity: 1 }}
-          animate={{ opacity: loadingFading ? 0 : 1 }}
-          className="fixed inset-0 z-[10000]"
-        >
-          {militaryLoader}
-        </motion.div>
-      )}
 
       {/* Add top padding on desktop to clear the fixed navbar */}
       <main className="flex-grow w-full flex flex-col lg:flex-row mx-auto relative z-10 pt-0 lg:pt-16 lg:pl-[600px]">
@@ -372,6 +363,18 @@ export default function Home() {
         {/* FEED SECTION - OFFSET ON DESKTOP ONLY */}
         <div className="flex-1 px-4 sm:px-6 lg:px-16 py-6 lg:py-12 w-full max-w-screen-2xl mx-auto flex flex-col gap-8 lg:gap-12">
           <motion.div variants={containerVars} initial="hidden" animate="show" className="flex flex-col gap-16">
+            {loading && articles.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-32 text-center gap-6">
+                <div className="p-1 rounded-2xl border border-white/5 bg-zinc-900/50 flex items-center justify-center animate-spin">
+                  <svg className="w-8 h-8 text-primary/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-xl font-black text-foreground uppercase tracking-widest">{isAr ? 'جاري تحميل الاستخبارات...' : 'LOADING INTELLIGENCE...'}</h3>
+                  <p className="text-sm text-text-muted max-w-xs">{isAr ? 'نحن نقوم بمزامنة البيانات المشفرة الآن...' : 'Synchronizing encrypted tactical data streams.'}</p>
+                </div>
+              </div>
+            )}
+
             {!loading && articles.length === 0 && (
               <div className="flex flex-col items-center justify-center py-32 text-center gap-6">
                 <div className="p-1 rounded-2xl border border-white/5 bg-zinc-900/50 flex items-center justify-center animate-pulse">
