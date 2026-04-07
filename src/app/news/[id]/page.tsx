@@ -221,10 +221,6 @@ export default function ArticlePage() {
                                         <div className="w-2 h-2 bg-primary rounded-none shadow-[0_0_8px_var(--primary)]"></div>
                                         <h4 className="font-bold text-foreground uppercase tracking-widest text-sm">{isAr ? 'نهاية التقرير' : 'End of Report'}</h4>
                                     </div>
-                                    <a href={`https://t.me/alertvice/${numericalId}`} target="_blank" rel="noopener noreferrer" className={`px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-muted-foreground hover:text-foreground font-bold uppercase text-[11px] tracking-widest transition-colors rounded-none shadow-sm flex items-center gap-3 hover:shadow-[0_0_15px_var(--primary)] hover:border-primary/50 ${isAr ? 'flex-row-reverse' : ''}`}>
-                                        {isAr ? 'تحقق من المصدر' : 'Verify Source'}
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isAr ? "M14 5l7 7m0 0l-7 7m7-7H3" : "M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"}></path></svg>
-                                    </a>
                                 </div>
                             </article>
                         </div>
@@ -247,7 +243,6 @@ export default function ArticlePage() {
                         <Link href="/" className="text-muted-foreground hover:text-foreground transition-all">{isAr ? "الرئيسية" : "News"}</Link>
                         <Link href="/about" className="text-muted-foreground hover:text-foreground transition-all">{isAr ? "عن الشركة" : "About"}</Link>
                         <Link href="/terms" className="text-muted-foreground hover:text-foreground transition-all">{isAr ? "الشروط" : "Terms"}</Link>
-                        <a href="https://t.me/alertvice" className="text-primary font-black">{isAr ? "تيليجرام" : "Telegram"}</a>
                     </div>
                     <div className="flex flex-col items-center lg:items-end gap-2 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/20">
                         <span>&copy; {mounted ? new Date().getFullYear() : "2026"} Alertvice</span>

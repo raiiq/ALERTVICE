@@ -106,7 +106,6 @@ export default function TermsPage() {
                         </div>
                         <div className="flex flex-col gap-4">
                             <span className="text-foreground text-[10px] text-primary mb-2">{isAr ? "تواصل" : "Connect"}</span>
-                            <a href="https://t.me/alertvice" target="_blank" rel="noopener noreferrer" className="text-text-muted hover:text-foreground transition-colors">Telegram</a>
                             <span className="text-text-muted">Email: intel@alertvice.site</span>
                         </div>
                     </div>

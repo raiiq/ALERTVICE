@@ -61,27 +61,12 @@ export default function AboutPage() {
                             {isAr ? "الالتزام بالدقة" : "Commitment to Accuracy"}
                         </h2>
                         <p>
-                            {isAr
-                                ? "في عصر المعلومات المضللة، نلتزم في أليرت فايس بالشفافية. نوفر روابط مباشرة للمصادر الأصلية لكل خبر، مما يتيح لمتابعينا التحقق من صحة البيانات بأنفسهم. هدفنا هو بناء جسر من الثقة بين التكنولوجيا المتقدمة والوعي البشري."
-                                : "In an era of misinformation, Alertvice is committed to transparency. We provide direct links to original sources for every report, allowing our audience to verify data independently. Our goal is to build a bridge of trust between advanced technology and human awareness."
-                            }
+                                ? "في عصر المعلومات المضللة، نلتزم في أليرت فايس بالشفافية والدقة. هدفنا هو بناء جسر من الثقة بين التكنولوجيا المتقدمة والوعي البشري من خلال تقديم استخبارات موثوقة ومحللة بعناية."
+                                : "In an era of misinformation, Alertvice is committed to transparency and precision. Our goal is to build a bridge of trust between advanced technology and human awareness through carefully analyzed and verified intelligence."
                         </p>
                     </section>
                 </div>
 
-                <div className="mt-20 p-8 border border-border bg-surface rounded-none text-center">
-                    <p className="text-sm font-bold uppercase tracking-[0.2em] text-text-muted mb-6">
-                        {isAr ? "انضم إلى شبكتنا الاستخباراتية" : "Join Our Intelligence Network"}
-                    </p>
-                    <a
-                        href="https://t.me/alertvice"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block px-10 py-4 bg-primary text-primary-foreground font-black uppercase tracking-widest rounded shadow-[0_0_20px_var(--primary)] hover:scale-105 transition-transform"
-                    >
-                        Telegram Channel
-                    </a>
-                </div>
             </main>
 
             <footer className="w-full bg-[#020512] border-t border-border py-12 mt-20">
@@ -108,7 +93,6 @@ export default function AboutPage() {
                         </div>
                         <div className="flex flex-col gap-4">
                             <span className="text-foreground text-[10px] text-primary mb-2">{isAr ? "تواصل" : "Connect"}</span>
-                            <a href="https://t.me/alertvice" target="_blank" rel="noopener noreferrer" className="text-text-muted hover:text-foreground transition-colors">Telegram</a>
                             <span className="text-text-muted">Email: intel@alertvice.site</span>
                         </div>
                     </div>

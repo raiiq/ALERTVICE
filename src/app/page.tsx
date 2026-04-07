@@ -543,7 +543,6 @@ export default function Home() {
           <div className="flex gap-8 text-[11px] font-black text-text-muted">
             <Link href="/" className="hover:text-primary">NEWS</Link>
             <Link href="/about" className="hover:text-primary">PROTOCOLS</Link>
-            <a href="https://t.me/alertvice" className="hover:text-primary">ENCRYPTED TELEGRAM</a>
           </div>
           <div className="text-[10px] text-foreground/20 font-mono">&copy; 2026 ALERTVICE CORE</div>
         </div>
