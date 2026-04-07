@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useTransition } from "react";
+import { createContext, useContext, useState, useEffect, useTransition, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type Language = "en" | "ar";
@@ -19,23 +19,26 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const [lang, setLangState] = useState<Language>("en");
     const [isTranslating, setIsTranslating] = useState(false);
     const router = useRouter();
-    const searchParams = useSearchParams();
     const [isPending, startTransition] = useTransition();
 
     // Combined pending states
     const activeTranslating = isTranslating || isPending;
 
-    // React to URL changes (e.g. from router.push)
-    useEffect(() => {
-        const urlLang = searchParams.get('lang') as Language;
-        if (urlLang === 'ar' || urlLang === 'en') {
-            if (urlLang !== lang) {
-                console.log(`[LanguageContext] URL Sync: ${urlLang}`);
-                setLangState(urlLang);
-                localStorage.setItem("newsLang", urlLang);
+    // React to URL changes via a separate component wrapped in Suspense
+    function LanguageSync() {
+        const searchParams = useSearchParams();
+        useEffect(() => {
+            const urlLang = searchParams.get('lang') as Language;
+            if (urlLang === 'ar' || urlLang === 'en') {
+                if (urlLang !== lang) {
+                    console.log(`[LanguageSync] URL Sync: ${urlLang}`);
+                    setLangState(urlLang);
+                    localStorage.setItem("newsLang", urlLang);
+                }
             }
-        }
-    }, [searchParams, lang]);
+        }, [searchParams]);
+        return null;
+    }
 
     // Initial load from localStorage
     useEffect(() => {
@@ -82,6 +85,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
     return (
         <LanguageContext.Provider value={{ lang, setLang, toggleLang, isAr, isTranslating: activeTranslating }}>
+            <Suspense fallback={null}>
+                <LanguageSync />
+            </Suspense>
             {children}
         </LanguageContext.Provider>
     );
