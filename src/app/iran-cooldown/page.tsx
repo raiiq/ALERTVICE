@@ -15,14 +15,15 @@ const DynamicMap = dynamic(() => import('./DynamicMap'), {
 const CountdownPage = () => {
   const { lang, isAr } = useLanguage();
   const [timeLeft, setTimeLeft] = useState({
+    days: 0,
     hours: 0,
     minutes: 0,
     seconds: 0,
   });
 
   useEffect(() => {
-    // Target: Wednesday, 8 April 2026, 03:00:00 Baghdad Time (UTC+3)
-    const targetDate = new Date('2026-04-08T03:00:00+03:00');
+    // Target: Tuesday, 21 April 2026, 03:00:00 Baghdad Time (UTC+3)
+    const targetDate = new Date('2026-04-21T03:00:00+03:00');
 
     const timer = setInterval(() => {
       const now = new Date();
@@ -30,12 +31,13 @@ const CountdownPage = () => {
 
       if (difference <= 0) {
         clearInterval(timer);
-        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       } else {
-        const hours = Math.floor(difference / (1000 * 60 * 60));
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
         const minutes = Math.floor((difference / 1000 / 60) % 60);
         const seconds = Math.floor((difference / 1000) % 60);
-        setTimeLeft({ hours, minutes, seconds });
+        setTimeLeft({ days, hours, minutes, seconds });
       }
     }, 1000);
 
@@ -49,11 +51,12 @@ const CountdownPage = () => {
     title: isAr ? "استهداف البنية التحتية الإيرانية" : "IRAN INFRASTRUCTURE TARGETING",
     subtitle: isAr ? "العد التنازلي للتأثير" : "COOLDOWN TO IMPACT",
     warning: isAr ? "تحذير: قد تستخدم الولايات المتحدة القنابل النووية لقصف إيران" : "WARNING: USA MIGHT USE NUCLEAR BOMBS TO BOMB IRAN",
+    days: isAr ? "أيام" : "Days",
     hours: isAr ? "ساعات" : "Hours",
     minutes: isAr ? "دقائق" : "Minutes",
     seconds: isAr ? "ثواني" : "Seconds",
     alert: isAr ? "تنبيه: العد التنازلي التدميري نشط. جميع الأهداف في المدى." : "ALERT: DESTRUCTIVE COOLDOWN ACTIVE. ALL TARGETS ARE IN RANGE.",
-    remaining: isAr ? "الوقت المتبقي: التأثير المجدول ليوم الأربعاء الساعة 03:00 صباحاً بتوقيت بغداد." : "REMAINING TIME: IMPACT SCHEDULED FOR WEDNESDAY AT 03:00 AM BAGHDAD TIME.",
+    remaining: isAr ? "الوقت المتبقي: التأثير المجدول ليوم الثلاثاء الساعة 03:00 صباحاً بتوقيت بغداد." : "REMAINING TIME: IMPACT SCHEDULED FOR TUESDAY AT 03:00 AM BAGHDAD TIME.",
     viewNews: isAr ? "عرض الأخبار" : "VIEW NEWS",
     target: isAr ? "هدف" : "TARGET",
     nuclear: isAr ? "المرافق النووية:" : "NUCLEAR FACILITIES:",
@@ -85,6 +88,13 @@ const CountdownPage = () => {
         </div>
 
         <div className="timer-container" dir="ltr">
+          <div className="timer-block">
+            <span className="timer-value">{formatNumber(timeLeft.days)}</span>
+            <span className="timer-label">{t.days}</span>
+          </div>
+          <div className="timer-block">
+            <span className="timer-value" style={{ color: 'var(--military-yellow)' }}>:</span>
+          </div>
           <div className="timer-block">
             <span className="timer-value">{formatNumber(timeLeft.hours)}</span>
             <span className="timer-label">{t.hours}</span>
