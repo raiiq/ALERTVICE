@@ -40,13 +40,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         return null;
     }
 
-    // Initial load from localStorage
+    // Initial load from localStorage and URL
     useEffect(() => {
         const savedLang = localStorage.getItem("newsLang") as Language;
-        const urlLang = new URLSearchParams(window.location.search).get('lang');
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlLang = urlParams.get('lang') as Language;
         
-        // Only set from storage if no URL param is present
-        if (savedLang && !urlLang) {
+        if (urlLang === 'ar' || urlLang === 'en') {
+            setLangState(urlLang);
+        } else if (savedLang === 'ar' || savedLang === 'en') {
             setLangState(savedLang);
         }
     }, []);

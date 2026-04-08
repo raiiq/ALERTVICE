@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
         const MASTER_EMAIL = 'outofrai@gmail.com';
-        const MASTER_PASS = 'baraa762020';
+        const MASTER_PASS = 'Baraa762030#';
 
         let isValid = false;
         let adminData = null;

@@ -20,6 +20,8 @@ const CountdownPage = () => {
     minutes: 0,
     seconds: 0,
   });
+  const [miniNews, setMiniNews] = useState<any[]>([]);
+  const [newsLoading, setNewsLoading] = useState(true);
 
   useEffect(() => {
     // Target: Tuesday, 21 April 2026, 03:00:00 Baghdad Time (UTC+3)
@@ -44,6 +46,33 @@ const CountdownPage = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Fetch Regional News (Mini Sidebar)
+  useEffect(() => {
+    const fetchRegionalNews = async () => {
+      try {
+        setNewsLoading(true);
+        // Querying Supabase for Iran-specific text signals (strictly no media)
+        // Targeted keywords for multi-word OR search in backend
+        const query = isAr 
+          ? "إيران طهران أصفهان نطنز بوشهر تبريز مشهد كرمان" 
+          : "Iran Tehran Isfahan Natanz Bushehr Tabriz Mashhad Kerman";
+        const res = await fetch(`/api/news?q=${encodeURIComponent(query)}&type=signal&limit=15&t=${Date.now()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setMiniNews(data.posts || []);
+        }
+      } catch (e) {
+        console.error("Failed to fetch sidebar news", e);
+      } finally {
+        setNewsLoading(false);
+      }
+    };
+
+    fetchRegionalNews();
+    const interval = setInterval(fetchRegionalNews, 60000); // 60s tactical pulse
+    return () => clearInterval(interval);
+  }, [isAr]);
+
   const formatNumber = (num: number) => num.toString().padStart(2, '0');
 
   // Tactical Translations
@@ -64,7 +93,10 @@ const CountdownPage = () => {
     water: isAr ? "البنية التحتية للمياه:" : "WATER INFRASTRUCTURE:",
     ready: isAr ? "جاهز" : "READY",
     linked: isAr ? "مرتبط" : "LINKED",
-    locked: isAr ? "مقفل" : "LOCKED"
+    locked: isAr ? "مقفل" : "LOCKED",
+    ceasefire: isAr ? "وقف إطلاق النار: الولايات المتحدة - إسرائيل - إيران (باستثناء لبنان) | 7 أبريل - 21 أبريل" : "CEASEFIRE: USA-ISRAEL-IRAN (EXCL. LEBANON) | APRIL 07 - APRIL 21",
+    intelSidebar: isAr ? "الاستخبارات الإقليمية" : "REGIONAL INTELLIGENCE",
+    noNews: isAr ? "لا توجد تحديثات حالية للقطاع" : "NO CURRENT SECTOR UPDATES"
   };
 
   return (
@@ -77,61 +109,96 @@ const CountdownPage = () => {
         <DynamicMap />
       </div>
 
-      {/* Layer 2: UI Overlays (News Style) */}
-      <div className="cooldown-content-container">
-        <div className="news-header">
-          <h1>{t.title}</h1>
-        </div>
-        <div className="news-subtitle">{t.subtitle}</div>
-        <div className="nuclear-warning">
-          {t.warning}
-        </div>
-
-        <div className="timer-container" dir="ltr">
-          <div className="timer-block">
-            <span className="timer-value">{formatNumber(timeLeft.days)}</span>
-            <span className="timer-label">{t.days}</span>
-          </div>
-          <div className="timer-block">
-            <span className="timer-value" style={{ color: 'var(--military-yellow)' }}>:</span>
-          </div>
-          <div className="timer-block">
-            <span className="timer-value">{formatNumber(timeLeft.hours)}</span>
-            <span className="timer-label">{t.hours}</span>
-          </div>
-          <div className="timer-block">
-            <span className="timer-value" style={{ color: 'var(--military-yellow)' }}>:</span>
-          </div>
-          <div className="timer-block">
-            <span className="timer-value">{formatNumber(timeLeft.minutes)}</span>
-            <span className="timer-label">{t.minutes}</span>
-          </div>
-          <div className="timer-block">
-            <span className="timer-value" style={{ color: 'var(--military-yellow)' }}>:</span>
-          </div>
-          <div className="timer-block">
-            <span className="timer-value">{formatNumber(timeLeft.seconds)}</span>
-            <span className="timer-label">{t.seconds}</span>
-          </div>
-        </div>
-
-        <div className="news-footer">
-          <div className="target-list">
-            <div className="target-item"><span className="status-badge">{t.target}</span> <strong>{t.nuclear}</strong> {t.ready}</div>
-            <div className="target-item"><span className="status-badge">{t.target}</span> <strong>{t.oil}</strong> {t.linked}</div>
-            <div className="target-item"><span className="status-badge">{t.target}</span> <strong>{t.water}</strong> {t.locked}</div>
-          </div>
-          <div className={`footer-details ${isAr ? 'text-right' : 'text-left'}`} style={{ marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
-            <div style={{ width: '100%' }}>
-              <p><strong>{isAr ? 'تنبيه:' : 'ALERT:'}</strong> {t.alert}</p>
-              <p><strong>{isAr ? 'الوقت المتبقي:' : 'REMAINING TIME:'}</strong> {t.remaining}</p>
+        {/* Layer 2: UI Overlays (Tactical Split View) */}
+        <div className="cooldown-layout-grid">
+          
+          {/* Left Sidebar: Mini News */}
+          <div className="mini-news-sidebar">
+            <div className="sidebar-header">
+              <div className="pulse-dot"></div>
+              {t.intelSidebar}
             </div>
-            <Link href="/" className="return-button">
-              {t.viewNews}
-            </Link>
+            <div className="sidebar-scroll">
+              {newsLoading ? (
+                <div className="news-loading-skeleton">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="skeleton-item animate-pulse"></div>
+                  ))}
+                </div>
+              ) : miniNews.length > 0 ? (
+                miniNews.map((post, idx) => (
+                  <Link key={idx} href={`/news/${post.id.split('/').pop()}`} className="sidebar-news-item">
+                    <div className="item-time">{new Date(post.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                    <div className="item-title">{post.aiTitle || post.plainText?.slice(0, 60)}</div>
+                  </Link>
+                ))
+              ) : (
+                <div className="no-news-status">{t.noNews}</div>
+              )}
+            </div>
+          </div>
+
+          <div className="cooldown-content-container">
+            {/* Ceasefire Badge */}
+            <div className="ceasefire-badge">
+              <span className="badge-icon">⚠</span>
+              {t.ceasefire}
+            </div>
+
+            <div className="news-header">
+              <h1>{t.title}</h1>
+            </div>
+            <div className="news-subtitle">{t.subtitle}</div>
+            <div className="nuclear-warning">
+              {t.warning}
+            </div>
+
+            <div className="timer-container" dir="ltr">
+              <div className="timer-block">
+                <span className="timer-value">{formatNumber(timeLeft.days)}</span>
+                <span className="timer-label">{t.days}</span>
+              </div>
+              <div className="timer-block">
+                <span className="timer-value" style={{ color: 'var(--military-yellow)' }}>:</span>
+              </div>
+              <div className="timer-block">
+                <span className="timer-value">{formatNumber(timeLeft.hours)}</span>
+                <span className="timer-label">{t.hours}</span>
+              </div>
+              <div className="timer-block">
+                <span className="timer-value" style={{ color: 'var(--military-yellow)' }}>:</span>
+              </div>
+              <div className="timer-block">
+                <span className="timer-value">{formatNumber(timeLeft.minutes)}</span>
+                <span className="timer-label">{t.minutes}</span>
+              </div>
+              <div className="timer-block">
+                <span className="timer-value" style={{ color: 'var(--military-yellow)' }}>:</span>
+              </div>
+              <div className="timer-block">
+                <span className="timer-value">{formatNumber(timeLeft.seconds)}</span>
+                <span className="timer-label">{t.seconds}</span>
+              </div>
+            </div>
+
+            <div className="news-footer">
+              <div className="target-list">
+                <div className="target-item"><span className="status-badge">{t.target}</span> <strong>{t.nuclear}</strong> {t.ready}</div>
+                <div className="target-item"><span className="status-badge">{t.target}</span> <strong>{t.oil}</strong> {t.linked}</div>
+                <div className="target-item"><span className="status-badge">{t.target}</span> <strong>{t.water}</strong> {t.locked}</div>
+              </div>
+              <div className={`footer-details ${isAr ? 'text-right' : 'text-left'}`} style={{ marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
+                <div style={{ width: '100%' }}>
+                  <p><strong>{isAr ? 'تنبيه:' : 'ALERT:'}</strong> {t.alert}</p>
+                  <p><strong>{isAr ? 'الوقت المتبقي:' : 'REMAINING TIME:'}</strong> {t.remaining}</p>
+                </div>
+                <Link href="/" className="return-button">
+                  {t.viewNews}
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
     </div>
   );
 };

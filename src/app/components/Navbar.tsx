@@ -419,12 +419,16 @@ export default function Navbar({
 
                             <div className="w-[1px] h-5 bg-white/10 mx-1"></div>
 
-                            {/* ADMIN STATUS */}
+                            {/* ADMIN GATE */}
                             <button 
                                 onClick={() => router.push(isAdmin ? '/admin/dashboard' : '/admin/login')}
-                                className={`w-9 h-9 flex items-center justify-center transition-all shrink-0 ${isAdmin ? 'text-primary' : 'text-foreground/20 hover:text-primary'}`}
+                                className={`h-9 px-3 flex items-center gap-2 transition-all border border-white/5 bg-white/5 hover:bg-white/10 shrink-0 ${isAdmin ? 'text-primary border-primary/20' : 'text-foreground/20 hover:text-primary'}`}
+                                title={isAdmin ? "Dashboard" : "Admin Gate"}
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                <span className="hidden xl:inline text-[9px] font-black tracking-widest uppercase">
+                                    {isAdmin ? 'ADMIN DATA' : 'GATE ACCESS'}
+                                </span>
                             </button>
                         </div>
                     </div>

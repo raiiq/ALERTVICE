@@ -66,7 +66,17 @@ export async function GET(request: Request) {
             const fetchOffset = urgent ? 0 : offset;
 
             if (q) {
-                query = query.or(`title.ilike.%${q}%,summary.ilike.%${q}%`);
+                // Split keywords for broader "OR" searching across tactical fields
+                const keywords = q.split(/\s+/).filter(k => k.length > 1);
+                const conditions = keywords.flatMap(k => [
+                    `title.ilike.%${k}%`,
+                    `summary.ilike.%${k}%`,
+                    `content_html.ilike.%${k}%`
+                ]);
+                
+                if (conditions.length > 0) {
+                    query = query.or(conditions.join(','));
+                }
             }
 
             const { data: posts, error } = await query.range(fetchOffset, fetchOffset + fetchLimit - 1);
@@ -91,13 +101,28 @@ export async function GET(request: Request) {
                 }
             } else if (type === 'signal' && finalPosts.length === 0 && lang !== 'en') {
                 // RELIABILITY FALLBACK: If Arabic (or other) is empty, fetch English 
-                const { data: fallback } = await supabaseAdmin.from('posts')
+                let fallbackQuery = supabaseAdmin.from('posts')
                     .select('*')
                     .eq('language', 'en')
                     .filter('has_video', 'eq', false)
                     .filter('image_url', 'is', null)
                     .order('post_date', { ascending: false })
                     .limit(fetchLimit);
+
+                // Ensure the fallback ALSO respects the search query q
+                if (q) {
+                    const keywords = q.split(/\s+/).filter(k => k.length > 1);
+                    const conditions = keywords.flatMap(k => [
+                        `title.ilike.%${k}%`,
+                        `summary.ilike.%${k}%`,
+                        `content_html.ilike.%${k}%`
+                    ]);
+                    if (conditions.length > 0) {
+                        fallbackQuery = fallbackQuery.or(conditions.join(','));
+                    }
+                }
+
+                const { data: fallback } = await fallbackQuery;
                 if (fallback) finalPosts = fallback;
             }
 
